@@ -1,0 +1,2681 @@
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Packages, DevPackages = ReplicatedStorage:WaitForChild("Packages"), ReplicatedStorage:WaitForChild("DevPackages")
+
+local JestGlobals = require(DevPackages:WaitForChild("JestGlobals"))
+
+local describe = JestGlobals.describe
+local it = JestGlobals.it
+local expect = JestGlobals.expect
+local beforeEach = JestGlobals.beforeEach
+local afterEach = JestGlobals.afterEach
+
+local CullThrottlePackage = Packages:WaitForChild("CullThrottle")
+local CullThrottle = require(CullThrottlePackage)
+local Frustum = require(CullThrottlePackage:WaitForChild("Frustum"))
+local VisibilitySearch = require(CullThrottlePackage:WaitForChild("VisibilitySearch"))
+local CameraMotion = require(CullThrottlePackage:WaitForChild("CameraMotion"))
+local OcclusionCulling = require(CullThrottlePackage:WaitForChild("OcclusionCulling"))
+local Utilities = CullThrottlePackage:WaitForChild("Utilities")
+local CameraCache = require(Utilities:WaitForChild("CameraCache"))
+
+local TestHelpers = require(script.Parent.TestHelpers)
+local createMockPart = TestHelpers.createMockPart
+local stubObjectData = TestHelpers.stubObjectData
+local visibleVoxelProof = TestHelpers.visibleVoxelProof
+local culledVoxelProof = TestHelpers.culledVoxelProof
+local hiddenOcclusionProof = TestHelpers.hiddenOcclusionProof
+local volumeCount = TestHelpers.volumeCount
+local popVolume = TestHelpers.popVolume
+local drainVolumeStack = TestHelpers.drainVolumeStack
+local patchFunction = TestHelpers.patchFunction
+local straddlingFrustumPlanes = TestHelpers.straddlingFrustumPlanes
+local roomyFrustumPlanes = TestHelpers.roomyFrustumPlanes
+
+--[[
+	Wraps Frustum.isBoxInFrustum with a counting shim (registered for the
+	afterEach restore) and returns a getter for how many tests have run since.
+]]
+local function countBoxTests(): () -> number
+	return TestHelpers.countCalls(Frustum, "isBoxInFrustum")
+end
+
+--[[
+	Wraps Frustum.classifyBucket with a counting shim (registered for the
+	afterEach restore) and returns a getter for how many classifications have
+	run since.
+]]
+local function countClassifyCalls(): () -> number
+	return TestHelpers.countCalls(Frustum, "classifyBucket")
+end
+
+--[[
+	Wraps VisibilitySearch.seedSearchVolumes with a counting shim (registered
+	for the afterEach restore) and returns a getter for how many passes have
+	seeded since. A replayed frame never seeds, so the count tells full
+	searches apart from replays.
+]]
+local function countSeedPasses(): () -> number
+	return TestHelpers.countCalls(VisibilitySearch, "seedSearchVolumes")
+end
+
+--[[
+	Wraps OcclusionCulling.testBoxOcclusion with a counting shim (registered
+	for the afterEach restore) and returns a getter for how many umbra tests
+	have run since.
+]]
+local function countUmbraTests(): () -> number
+	return TestHelpers.countCalls(OcclusionCulling, "testBoxOcclusion")
+end
+
+--[[
+	Wraps VisibilitySearch.searchSingleVoxel with a counting shim (registered
+	for the afterEach restore) and returns a getter for how many leaf
+	resolutions have run since.
+]]
+local function countLeafResolutions(): () -> number
+	return TestHelpers.countCalls(VisibilitySearch, "searchSingleVoxel")
+end
+
+--[[
+	Stages a hand-built single-plane umbra into the given slot on the
+	instance's occlusion module, hiding the half space where dot(normal, p)
+	is at most offset, in voxel space. The plane is classified as a cap, the
+	shape and edge fields are zeroed so every depth-scaled term collapses and
+	allowances stay pinned to the staged pad value of half a voxel, and the
+	AABB is unbounded so the gate never prunes. The caller marks the staged
+	slots live afterward by setting the umbra count and full mask.
+]]
+local function stageSlabUmbraPlane(cullThrottle, slot: number, normal: Vector3, offset: number)
+	local occlusion = cullThrottle._occlusion
+	occlusion._umbraPlaneNormals[slot] = { normal }
+	occlusion._umbraPlaneOffsets[slot] = { offset }
+	occlusion._umbraPlaneCounts[slot] = 1
+	occlusion._umbraCapCounts[slot] = 1
+	occlusion._umbraAllowances[slot] = 0.5
+	occlusion._umbraShapeAllowances[slot] = 0
+	occlusion._umbraEdgeDistances[slot] = 0
+	occlusion._umbraBoundsMin[slot] = Vector3.one * -math.huge
+	occlusion._umbraBoundsMax[slot] = Vector3.one * math.huge
+end
+
+--[[
+	Stages the occlusion suite's world-fixed slab umbra directly onto the
+	instance's occlusion module and marks it live, hiding everything past
+	z = 1.9 in voxel space. A hand-built slab keeps these tests independent
+	of the umbra construction geometry.
+]]
+local function stageSlabUmbra(cullThrottle)
+	stageSlabUmbraPlane(cullThrottle, 1, Vector3.new(0, 0, -1), -1.9)
+	local occlusion = cullThrottle._occlusion
+	occlusion._umbraCount = 1
+	occlusion._fullUmbraMask = 1
+	occlusion._cameraPosVoxels = Vector3.zero
+end
+
+--[[
+	Returns the eight corners of a voxel-space box.
+]]
+local function boxCorners(x0: number, y0: number, z0: number, x1: number, y1: number, z1: number): { Vector3 }
+	return {
+		Vector3.new(x0, y0, z0),
+		Vector3.new(x1, y0, z0),
+		Vector3.new(x0, y1, z0),
+		Vector3.new(x1, y1, z0),
+		Vector3.new(x0, y0, z1),
+		Vector3.new(x1, y0, z1),
+		Vector3.new(x0, y1, z1),
+		Vector3.new(x1, y1, z1),
+	}
+end
+
+--[[
+	Returns the most camera motion that cannot bring the given
+	voxel-space box back inside the frustum, which is how deep the box's
+	nearest corner sits past the plane that rejects it most strongly. Any sound
+	culled margin has to stay at or under this true clearance.
+]]
+local function maxSoundCulledMargin(
+	frustumPlanes: { Vector3 },
+	x0: number,
+	y0: number,
+	z0: number,
+	x1: number,
+	y1: number,
+	z1: number
+): number
+	local corners = boxCorners(x0, y0, z0, x1, y1, z1)
+	local best = 0
+	for i = 1, #frustumPlanes, 2 do
+		local planePos, planeNormal = frustumPlanes[i], frustumPlanes[i + 1]
+		local minDist = math.huge
+		for _, corner in corners do
+			local dist = (corner - planePos):Dot(planeNormal)
+			if dist < minDist then
+				minDist = dist
+			end
+		end
+		if minDist > best then
+			best = minDist
+		end
+	end
+	return best
+end
+
+--[[
+	Returns the true clearance from the given fully-inside voxel-space box to
+	the nearest frustum plane, which is how far a plane must sweep before it
+	can touch the box. Any sound visible slack has to stay under this.
+]]
+local function trueInsideClearance(
+	frustumPlanes: { Vector3 },
+	x0: number,
+	y0: number,
+	z0: number,
+	x1: number,
+	y1: number,
+	z1: number
+): number
+	local corners = boxCorners(x0, y0, z0, x1, y1, z1)
+	local clearance = math.huge
+	for i = 1, #frustumPlanes, 2 do
+		local planePos, planeNormal = frustumPlanes[i], frustumPlanes[i + 1]
+		local maxDist = -math.huge
+		for _, corner in corners do
+			local dist = (corner - planePos):Dot(planeNormal)
+			if dist > maxDist then
+				maxDist = dist
+			end
+		end
+		local planeClearance = -maxDist
+		if planeClearance < clearance then
+			clearance = planeClearance
+		end
+	end
+	return clearance
+end
+
+describe("VisibilitySearch", function()
+	local cullThrottle
+	local originalFieldOfView
+
+	beforeEach(function()
+		originalFieldOfView = workspace.CurrentCamera.FieldOfView
+		cullThrottle = CullThrottle.new()
+	end)
+
+	afterEach(function()
+		-- Frustum is a shared module table, so any counting shims patched onto
+		-- it must be unwound before the next test.
+		TestHelpers.restorePatches()
+		if cullThrottle then
+			cullThrottle:Destroy()
+		end
+		cullThrottle = nil
+
+		-- Tests that reshape the live camera's projection restore it here so a
+		-- failure can't leak the change. The restore fires the projection change
+		-- signal deferred, so let it land before the next test reads the camera.
+		local camera = workspace.CurrentCamera
+		if camera.FieldOfView ~= originalFieldOfView then
+			camera.FieldOfView = originalFieldOfView
+			task.wait()
+		end
+	end)
+
+	describe("Volume search", function()
+		it("drains the whole volume stack and surfaces every staged voxel in a full search", function()
+			-- Spread objects through the view at increasing depth so the search
+			-- subdivides and pushes and pops volumes on the flat stack.
+			local camera = workspace.CurrentCamera
+			local parts = {}
+			for i = 1, 5 do
+				local part = createMockPart((camera.CFrame * CFrame.new(0, 0, -100 * i)).Position)
+				cullThrottle:AddObject(part)
+				table.insert(parts, part)
+			end
+
+			-- A generous budget lets the search run to completion rather than bail
+			-- into the cached-visibility fallback (which leaves volumes on the stack).
+			cullThrottle._config.searchTimeBudget = 1
+			cullThrottle:_findVisibleObjects(os.clock())
+
+			local search = cullThrottle._search
+			expect(search._volumesToCheckSize).toBe(0)
+
+			-- Draining alone isn't enough. The completed search must also have
+			-- surfaced every part's voxel as visible.
+			for _, part in parts do
+				local voxelKey = next(cullThrottle._lifecycle._objects[part].voxelKeys)
+				local found = false
+				for i = 1, search._visibleVoxelCount do
+					if search._pendingVoxelKeys[i] == voxelKey then
+						found = true
+						break
+					end
+				end
+				expect(found).toBe(true)
+			end
+
+			for _, part in parts do
+				part:Destroy()
+			end
+		end)
+
+		it(
+			"re-marks a voxel from its stale visible proof when the fallback runs over a hand-staged leftover volume",
+			function()
+				local part = createMockPart(Vector3.new(0, 0, 0))
+				cullThrottle:AddObject(part)
+				local objectData = cullThrottle._lifecycle._objects[part]
+				local voxelKey = next(objectData.voxelKeys)
+
+				local search = cullThrottle._search
+
+				-- The voxel holds a visibility proof (even a stale one counts, since with
+				-- the budget gone the fallback reuses whatever was last proven), so the
+				-- fallback should re-mark it. The accumulators sit far past the proof's
+				-- expiry to make it stale, so a rewrite that re-validates proofs before
+				-- re-marking would fail here.
+				cullThrottle._visibilityCache._voxelProofs[voxelKey] = visibleVoxelProof(5, 1)
+				cullThrottle._motion._accumT = 50
+
+				-- Leave a single-voxel volume on the stack, as if the search ran out of
+				-- time before reaching it, then run the cached-visibility fallback. The
+				-- volume points at its key's slice in the seeded search buffer, and the
+				-- fallback accumulates into the unsorted pending buffer (the ingest sorts
+				-- it afterward), so check there.
+				search._searchVoxelKeys[1] = voxelKey
+				search._volumesToCheckSize = 0
+				search:pushVolume(
+					voxelKey.X,
+					voxelKey.Y,
+					voxelKey.Z,
+					voxelKey.X + 1,
+					voxelKey.Y + 1,
+					voxelKey.Z + 1,
+					1,
+					1,
+					0b11111,
+					math.huge,
+					0
+				)
+				search:reuseCachedVisibilityForRemainingVolumes()
+
+				local found = false
+				for i = 1, search._visibleVoxelCount do
+					if search._pendingVoxelKeys[i] == voxelKey then
+						found = true
+						break
+					end
+				end
+				expect(found).toBe(true)
+				local perfMetrics = cullThrottle._perfMetrics
+				expect(perfMetrics._skippedSearch[perfMetrics._skippedFramesCursor]).toBe(1)
+
+				part:Destroy()
+			end
+		)
+
+		it("re-marks only proven-visible voxels in the fallback and counts every leftover key skipped", function()
+			local search = cullThrottle._search
+			local voxelProofs = cullThrottle._visibilityCache._voxelProofs
+			local visibleKey = Vector3.new(1, 1, 1)
+			local culledKey = Vector3.new(2, 2, 2)
+			local coldKey = Vector3.new(3, 3, 3)
+			search._searchVoxelKeys[1] = visibleKey
+			search._searchVoxelKeys[2] = culledKey
+			search._searchVoxelKeys[3] = coldKey
+			voxelProofs[visibleKey] = visibleVoxelProof(5, 1)
+			voxelProofs[culledKey] = culledVoxelProof(5, 1)
+
+			-- Leave one leftover volume owning all three keys, as if the budget
+			-- ran out before reaching it. Only the key whose last proof found it
+			-- visible may be re-marked. Resurrecting the culled or never-proven
+			-- ones would flash provably-invisible voxels into the frame. The
+			-- skipped metric counts every key the budget left unverified, the
+			-- re-marked one included.
+			search._volumesToCheckSize = 0
+			search:pushVolume(1, 1, 1, 4, 4, 4, 1, 3, 0b11111, math.huge, 0)
+			search:clearVisibleVoxels()
+			search:reuseCachedVisibilityForRemainingVolumes()
+
+			expect(search._visibleVoxelCount).toBe(1)
+			expect(search._pendingVoxelKeys[1]).toBe(visibleKey)
+			local perfMetrics = cullThrottle._perfMetrics
+			expect(perfMetrics._skippedSearch[perfMetrics._skippedFramesCursor]).toBe(3)
+		end)
+
+		it("surfaces proven-visible voxels from the volumes a run's exhausted budget never reaches", function()
+			-- Six buckets ride the frustum's right side plane at increasing depth,
+			-- so each classifies as straddling and pushes its own root volume
+			-- holding one key with a valid visible proof. A zero budget exhausts
+			-- after the first batch of volume pops, so the rest must flow through
+			-- the cached-visibility fallback rather than dropping out of the frame.
+			local search = cullThrottle._search
+			local voxelProofs = cullThrottle._visibilityCache._voxelProofs
+			local part = createMockPart()
+			local keys = {
+				Vector3.new(5, 5, 1),
+				Vector3.new(5, 9, 1),
+				Vector3.new(9, 13, 1),
+				Vector3.new(13, 17, 1),
+				Vector3.new(13, 21, 1),
+				Vector3.new(17, 25, 1),
+			}
+			for _, key in keys do
+				cullThrottle._grid:insertToVoxel(key, stubObjectData(part))
+				voxelProofs[key] = visibleVoxelProof(math.huge, 0)
+			end
+
+			patchFunction(CameraCache, "getPlanesAndBounds", function()
+				return roomyFrustumPlanes, Vector3.new(0, 0, 0), Vector3.new(19, 27, 3)
+			end)
+
+			cullThrottle._config.searchTimeBudget = 0
+			search:run(os.clock())
+
+			-- Every key surfaced exactly once, whether its volume was popped
+			-- within the budget or swept up by the fallback afterward, and the
+			-- fallback counted its leftover keys into the skipped metric.
+			expect(search._visibleVoxelCount).toBe(6)
+			for _, key in keys do
+				local occurrences = 0
+				for i = 1, search._visibleVoxelCount do
+					if search._pendingVoxelKeys[i] == key then
+						occurrences += 1
+					end
+				end
+				expect(occurrences).toBe(1)
+			end
+			local perfMetrics = cullThrottle._perfMetrics
+			expect(perfMetrics._skippedSearch[perfMetrics._skippedFramesCursor]).toBeGreaterThan(0)
+
+			part:Destroy()
+		end)
+
+		it("stamps every voxel of a culled volume culled in one pass", function()
+			local search = cullThrottle._search
+			local voxelProofs = cullThrottle._visibilityCache._voxelProofs
+			local keys = {
+				Vector3.new(8, 0, 0),
+				Vector3.new(9, 1, 1),
+				Vector3.new(10, 2, 2),
+				Vector3.new(11, 3, 3),
+				Vector3.new(8, 1, 2),
+				Vector3.new(9, 2, 3),
+			}
+			for i, key in keys do
+				search._searchVoxelKeys[i] = key
+			end
+			-- The first key carries a visible proof that the staged motion has
+			-- expired, so the cold walk bails into the box test and the bulk
+			-- stamp must overwrite that stale visible expiry.
+			voxelProofs[keys[1]] = visibleVoxelProof(5, 1)
+
+			local getBoxTests = countBoxTests()
+			search:searchVolume(10, 0, roomyFrustumPlanes, 8, 0, 0, 12, 4, 4, 1, 6, 0b11111, math.huge, 0)
+
+			-- The whole volume sits outside a side plane, so one box test settles
+			-- it. Nothing is visible, no children are pushed, and every key now
+			-- carries a culled proof so later frames and the budget fallback can
+			-- never resurrect them.
+			expect(getBoxTests()).toBe(1)
+			expect(search._visibleVoxelCount).toBe(0)
+			expect(search._volumesToCheckSize).toBe(0)
+			for _, key in keys do
+				local proof = voxelProofs[key]
+				expect(proof).toBeDefined()
+				expect(proof.X).toBe(-1)
+				expect(proof.Y >= 10).toBe(true)
+				-- The margin stored past the staged motion must stay under this
+				-- cell's true clearance to the rejecting plane, or camera motion
+				-- could bring the cell back into view while the cache still calls
+				-- it culled.
+				local bound =
+					maxSoundCulledMargin(roomyFrustumPlanes, key.X, key.Y, key.Z, key.X + 1, key.Y + 1, key.Z + 1)
+				expect(proof.Y - 10 < bound).toBe(true)
+				expect(proof.Z > 0).toBe(true)
+			end
+		end)
+
+		it("stamps every voxel of a fully-inside volume visible in one pass", function()
+			local search = cullThrottle._search
+			local voxelProofs = cullThrottle._visibilityCache._voxelProofs
+			local keys = {
+				Vector3.new(0, 40, 0),
+				Vector3.new(1, 41, 1),
+				Vector3.new(2, 42, 2),
+				Vector3.new(3, 43, 3),
+				Vector3.new(0, 42, 1),
+				Vector3.new(3, 40, 2),
+			}
+			for i, key in keys do
+				search._searchVoxelKeys[i] = key
+			end
+
+			local getBoxTests = countBoxTests()
+			search:searchVolume(0, 0, roomyFrustumPlanes, 0, 40, 0, 4, 44, 4, 1, 6, 0b11111, math.huge, 0)
+
+			-- The cold walk bails, the one box test proves the volume fully
+			-- inside, and the bulk path appends each key exactly once with a
+			-- visible proof carrying no culled expiry.
+			expect(getBoxTests()).toBe(1)
+			expect(search._visibleVoxelCount).toBe(6)
+			expect(search._volumesToCheckSize).toBe(0)
+			for _, key in keys do
+				local proof = voxelProofs[key]
+				expect(proof).toBeDefined()
+				expect(proof.X > 0).toBe(true)
+				expect(proof.Y).toBe(-1)
+				expect(proof.Z > 0).toBe(true)
+
+				local occurrences = 0
+				for i = 1, search._visibleVoxelCount do
+					if search._pendingVoxelKeys[i] == key then
+						occurrences += 1
+					end
+				end
+				expect(occurrences).toBe(1)
+			end
+		end)
+
+		it("drops the walk's partial run when bailing so no voxel is appended twice", function()
+			local search = cullThrottle._search
+			local voxelProofs = cullThrottle._visibilityCache._voxelProofs
+			local keys = {
+				Vector3.new(0, 40, 0),
+				Vector3.new(1, 41, 1),
+				Vector3.new(2, 42, 2),
+				Vector3.new(3, 43, 3),
+				Vector3.new(0, 42, 1),
+				Vector3.new(3, 40, 2),
+				Vector3.new(1, 43, 0),
+			}
+			for i, key in keys do
+				search._searchVoxelKeys[i] = key
+			end
+			-- The first key holds a valid visible proof, so the walk appends it
+			-- before the cold majority forces a bail. The bail must drop that
+			-- partial run, since the bulk inside path below re-appends the whole
+			-- slice, this key included.
+			voxelProofs[keys[1]] = visibleVoxelProof(math.huge, 0)
+
+			local getBoxTests = countBoxTests()
+			search:searchVolume(0, 0, roomyFrustumPlanes, 0, 40, 0, 4, 44, 4, 1, 7, 0b11111, math.huge, 0)
+
+			-- A single whole-box test proves the walk bailed into the bulk
+			-- path. Re-testing the cold cells one by one would reach the same
+			-- visible set with six tests instead.
+			expect(getBoxTests()).toBe(1)
+			expect(search._visibleVoxelCount).toBe(7)
+			local occurrences = 0
+			for i = 1, search._visibleVoxelCount do
+				if search._pendingVoxelKeys[i] == keys[1] then
+					occurrences += 1
+				end
+			end
+			expect(occurrences).toBe(1)
+		end)
+
+		it("skips valid culled proofs in the walk without appending or re-testing them", function()
+			local search = cullThrottle._search
+			local voxelProofs = cullThrottle._visibilityCache._voxelProofs
+			local culledKey = Vector3.new(1, 41, 1)
+			local provenKey = Vector3.new(2, 42, 2)
+			search._searchVoxelKeys[1] = culledKey
+			search._searchVoxelKeys[2] = provenKey
+			voxelProofs[culledKey] = culledVoxelProof(math.huge, 0)
+			voxelProofs[provenKey] = visibleVoxelProof(math.huge, 0)
+
+			local getBoxTests = countBoxTests()
+			search:searchVolume(0, 0, roomyFrustumPlanes, 0, 40, 0, 4, 44, 4, 1, 2, 0b11111, math.huge, 0)
+
+			-- The provably-culled voxel is skipped silently (no test, no append)
+			-- while the proven-visible one rides the walk into the visible set.
+			expect(getBoxTests()).toBe(0)
+			expect(search._visibleVoxelCount).toBe(1)
+			expect(search._pendingVoxelKeys[1]).toBe(provenKey)
+			expect(search._volumesToCheckSize).toBe(0)
+		end)
+
+		it("subdivides a straddling bucket to keep in-frustum voxels and drop out-of-frustum ones", function()
+			local part = createMockPart()
+			local insideKey = Vector3.new(0, 0, 0)
+			local outsideKey = Vector3.new(3, 0, 3)
+			cullThrottle._grid:insertToVoxel(insideKey, stubObjectData(part))
+			cullThrottle._grid:insertToVoxel(outsideKey, stubObjectData(part))
+
+			local search = cullThrottle._search
+			search:seedSearchVolumes(straddlingFrustumPlanes, 0, 0, 0, 4, 4, 4)
+
+			-- Drain the stack the way run does, with zero accumulated motion, so
+			-- the root volume's straddle mask and inherited slack flow into its
+			-- children. A wrong root mask would stop the subdivision from
+			-- rejecting the out-of-frustum voxel.
+			drainVolumeStack(search, 0, 0, straddlingFrustumPlanes)
+
+			local foundInside, foundOutside = false, false
+			for i = 1, search._visibleVoxelCount do
+				local key = search._pendingVoxelKeys[i]
+				if key == insideKey then
+					foundInside = true
+				elseif key == outsideKey then
+					foundOutside = true
+				end
+			end
+			expect(foundInside).toBe(true)
+			expect(foundOutside).toBe(false)
+
+			part:Destroy()
+		end)
+
+		it("resolves a single-voxel root volume through the leaf test", function()
+			local search = cullThrottle._search
+			stageSlabUmbra(cullThrottle)
+
+			-- A bucket clipped down to one cell pops as a 1x1x1 volume, which
+			-- must hand straight off to the leaf rather than running the
+			-- volume-level machinery on a box the leaf re-tests anyway.
+			local key = Vector3.new(1, 41, 2)
+			search._searchVoxelKeys[1] = key
+			search:pushVolume(1, 41, 2, 2, 42, 3, 1, 1, 0b11111, math.huge, 1)
+
+			local getLeafResolutions = countLeafResolutions()
+			local getUmbraTests = countUmbraTests()
+			drainVolumeStack(search, 0, 0, roomyFrustumPlanes)
+
+			-- One leaf call and one umbra test mean the cell resolved at the
+			-- leaf, which found it hidden behind the slab and stamped the
+			-- hidden proof, with no volume-level test and no splits.
+			expect(getLeafResolutions()).toBe(1)
+			expect(getUmbraTests()).toBe(1)
+			expect(search._visibleVoxelCount).toBe(0)
+			expect(search._volumesToCheckSize).toBe(0)
+			local occlusionProof = cullThrottle._visibilityCache._voxelOcclusionProofs[key]
+			expect(occlusionProof).toBeDefined()
+			expect(occlusionProof.X).toBe(0.5)
+			expect(cullThrottle._perfMetrics._occludedVoxelCount).toBe(1)
+		end)
+
+		it("normalizes a negated umbra mask before the leaf test of a single-voxel volume", function()
+			local search = cullThrottle._search
+			stageSlabUmbra(cullThrottle)
+			stageSlabUmbraPlane(cullThrottle, 2, Vector3.new(0, 0, 1), -1.9)
+			local occlusion = cullThrottle._occlusion
+			occlusion._umbraCount = 2
+			occlusion._fullUmbraMask = 3
+
+			-- The cell sits inside the second slab and outside the first. The
+			-- negated mask says the seeding already pruned everything but the
+			-- first umbra from this box, so the leaf must test that umbra
+			-- alone and find the cell clear. A negative mask reaching the
+			-- leaf raw would read as every bit set, test the second slab too,
+			-- and wrongly drop the cell.
+			local key = Vector3.new(1, 41, -3)
+			search._searchVoxelKeys[1] = key
+			search:pushVolume(1, 41, -3, 2, 42, -2, 1, 1, 0b11111, math.huge, -1)
+
+			drainVolumeStack(search, 0, 0, roomyFrustumPlanes)
+
+			expect(search._visibleVoxelCount).toBe(1)
+			expect(search._pendingVoxelKeys[1]).toBe(key)
+			expect(cullThrottle._perfMetrics._occludedVoxelCount).toBe(0)
+		end)
+
+		it("flips the subdivision push order between frames so each half takes its turn in front", function()
+			-- Six cold keys force the proof walk to bail, and the box test
+			-- straddles, so the volume splits in half (the staged cube has no
+			-- longest axis, and the tie goes to x) and pushes both halves. The
+			-- stack is LIFO, so the half pushed last is searched
+			-- first, and the push order must flip with the per-frame rotation
+			-- counter or one half would hog the front of the budget every frame.
+			local search = cullThrottle._search
+			local keys = {
+				Vector3.new(0, 0, 0),
+				Vector3.new(1, 1, 1),
+				Vector3.new(0, 2, 1),
+				Vector3.new(2, 2, 2),
+				Vector3.new(3, 3, 3),
+				Vector3.new(3, 1, 2),
+			}
+			for i, key in keys do
+				search._searchVoxelKeys[i] = key
+			end
+
+			search._volumeRotationCounter = 0
+			search:searchVolume(0, 0, straddlingFrustumPlanes, 0, 0, 0, 4, 4, 4, 1, 6, 0b11111, math.huge, 0)
+			expect(volumeCount(search)).toBe(2)
+			local evenFrameFirst = popVolume(search)
+			search._volumesToCheckSize = 0
+
+			-- The split partitioned the key buffer in place, so restage it before
+			-- running the same volume under the flipped parity.
+			for i, key in keys do
+				search._searchVoxelKeys[i] = key
+			end
+			search._volumeRotationCounter = 1
+			search:searchVolume(0, 0, straddlingFrustumPlanes, 0, 0, 0, 4, 4, 4, 1, 6, 0b11111, math.huge, 0)
+			expect(volumeCount(search)).toBe(2)
+			local oddFrameFirst = popVolume(search)
+
+			-- The two parities lead with opposite halves of the same x split.
+			expect(evenFrameFirst.x0).never.toBe(oddFrameFirst.x0)
+			expect(math.min(evenFrameFirst.x0, oddFrameFirst.x0)).toBe(0)
+			expect(math.max(evenFrameFirst.x0, oddFrameFirst.x0)).toBe(2)
+		end)
+
+		it("still seeds surviving buckets after a boundary bucket empties", function()
+			-- Two voxels sit in distant buckets, with the farther one defining
+			-- the coarse bounds. Removing it dirties the bounds, and the next seed must
+			-- recompute them around the survivor rather than clamping it out of
+			-- the scan.
+			local partA = createMockPart()
+			local partB = createMockPart()
+			local dataB = stubObjectData(partB)
+			cullThrottle._grid:insertToVoxel(Vector3.new(1, 41, 1), stubObjectData(partA))
+			cullThrottle._grid:insertToVoxel(Vector3.new(40, 80, 40), dataB)
+
+			cullThrottle._grid:removeFromVoxel(Vector3.new(40, 80, 40), dataB)
+			expect(cullThrottle._grid._coarseBoundsDirty).toBe(true)
+
+			local search = cullThrottle._search
+			search:clearVisibleVoxels()
+			search:seedSearchVolumes(roomyFrustumPlanes, 0, 40, 0, 4, 44, 4)
+
+			expect(cullThrottle._grid._coarseBoundsDirty).toBe(false)
+			expect(search._visibleVoxelCount).toBe(1)
+			expect(search._pendingVoxelKeys[1]).toBe(Vector3.new(1, 41, 1))
+
+			partA:Destroy()
+			partB:Destroy()
+		end)
+
+		it("keeps the inclusive max-bound voxel row inside the searched box", function()
+			-- The camera bounds arrive as inclusive voxel indices and run converts
+			-- them to a half-open box. This voxel sits on the max-bound row of a
+			-- straddling bucket, so dropping the conversion's +1 would filter its
+			-- key out of the seed and silently cull the outermost row.
+			local edgeKey = Vector3.new(15, 21, 3)
+			local part = createMockPart()
+			cullThrottle._grid:insertToVoxel(edgeKey, stubObjectData(part))
+
+			patchFunction(CameraCache, "getPlanesAndBounds", function()
+				return roomyFrustumPlanes, Vector3.new(12, 18, 0), edgeKey
+			end)
+
+			cullThrottle._config.searchTimeBudget = 1
+			local search = cullThrottle._search
+			search:run(os.clock())
+
+			local found = false
+			for i = 1, search._visibleVoxelCount do
+				if search._pendingVoxelKeys[i] == edgeKey then
+					found = true
+					break
+				end
+			end
+			expect(found).toBe(true)
+
+			part:Destroy()
+		end)
+
+		it("does not scan the bucket just past a box ending exactly on a bucket boundary", function()
+			-- The query box is half-open, so a box ending exactly where buckets 0
+			-- and 1 meet holds no cell of bucket 1 and the scan must not touch
+			-- it. The occupied voxel sits at the very start of bucket 1.
+			local part = createMockPart()
+			cullThrottle._grid:insertToVoxel(Vector3.new(4, 1, 1), stubObjectData(part))
+
+			local getCalls = countClassifyCalls()
+			local search = cullThrottle._search
+			expect(search:seedSearchVolumes(roomyFrustumPlanes, 0, 0, 0, 4, 4, 4)).toBe(0)
+			expect(getCalls()).toBe(0)
+			expect(cullThrottle._visibilityCache._bucketVerdicts[Vector3.new(1, 0, 0)]).toBeNil()
+
+			-- Extending the box one voxel past the boundary brings the bucket
+			-- into the scan, so it gets classified.
+			search:seedSearchVolumes(roomyFrustumPlanes, 0, 0, 0, 5, 4, 4)
+			expect(getCalls()).toBe(1)
+			expect(cullThrottle._visibilityCache._bucketVerdicts[Vector3.new(1, 0, 0)]).toBeDefined()
+
+			part:Destroy()
+		end)
+
+		it("seeds nothing over an empty grid", function()
+			local search = cullThrottle._search
+			local getCalls = countClassifyCalls()
+
+			-- With no occupied bucket there is nothing to scan, so the seed
+			-- returns cleanly before touching the coarse bounds.
+			expect(search:seedSearchVolumes(roomyFrustumPlanes, 0, 0, 0, 16, 16, 16)).toBe(0)
+			expect(getCalls()).toBe(0)
+			expect(volumeCount(search)).toBe(0)
+			expect(search._visibleVoxelCount).toBe(0)
+		end)
+
+		it("seeds every key of a straddling bucket that sits fully inside the query box", function()
+			-- The straddling fixture's planes all cut through the first coarse
+			-- bucket's box, and the query box below exactly covers that box, so the
+			-- seed takes the unfiltered interior copy for the whole bucket.
+			local part = createMockPart()
+			local keys = {
+				Vector3.new(0, 0, 0),
+				Vector3.new(1, 1, 1),
+				Vector3.new(2, 2, 3),
+				Vector3.new(3, 3, 2),
+			}
+			for _, key in keys do
+				cullThrottle._grid:insertToVoxel(key, stubObjectData(part))
+			end
+
+			local search = cullThrottle._search
+			local count = search:seedSearchVolumes(straddlingFrustumPlanes, 0, 0, 0, 4, 4, 4)
+
+			-- Every key lands in the search buffer (the order within the slice
+			-- is not promised), and the one root volume owns exactly that slice.
+			expect(count).toBe(4)
+			for _, key in keys do
+				local found = false
+				for i = 1, count do
+					if search._searchVoxelKeys[i] == key then
+						found = true
+						break
+					end
+				end
+				expect(found).toBe(true)
+			end
+			expect(volumeCount(search)).toBe(1)
+			local volume = popVolume(search)
+			expect(volume.lo).toBe(1)
+			expect(volume.hi).toBe(4)
+			-- The root volume continues from the classification's partial
+			-- proof, so its mask covers some but not all of the five planes
+			-- (which bits is Frustum's private plane ordering), and the
+			-- inherited slack is the min slack of the planes the box sits
+			-- fully inside of (two side planes touch the box exactly, so zero).
+			expect(volume.planeMask).never.toBe(0)
+			expect(volume.planeMask).never.toBe(0b11111)
+			expect(volume.inheritedSlack).toBeCloseTo(0, 4)
+
+			part:Destroy()
+		end)
+
+		it("rotates the first-searched volume so each bucket gets a turn", function()
+			-- The search seeds one root volume per occupied coarse bucket, and
+			-- _volumeRotationCounter chooses which one is moved to the top of the
+			-- LIFO stack so it is searched first. A zero search budget bails right
+			-- after the first clock check, so the first searchVolume call each
+			-- frame is the chosen bucket.
+			cullThrottle._config.voxelSize = 50
+			cullThrottle._config.searchTimeBudget = 0
+			-- A zero-width range pins the render distance so the controller can't
+			-- adjust it between frames, and 3000 keeps every part well within range.
+			cullThrottle:SetRenderDistanceRange(NumberRange.new(3000, 3000))
+
+			-- These four parts ride the right frustum side plane at increasing depth.
+			-- Sitting on a plane makes each part's coarse bucket straddle the
+			-- frustum, and only straddling buckets push root volumes (culled and
+			-- fully-inside buckets are resolved by the verdict cache without ever
+			-- reaching the volume stack). Depth steps of 400 studs keep
+			-- consecutive parts in distinct coarse buckets (a bucket spans 4 voxels,
+			-- which is 200 studs, and the step moves at least 400 on some axis).
+			local camCFrame = workspace.CurrentCamera.CFrame
+			local tanHalfHorizontalFov = CameraCache.SinHalfHorizontalFOV / CameraCache.CosHalfHorizontalFOV
+			local parts = {}
+			for i = 1, 4 do
+				local depth = 300 + (i - 1) * 400
+				local part = createMockPart((camCFrame * CFrame.new(tanHalfHorizontalFov * depth, 0, -depth)).Position)
+				cullThrottle:AddObject(part)
+				table.insert(parts, part)
+			end
+
+			-- This is patched on the subsystem instance, so it dies with the test.
+			local realSearchVolume = cullThrottle._search.searchVolume
+			local firstOrigin = nil
+			cullThrottle._search.searchVolume = function(
+				search,
+				accumTF,
+				accumR,
+				frustumPlanes,
+				x0,
+				y0,
+				z0,
+				x1,
+				y1,
+				z1,
+				lo,
+				hi,
+				planeMask,
+				inheritedSlack,
+				umbraMask
+			)
+				if firstOrigin == nil then
+					firstOrigin = Vector3.new(x0, y0, z0)
+				end
+				return realSearchVolume(
+					search,
+					accumTF,
+					accumR,
+					frustumPlanes,
+					x0,
+					y0,
+					z0,
+					x1,
+					y1,
+					z1,
+					lo,
+					hi,
+					planeMask,
+					inheritedSlack,
+					umbraMask
+				)
+			end
+
+			-- Eight frames give the rotation a window of two full passes over the
+			-- four bucket volumes.
+			local distinctOrigins = {}
+			local distinctCount = 0
+			for _ = 1, 8 do
+				firstOrigin = nil
+				-- A hair of staged translation keeps the frames from being
+				-- bit-identical. A warm zero-budget pass can drain its whole
+				-- stack within one clock-check batch and arm the whole-frame
+				-- replay, which would skip the very search this test watches,
+				-- and the creep is far too small to expire any proof in the
+				-- window.
+				cullThrottle._motion._accumT += 1e-6
+				cullThrottle:_findVisibleObjects(os.clock())
+				expect(firstOrigin).never.toBeNil()
+				if not distinctOrigins[firstOrigin] then
+					distinctOrigins[firstOrigin] = true
+					distinctCount += 1
+				end
+			end
+
+			-- The contract is fairness rather than a strict cycle, so all the
+			-- test demands is that every bucket led the search at least once
+			-- across the window.
+			expect(distinctCount).toBe(4)
+
+			for _, part in parts do
+				part:Destroy()
+			end
+		end)
+
+		it("surfaces every in-frustum object spread across the seeded buckets", function()
+			-- The seed hands each occupied coarse bucket its own root volume and
+			-- slice of the key buffer. Spread objects through the view in a cone
+			-- (so they land in distinct voxels across many buckets), then confirm
+			-- the seed and the in-bucket partitions drop none of them.
+			local camCFrame = workspace.CurrentCamera.CFrame
+
+			-- Small voxels make the spread objects occupy distinct, widely separated voxels.
+			cullThrottle:SetVoxelSize(40)
+			cullThrottle._config.searchTimeBudget = 1
+			cullThrottle._config.ingestTimeBudget = 1
+
+			-- Offsets scale with depth to stay safely inside the FOV at every distance.
+			local parts = {}
+			for _, depth in { 100, 300, 500 } do
+				for _, sx in { -1, 1 } do
+					for _, sy in { -1, 1 } do
+						local offset = CFrame.new(sx * depth * 0.2, sy * depth * 0.1, -depth)
+						local part = createMockPart((camCFrame * offset).Position)
+						cullThrottle:AddObject(part)
+						table.insert(parts, part)
+					end
+				end
+			end
+
+			local visibleObjects = cullThrottle:GetVisibleObjects()
+
+			-- Each object is in front of the camera and within range, so the seed
+			-- must surface all of them.
+			for _, part in parts do
+				expect(table.find(visibleObjects, part)).never.toBeNil()
+			end
+
+			for _, part in parts do
+				part:Destroy()
+			end
+		end)
+	end)
+
+	describe("Bucket bulk copies", function()
+		it("appends a whole bucket after the keys already pending", function()
+			local search = cullThrottle._search
+
+			-- Seed the pending buffer with an existing key so the append's
+			-- destination offset matters. Landing one slot low overwrites it, and
+			-- landing one slot high leaves a hole.
+			local existingKey = Vector3.new(9, 9, 9)
+			search._pendingVoxelKeys[1] = existingKey
+			search._visibleVoxelCount = 1
+
+			local bucket = { Vector3.new(0, 40, 0), Vector3.new(1, 41, 1), Vector3.new(2, 42, 2) }
+			search:appendWholeBucketToVisible(bucket, 0, 40, 0)
+
+			expect(search._visibleVoxelCount).toBe(4)
+			expect(search._pendingVoxelKeys[1]).toBe(existingKey)
+			expect(search._pendingVoxelKeys[2]).toBe(bucket[1])
+			expect(search._pendingVoxelKeys[3]).toBe(bucket[2])
+			expect(search._pendingVoxelKeys[4]).toBe(bucket[3])
+		end)
+	end)
+
+	describe("Occlusion in the search", function()
+		it(
+			"occlusion-tests a contested cell despite its valid visible frustum proof and drops it when hidden",
+			function()
+				local search = cullThrottle._search
+				local voxelProofs = cullThrottle._visibilityCache._voxelProofs
+				stageSlabUmbra(cullThrottle)
+
+				-- The cell sits behind the slab while holding a warm visible
+				-- frustum proof. Under a live umbra mask that proof only answers
+				-- the frustum side, so the walk must still send the cell through
+				-- the occlusion test, and the leaf must consult occlusion before
+				-- trusting the proof.
+				local key = Vector3.new(1, 41, 2)
+				search._searchVoxelKeys[1] = key
+				voxelProofs[key] = visibleVoxelProof(math.huge, 0)
+
+				local getBoxTests = countBoxTests()
+				search:searchVolume(0, 0, roomyFrustumPlanes, 0, 40, 0, 4, 44, 4, 1, 1, 0b11111, math.huge, 1)
+
+				-- The umbra hides the cell, so it stays out of the visible set
+				-- and picks up a hidden occlusion proof, while the frustum proof
+				-- survives untouched for whenever the occlusion lifts (no frustum
+				-- test ran at all, the proof answered that side).
+				expect(search._visibleVoxelCount).toBe(0)
+				expect(cullThrottle._perfMetrics._occludedVoxelCount).toBe(1)
+				local occlusionProof = cullThrottle._visibilityCache._voxelOcclusionProofs[key]
+				expect(occlusionProof).toBeDefined()
+				expect(occlusionProof.X).toBe(0.5)
+				expect(occlusionProof.Y).toBe(cullThrottle._occlusion._generation)
+				expect(voxelProofs[key].X).toBe(math.huge)
+				expect(getBoxTests()).toBe(0)
+			end
+		)
+
+		it("skips the hidden bucket stamp when its allowance cannot outlive the motion floor", function()
+			local part = createMockPart()
+			cullThrottle._grid:insertToVoxel(Vector3.new(1, 41, 4), stubObjectData(part))
+			stageSlabUmbra(cullThrottle)
+			local occlusion = cullThrottle._occlusion
+			local bucketOcclusionProofs = cullThrottle._visibilityCache._bucketOcclusionProofs
+
+			-- The bucket sits entirely behind the slab, and its allowance is
+			-- the staged half-voxel pad. With 0.6 voxels of translation last
+			-- frame the proof would expire before it was ever trusted, so the
+			-- bucket is still skipped as occluded but the write is skipped
+			-- with it.
+			occlusion._motionFloor = 0.6
+			local search = cullThrottle._search
+			search:seedSearchVolumes(roomyFrustumPlanes, 0, 40, 4, 4, 44, 8)
+			expect(search._visibleVoxelCount).toBe(0)
+			expect(cullThrottle._perfMetrics._occludedVoxelCount).toBe(1)
+			expect(bucketOcclusionProofs[Vector3.new(0, 10, 1)]).toBeNil()
+
+			-- At exactly half a voxel of motion the allowance survives one
+			-- repeat of it (expiries compare inclusively), so the stamp is
+			-- worth its write again.
+			occlusion._motionFloor = 0.5
+			search:seedSearchVolumes(roomyFrustumPlanes, 0, 40, 4, 4, 44, 8)
+			local proof = bucketOcclusionProofs[Vector3.new(0, 10, 1)]
+			expect(proof).toBeDefined()
+			expect(proof.X).toBe(0.5)
+			expect(proof.Y).toBe(occlusion._generation)
+
+			part:Destroy()
+		end)
+
+		it("skips the clear bucket stamp on frames where no measurement could survive", function()
+			local part = createMockPart()
+			cullThrottle._grid:insertToVoxel(Vector3.new(1, 41, -3), stubObjectData(part))
+			stageSlabUmbra(cullThrottle)
+			local occlusion = cullThrottle._occlusion
+			occlusion._umbraShapeAllowances[1] = 3
+			local bucketOcclusionProofs = cullThrottle._visibilityCache._bucketOcclusionProofs
+
+			-- The bucket sits fully in front of the slab, so seeding prunes
+			-- the umbra and the bucket takes the pure frustum path. The frame
+			-- ruled all measuring out, so no clear proof may be written.
+			occlusion._measuresUseful = false
+			local search = cullThrottle._search
+			search:seedSearchVolumes(roomyFrustumPlanes, 0, 40, -4, 4, 44, 0)
+			expect(search._visibleVoxelCount).toBe(1)
+			expect(bucketOcclusionProofs[Vector3.new(0, 10, -1)]).toBeNil()
+
+			-- A frame whose ceiling allows measuring pays the second pass and
+			-- stamps the clear proof, the cap witness's shape allowance
+			-- shaved by the safety margin.
+			occlusion._measuresUseful = true
+			search:clearVisibleVoxels()
+			search:seedSearchVolumes(roomyFrustumPlanes, 0, 40, -4, 4, 44, 0)
+			expect(search._visibleVoxelCount).toBe(1)
+			local proof = bucketOcclusionProofs[Vector3.new(0, 10, -1)]
+			expect(proof).toBeDefined()
+			expect(proof.X).toBe(-1)
+			expect(proof.Y).toBe(occlusion._clearGeneration)
+			expect(proof.Z).toBeCloseTo(2.99, 5)
+
+			part:Destroy()
+		end)
+
+		it(
+			"re-marks a voxel from its visible frustum proof in the budget fallback despite a hidden occlusion proof",
+			function()
+				local search = cullThrottle._search
+				stageSlabUmbra(cullThrottle)
+
+				-- The voxel carries both a visible frustum proof and a live
+				-- hidden occlusion proof, and its volume is one the budget never
+				-- reached.
+				local key = Vector3.new(1, 41, 2)
+				search._searchVoxelKeys[1] = key
+				cullThrottle._visibilityCache._voxelProofs[key] = visibleVoxelProof(5, 1)
+				cullThrottle._visibilityCache._voxelOcclusionProofs[key] =
+					hiddenOcclusionProof(math.huge, cullThrottle._occlusion._generation)
+				search:pushVolume(0, 40, 0, 4, 44, 4, 1, 1, 0b11111, math.huge, 1)
+
+				search:reuseCachedVisibilityForRemainingVolumes()
+
+				-- The fallback reads only the frustum family and errs toward
+				-- visible, so the hidden proof cannot keep the voxel out of the
+				-- frame. A stale flash of a hidden voxel beats dropping a visible
+				-- one.
+				expect(search._visibleVoxelCount).toBe(1)
+				expect(search._pendingVoxelKeys[1]).toBe(key)
+			end
+		)
+
+		it(
+			"inherits a cached-inside bucket's remaining margin with translation and render distance charges debited",
+			function()
+				local part = createMockPart()
+				cullThrottle._grid:insertToVoxel(Vector3.new(1, 41, 1), stubObjectData(part))
+				stageSlabUmbra(cullThrottle)
+
+				-- The staged verdict leaves the side family 8 charge units of
+				-- expiry and the far family 6. With one unit of translation and
+				-- two of render distance change, the side margin has 7 left and
+				-- the far margin 3, and the tighter far margin is what stamps
+				-- inside the seeded volume may claim.
+				cullThrottle._visibilityCache._bucketVerdicts[Vector3.new(0, 10, 0)] = {
+					state = Frustum.BUCKET_INSIDE,
+					armFactor = 1,
+					sideExpiry = 8,
+					farExpiry = 6,
+				}
+				cullThrottle._motion._accumT = 1
+				cullThrottle._motion._accumF = 2
+
+				local getCalls = countClassifyCalls()
+				local search = cullThrottle._search
+				search:seedSearchVolumes(roomyFrustumPlanes, 0, 40, 0, 4, 44, 4)
+
+				expect(getCalls()).toBe(0)
+				expect(search._visibleVoxelCount).toBe(0)
+				expect(volumeCount(search)).toBe(1)
+				local volume = popVolume(search)
+				expect(volume.planeMask).toBe(0)
+				expect(volume.umbraMask).toBe(-1)
+				expect(volume.inheritedSlack).toBe(3)
+
+				part:Destroy()
+			end
+		)
+
+		it("settles a contested cell from its valid culled frustum proof without an umbra test", function()
+			local search = cullThrottle._search
+			stageSlabUmbra(cullThrottle)
+
+			-- The negated mask marks the volume's own box as already
+			-- umbra-tested this frame, so any umbra test that runs here would
+			-- be for the cell itself. A culled cell is culled no matter what
+			-- occludes it, so its valid proof settles it with no occlusion
+			-- work at all.
+			local key = Vector3.new(1, 41, 2)
+			search._searchVoxelKeys[1] = key
+			cullThrottle._visibilityCache._voxelProofs[key] = culledVoxelProof(math.huge, 0)
+
+			local getUmbraTests = countUmbraTests()
+			search:searchVolume(0, 0, roomyFrustumPlanes, 0, 40, 0, 4, 44, 4, 1, 1, 0b11111, math.huge, -1)
+
+			expect(getUmbraTests()).toBe(0)
+			expect(search._visibleVoxelCount).toBe(0)
+			expect(search._volumesToCheckSize).toBe(0)
+			expect(cullThrottle._visibilityCache._voxelOcclusionProofs[key]).toBeNil()
+		end)
+	end)
+
+	describe("Motion-proof visibility cache", function()
+		-- This is the same camera as the roomy fixture with the far plane only
+		-- 5 voxels out, so a bucket a few voxels ahead is culled by the far plane
+		-- specifically.
+		local shortFarFrustumPlanes: { Vector3 } = {
+			Vector3.new(0, 0, 0),
+			Vector3.new(-0, -0.779599547, 0.626278222),
+			Vector3.new(0, 0, 0),
+			Vector3.new(0, -0.779599547, -0.626278222),
+			Vector3.new(0, 0, 0),
+			Vector3.new(0.819152057, -0.573576391, 0),
+			Vector3.new(0, 0, 0),
+			Vector3.new(-0.819152057, -0.573576391, -0),
+			Vector3.new(0, 5, 0),
+			Vector3.new(0, 1, 0),
+		}
+
+		it("skips a culled bucket without re-classifying until motion can overturn the proof", function()
+			-- Bucket (2, 0, 0) sits far to the camera's right, so it's culled by a
+			-- side plane with a clearance of about 3.6 voxels.
+			local part = createMockPart()
+			cullThrottle._grid:insertToVoxel(Vector3.new(8, 0, 0), stubObjectData(part))
+
+			local search = cullThrottle._search
+			local count = search:seedSearchVolumes(roomyFrustumPlanes, 0, 0, 0, 16, 16, 16)
+			expect(count).toBe(0)
+			expect(search._volumesToCheckSize).toBe(0)
+			expect(search._visibleVoxelCount).toBe(0)
+
+			local verdict = cullThrottle._visibilityCache._bucketVerdicts[Vector3.new(2, 0, 0)]
+			expect(verdict).toBeDefined()
+			expect(verdict.state).toBe(Frustum.BUCKET_CULLED)
+
+			local getCalls = countClassifyCalls()
+
+			-- A small translation stays under the clearance, so the bucket is still
+			-- skipped with no frustum math at all.
+			cullThrottle._motion._accumT = 1
+			expect(search:seedSearchVolumes(roomyFrustumPlanes, 0, 0, 0, 16, 16, 16)).toBe(0)
+			expect(getCalls()).toBe(0)
+
+			-- A side-culled bucket is culled at any render distance, so even a
+			-- huge render distance change can't expire it.
+			cullThrottle._motion._accumF = 1000
+			expect(search:seedSearchVolumes(roomyFrustumPlanes, 0, 0, 0, 16, 16, 16)).toBe(0)
+			expect(getCalls()).toBe(0)
+
+			-- Translation past the clearance expires the proof and forces a
+			-- fresh classification.
+			cullThrottle._motion._accumT = 4
+			expect(search:seedSearchVolumes(roomyFrustumPlanes, 0, 0, 0, 16, 16, 16)).toBe(0)
+			expect(getCalls()).toBe(1)
+
+			part:Destroy()
+		end)
+
+		it("keeps skipping a culled bucket when new voxels appear inside it", function()
+			-- The verdict describes the bucket's box, not its contents, so a new
+			-- voxel inside a provably-culled bucket is culled too.
+			local partA = createMockPart()
+			local partB = createMockPart()
+			cullThrottle._grid:insertToVoxel(Vector3.new(8, 0, 0), stubObjectData(partA))
+
+			local search = cullThrottle._search
+			search:seedSearchVolumes(roomyFrustumPlanes, 0, 0, 0, 16, 16, 16)
+			expect(cullThrottle._visibilityCache._bucketVerdicts[Vector3.new(2, 0, 0)]).toBeDefined()
+
+			local getCalls = countClassifyCalls()
+			cullThrottle._grid:insertToVoxel(Vector3.new(9, 0, 0), stubObjectData(partB))
+
+			local count = search:seedSearchVolumes(roomyFrustumPlanes, 0, 0, 0, 16, 16, 16)
+			expect(count).toBe(0)
+			expect(search._visibleVoxelCount).toBe(0)
+			expect(getCalls()).toBe(0)
+
+			partA:Destroy()
+			partB:Destroy()
+		end)
+
+		it("expires a far-culled bucket on render distance change", function()
+			-- Bucket (0, 2, 0) is straight ahead but past the short far plane, so
+			-- it's culled by the far plane with a clearance of about 1.5 voxels.
+			local part = createMockPart()
+			cullThrottle._grid:insertToVoxel(Vector3.new(1, 9, 1), stubObjectData(part))
+
+			local search = cullThrottle._search
+			search:seedSearchVolumes(shortFarFrustumPlanes, 0, 0, 0, 16, 16, 16)
+			local verdict = cullThrottle._visibilityCache._bucketVerdicts[Vector3.new(0, 2, 0)]
+			expect(verdict).toBeDefined()
+			expect(verdict.state).toBe(Frustum.BUCKET_CULLED)
+
+			local getCalls = countClassifyCalls()
+
+			-- A render distance change smaller than the clearance is survivable.
+			cullThrottle._motion._accumF = 1
+			search:seedSearchVolumes(shortFarFrustumPlanes, 0, 0, 0, 16, 16, 16)
+			expect(getCalls()).toBe(0)
+
+			-- One larger than the clearance could have brought the bucket into
+			-- range, so the proof expires.
+			cullThrottle._motion._accumF = 2
+			search:seedSearchVolumes(shortFarFrustumPlanes, 0, 0, 0, 16, 16, 16)
+			expect(getCalls()).toBe(1)
+
+			part:Destroy()
+		end)
+
+		it("expires a voxel proof when render distance change alone passes its expiry", function()
+			-- The voxel sits inside the frustum within a straddling bucket, so the
+			-- search stamps it a visible proof with a positive expiry. Voxel
+			-- proofs charge render distance change at full weight alongside
+			-- translation, so growing that accumulator alone must spend the
+			-- expiry the same way moving the camera would.
+			local part = createMockPart()
+			local voxelKey = Vector3.new(4, 11, 1)
+			cullThrottle._grid:insertToVoxel(voxelKey, stubObjectData(part))
+
+			patchFunction(CameraCache, "getPlanesAndBounds", function()
+				return roomyFrustumPlanes, Vector3.new(4, 8, 0), Vector3.new(7, 11, 3)
+			end)
+
+			cullThrottle._config.searchTimeBudget = 1
+			local search = cullThrottle._search
+			local voxelProofs = cullThrottle._visibilityCache._voxelProofs
+			search:run(os.clock())
+
+			local proof = voxelProofs[voxelKey]
+			expect(proof).toBeDefined()
+			expect(proof.X > 0).toBe(true)
+
+			local getBoxTests = countBoxTests()
+
+			-- A render distance change under the stored expiry trusts the proof,
+			-- so the voxel surfaces with no fresh frustum math.
+			cullThrottle._motion._accumF = proof.X * 0.5
+			search:clearVisibleVoxels()
+			search:run(os.clock())
+			expect(getBoxTests()).toBe(0)
+			expect(search._visibleVoxelCount).toBe(1)
+
+			-- One past the expiry, with zero translation and rotation, expires
+			-- the proof and forces a fresh test that re-proves the verdict.
+			cullThrottle._motion._accumF = proof.X + 0.01
+			search:clearVisibleVoxels()
+			search:run(os.clock())
+			expect(getBoxTests()).toBe(1)
+			expect(search._visibleVoxelCount).toBe(1)
+			expect(voxelProofs[voxelKey].X > proof.X).toBe(true)
+
+			part:Destroy()
+		end)
+
+		it("charges rotation against a culled-bucket verdict at its own arm", function()
+			-- Bucket (2, 0, 0) sits far to the camera's right, so it's culled by
+			-- a side plane and the verdict's rotation budget is its side expiry
+			-- over its arm.
+			local part = createMockPart()
+			cullThrottle._grid:insertToVoxel(Vector3.new(8, 0, 0), stubObjectData(part))
+
+			local search = cullThrottle._search
+			search:seedSearchVolumes(roomyFrustumPlanes, 0, 0, 0, 16, 16, 16)
+			local verdict = cullThrottle._visibilityCache._bucketVerdicts[Vector3.new(2, 0, 0)]
+			expect(verdict).toBeDefined()
+			expect(verdict.state).toBe(Frustum.BUCKET_CULLED)
+
+			local getCalls = countClassifyCalls()
+
+			-- Rotation under the budget keeps the bucket culled with no
+			-- frustum math.
+			local rotationBudget = verdict.sideExpiry / verdict.armFactor
+			cullThrottle._motion._accumR = rotationBudget * 0.99
+			expect(search:seedSearchVolumes(roomyFrustumPlanes, 0, 0, 0, 16, 16, 16)).toBe(0)
+			expect(getCalls()).toBe(0)
+
+			-- Rotation alone past the budget could swing the side plane back
+			-- onto the bucket, so the verdict expires and the box is
+			-- re-classified.
+			cullThrottle._motion._accumR = rotationBudget * 1.01
+			expect(search:seedSearchVolumes(roomyFrustumPlanes, 0, 0, 0, 16, 16, 16)).toBe(0)
+			expect(getCalls()).toBe(1)
+
+			part:Destroy()
+		end)
+
+		it("stamps bucket verdicts with arms that cover the bucket's corners", function()
+			-- A verdict is about the bucket's whole box, so its rotation debit must
+			-- cover every point of that box. The farthest corner sits a half
+			-- diagonal past the center, so an arm built from the center distance
+			-- alone under-charges rotation and can keep trusting a culled verdict
+			-- after the frustum has swept onto the bucket's corner.
+			local partA = createMockPart()
+			local partB = createMockPart()
+			-- Bucket (2, 0, 0) sits far to the camera's right, culled by a side
+			-- plane, while bucket (0, 10, 0) sits straight ahead, fully inside.
+			cullThrottle._grid:insertToVoxel(Vector3.new(8, 0, 0), stubObjectData(partA))
+			cullThrottle._grid:insertToVoxel(Vector3.new(1, 41, 1), stubObjectData(partB))
+
+			local search = cullThrottle._search
+			search:seedSearchVolumes(roomyFrustumPlanes, 0, 0, 0, 16, 48, 16)
+
+			-- A bucket spans four voxels per axis, so this is the covering half diagonal.
+			local bucketHalfDiagonal = 2 * math.sqrt(3)
+			local bucketVerdicts = cullThrottle._visibilityCache._bucketVerdicts
+
+			-- The seed ran with zero accumulated motion, so each expiry reads back
+			-- exactly the shaved clearance it stored, and the expected arm (the
+			-- center distance plus the covering half diagonal plus the governing
+			-- clearance) assembles from observable fields alone.
+			local culledVerdict = bucketVerdicts[Vector3.new(2, 0, 0)]
+			expect(culledVerdict.state).toBe(Frustum.BUCKET_CULLED)
+			expect(culledVerdict.armFactor).toBeCloseTo(
+				Vector3.new(10, 2, 2).Magnitude + bucketHalfDiagonal + culledVerdict.sideExpiry,
+				3
+			)
+
+			local insideVerdict = bucketVerdicts[Vector3.new(0, 10, 0)]
+			expect(insideVerdict.state).toBe(Frustum.BUCKET_INSIDE)
+			expect(insideVerdict.armFactor).toBeCloseTo(
+				Vector3.new(2, 42, 2).Magnitude
+					+ bucketHalfDiagonal
+					+ math.min(insideVerdict.sideExpiry, insideVerdict.farExpiry),
+				3
+			)
+
+			partA:Destroy()
+			partB:Destroy()
+		end)
+
+		it("trusts a bucket verdict at exactly its clearance boundary", function()
+			-- The verdict check is inclusive, so motion landing exactly on the
+			-- stored expiry still trusts the verdict and only motion past it
+			-- expires the proof. A perfectly still camera riding a zero-clearance
+			-- verdict takes this same comparison.
+			local part = createMockPart()
+			cullThrottle._grid:insertToVoxel(Vector3.new(8, 0, 0), stubObjectData(part))
+
+			local search = cullThrottle._search
+			search:seedSearchVolumes(roomyFrustumPlanes, 0, 0, 0, 16, 16, 16)
+			local verdict = cullThrottle._visibilityCache._bucketVerdicts[Vector3.new(2, 0, 0)]
+			expect(verdict.state).toBe(Frustum.BUCKET_CULLED)
+
+			local getCalls = countClassifyCalls()
+
+			-- Exactly at the boundary the verdict still holds.
+			cullThrottle._motion._accumT = verdict.sideExpiry
+			search:seedSearchVolumes(roomyFrustumPlanes, 0, 0, 0, 16, 16, 16)
+			expect(getCalls()).toBe(0)
+
+			-- The smallest step past it forces a re-classification.
+			cullThrottle._motion._accumT = verdict.sideExpiry + 1e-4
+			search:seedSearchVolumes(roomyFrustumPlanes, 0, 0, 0, 16, 16, 16)
+			expect(getCalls()).toBe(1)
+
+			part:Destroy()
+		end)
+
+		it("drops a stale cached verdict when its bucket reclassifies as straddling", function()
+			-- The first coarse bucket's box straddles the fixture frustum. Stage
+			-- an expired culled verdict on it, so the seed has to re-classify,
+			-- find it straddling, and delete the record outright, since a
+			-- straddling bucket stores no verdict at all.
+			local part = createMockPart()
+			cullThrottle._grid:insertToVoxel(Vector3.new(1, 1, 1), stubObjectData(part))
+
+			local bucketVerdicts = cullThrottle._visibilityCache._bucketVerdicts
+			bucketVerdicts[Vector3.new(0, 0, 0)] = {
+				state = Frustum.BUCKET_CULLED,
+				armFactor = 0,
+				sideExpiry = 0,
+				farExpiry = 0,
+			}
+			cullThrottle._motion._accumT = 1
+
+			local search = cullThrottle._search
+			local count = search:seedSearchVolumes(straddlingFrustumPlanes, 0, 0, 0, 4, 4, 4)
+
+			-- The bucket's key went to the subdivision search and the stale
+			-- record is gone. A surviving record would keep resolving the bucket
+			-- from cached state it no longer earns.
+			expect(count).toBe(1)
+			expect(bucketVerdicts[Vector3.new(0, 0, 0)]).toBeNil()
+
+			part:Destroy()
+		end)
+
+		it("resolves a fully-inside bucket by appending its live key list with no volumes", function()
+			local partA = createMockPart()
+			local partB = createMockPart()
+			local keyA = Vector3.new(1, 41, 1)
+			cullThrottle._grid:insertToVoxel(keyA, stubObjectData(partA))
+
+			local search = cullThrottle._search
+			local count = search:seedSearchVolumes(roomyFrustumPlanes, 0, 40, 0, 4, 44, 4)
+			expect(count).toBe(0)
+			expect(search._volumesToCheckSize).toBe(0)
+			expect(search._visibleVoxelCount).toBe(1)
+			expect(search._pendingVoxelKeys[1]).toBe(keyA)
+
+			local verdict = cullThrottle._visibilityCache._bucketVerdicts[Vector3.new(0, 10, 0)]
+			expect(verdict).toBeDefined()
+			expect(verdict.state).toBe(Frustum.BUCKET_INSIDE)
+
+			-- A voxel added after the proof is picked up on the next pass without
+			-- any new frustum work, since the verdict covers the bucket's whole box.
+			local getCalls = countClassifyCalls()
+			local keyB = Vector3.new(2, 42, 2)
+			cullThrottle._grid:insertToVoxel(keyB, stubObjectData(partB))
+			search:clearVisibleVoxels()
+
+			search:seedSearchVolumes(roomyFrustumPlanes, 0, 40, 0, 4, 44, 4)
+			expect(search._visibleVoxelCount).toBe(2)
+			expect(getCalls()).toBe(0)
+
+			partA:Destroy()
+			partB:Destroy()
+		end)
+
+		it("trusts an inside-bucket verdict within its clearance and expires past it", function()
+			local part = createMockPart()
+			cullThrottle._grid:insertToVoxel(Vector3.new(1, 41, 1), stubObjectData(part))
+
+			local search = cullThrottle._search
+			search:seedSearchVolumes(roomyFrustumPlanes, 0, 40, 0, 4, 44, 4)
+			local verdict = cullThrottle._visibilityCache._bucketVerdicts[Vector3.new(0, 10, 0)]
+			expect(verdict).toBeDefined()
+			expect(verdict.state).toBe(Frustum.BUCKET_INSIDE)
+
+			local getCalls = countClassifyCalls()
+
+			-- Translation under the side clearance (about 19 voxels for this
+			-- bucket) trusts the verdict, so its keys are bulk-appended with no
+			-- frustum math at all.
+			cullThrottle._motion._accumT = 18
+			search:clearVisibleVoxels()
+			search:seedSearchVolumes(roomyFrustumPlanes, 0, 40, 0, 4, 44, 4)
+			expect(getCalls()).toBe(0)
+			expect(search._visibleVoxelCount).toBe(1)
+
+			-- Translation past the clearance could have swept a side plane onto
+			-- the bucket, so the verdict expires and the box is re-classified.
+			cullThrottle._motion._accumT = 20
+			search:clearVisibleVoxels()
+			search:seedSearchVolumes(roomyFrustumPlanes, 0, 40, 0, 4, 44, 4)
+			expect(getCalls()).toBe(1)
+			expect(search._visibleVoxelCount).toBe(1)
+
+			part:Destroy()
+		end)
+
+		it("expires an inside-bucket verdict when render distance change spends its far clearance", function()
+			local part = createMockPart()
+			cullThrottle._grid:insertToVoxel(Vector3.new(1, 41, 1), stubObjectData(part))
+
+			local search = cullThrottle._search
+			search:seedSearchVolumes(roomyFrustumPlanes, 0, 40, 0, 4, 44, 4)
+			expect(cullThrottle._visibilityCache._bucketVerdicts[Vector3.new(0, 10, 0)].state).toBe(
+				Frustum.BUCKET_INSIDE
+			)
+
+			local getCalls = countClassifyCalls()
+
+			-- The far plane sits 100 voxels out, leaving this bucket about 54
+			-- voxels of far clearance, so a smaller render distance change keeps
+			-- the verdict.
+			cullThrottle._motion._accumF = 50
+			search:clearVisibleVoxels()
+			search:seedSearchVolumes(roomyFrustumPlanes, 0, 40, 0, 4, 44, 4)
+			expect(getCalls()).toBe(0)
+			expect(search._visibleVoxelCount).toBe(1)
+
+			-- A larger one could pull the far plane onto the bucket, so the
+			-- verdict expires.
+			cullThrottle._motion._accumF = 56
+			search:seedSearchVolumes(roomyFrustumPlanes, 0, 40, 0, 4, 44, 4)
+			expect(getCalls()).toBe(1)
+
+			part:Destroy()
+		end)
+
+		it("charges rotation against an inside-bucket verdict at its own arm", function()
+			local part = createMockPart()
+			cullThrottle._grid:insertToVoxel(Vector3.new(1, 41, 1), stubObjectData(part))
+
+			local search = cullThrottle._search
+			search:seedSearchVolumes(roomyFrustumPlanes, 0, 40, 0, 4, 44, 4)
+			local verdict = cullThrottle._visibilityCache._bucketVerdicts[Vector3.new(0, 10, 0)]
+			expect(verdict.state).toBe(Frustum.BUCKET_INSIDE)
+			-- The arm covers the bucket from the camera (about 42 voxels out)
+			-- plus the slack translation may consume while the verdict lives.
+			expect(verdict.armFactor).toBeGreaterThan(40)
+
+			local getCalls = countClassifyCalls()
+
+			-- The rotation debit is the angle times the arm, so the budget this
+			-- verdict can absorb is its side expiry over its arm.
+			local rotationBudget = verdict.sideExpiry / verdict.armFactor
+			cullThrottle._motion._accumR = rotationBudget * 0.99
+			search:clearVisibleVoxels()
+			search:seedSearchVolumes(roomyFrustumPlanes, 0, 40, 0, 4, 44, 4)
+			expect(getCalls()).toBe(0)
+			expect(search._visibleVoxelCount).toBe(1)
+
+			cullThrottle._motion._accumR = rotationBudget * 1.01
+			search:seedSearchVolumes(roomyFrustumPlanes, 0, 40, 0, 4, 44, 4)
+			expect(getCalls()).toBe(1)
+
+			part:Destroy()
+		end)
+
+		it("trusts a zero-slack stamp while the camera is still, and re-tests once motion passes it", function()
+			local voxelKey = Vector3.new(0, 0, 0)
+			local search = cullThrottle._search
+			local getBoxTests = countBoxTests()
+
+			-- The cell touches the far plane exactly (its inside slack there is
+			-- zero), so its proof stores exactly zero slack even though the side
+			-- planes it straddles have positive exit clearance.
+			search:searchSingleVoxel(0, 0, straddlingFrustumPlanes, 0b11111, math.huge, 0, 0, 0, voxelKey, 0)
+			expect(getBoxTests()).toBe(1)
+			expect(search._visibleVoxelCount).toBe(1)
+			local proof = cullThrottle._visibilityCache._voxelProofs[voxelKey]
+			expect(proof.X).toBe(0)
+
+			-- With the same accumulators (no camera motion), even a zero-slack proof holds.
+			search:searchSingleVoxel(0, 0, straddlingFrustumPlanes, 0b11111, math.huge, 0, 0, 0, voxelKey, 0)
+			expect(getBoxTests()).toBe(1)
+			expect(search._visibleVoxelCount).toBe(2)
+
+			-- The cell sits flush against the far plane, so any motion at all is
+			-- past a zero-slack stamp and forces a re-test.
+			search:searchSingleVoxel(0.001, 0, straddlingFrustumPlanes, 0b11111, math.huge, 0, 0, 0, voxelKey, 0)
+			expect(getBoxTests()).toBe(2)
+			expect(search._visibleVoxelCount).toBe(3)
+		end)
+
+		it("trusts a culled proof until motion could bring the voxel back into view", function()
+			-- This cell sits far outside the frustum's right side plane (and only
+			-- that plane), so the first check stamps a culled proof carrying the
+			-- rejection margin, and further checks are free until the culled
+			-- motion metric passes it.
+			local voxelKey = Vector3.new(8, 0, 0)
+			local search = cullThrottle._search
+			local getBoxTests = countBoxTests()
+
+			search:searchSingleVoxel(0, 0, straddlingFrustumPlanes, 0b11111, math.huge, 8, 0, 0, voxelKey, 0)
+			expect(getBoxTests()).toBe(1)
+			expect(search._visibleVoxelCount).toBe(0)
+			local proof = cullThrottle._visibilityCache._voxelProofs[voxelKey]
+			expect(proof).toBeDefined()
+			-- A culled proof carries no visible expiry.
+			expect(proof.X).toBe(-1)
+			-- The stored margin must stay under the cell's true clearance to the
+			-- rejecting plane, or motion could bring the cell back into view
+			-- while the cache still calls it culled. The sphere fast
+			-- path understates the true clearance by at most the circumscribing
+			-- radius plus the safety shave, so the margin also can't collapse to
+			-- a uselessly small window.
+			local maxMargin = maxSoundCulledMargin(straddlingFrustumPlanes, 8, 0, 0, 9, 1, 1)
+			expect(proof.Y < maxMargin).toBe(true)
+			expect(proof.Y > maxMargin - 1).toBe(true)
+
+			-- It's still proven culled at the same accumulators, so there's no test
+			-- and it isn't visible.
+			search:searchSingleVoxel(0, 0, straddlingFrustumPlanes, 0b11111, math.huge, 8, 0, 0, voxelKey, 0)
+			expect(getBoxTests()).toBe(1)
+			expect(search._visibleVoxelCount).toBe(0)
+
+			-- Once motion passes the stored expiry, the cell is re-tested.
+			search:searchSingleVoxel(
+				proof.Y + 0.001,
+				0,
+				straddlingFrustumPlanes,
+				0b11111,
+				math.huge,
+				8,
+				0,
+				0,
+				voxelKey,
+				0
+			)
+			expect(getBoxTests()).toBe(2)
+		end)
+
+		it("bounds a proof by the slack inherited through masked-out planes", function()
+			-- With every plane masked off, the local test proves nothing, so the
+			-- proof's slack can only come from the ancestor's clearance.
+			local voxelKey = Vector3.new(0, 40, 0)
+			local search = cullThrottle._search
+			local voxelProofs = cullThrottle._visibilityCache._voxelProofs
+			search:searchSingleVoxel(5, 0, roomyFrustumPlanes, 0, 0.5, 0, 40, 0, voxelKey, 0)
+
+			-- The stored slack is the inherited clearance shaved by the safety
+			-- margin, so it must stay strictly under the geometry it came from
+			-- while remaining a usable positive window.
+			local smallSlack = voxelProofs[voxelKey].X - 5
+			expect(smallSlack).toBeGreaterThan(0)
+			expect(smallSlack < 0.5).toBe(true)
+
+			-- The arm covers the cell (its center distance plus the covering
+			-- half diagonal) plus at most the slack translation may consume
+			-- while the proof lives.
+			local armBase = Vector3.new(0.5, 40.5, 0.5).Magnitude + math.sqrt(3) / 2
+			expect(voxelProofs[voxelKey].Z >= armBase).toBe(true)
+			expect(voxelProofs[voxelKey].Z < armBase + 0.5).toBe(true)
+
+			-- A larger inherited clearance may store more slack, never less, and
+			-- never more than its own geometry.
+			voxelProofs[voxelKey] = nil
+			search:searchSingleVoxel(5, 0, roomyFrustumPlanes, 0, 2, 0, 40, 0, voxelKey, 0)
+			local widerSlack = voxelProofs[voxelKey].X - 5
+			expect(widerSlack >= smallSlack).toBe(true)
+			expect(widerSlack < 2).toBe(true)
+
+			-- Past the cap, a huge clearance stores the same bounded slack as a
+			-- vastly larger one, so no single proof can grow arbitrarily stale.
+			voxelProofs[voxelKey] = nil
+			search:searchSingleVoxel(5, 0, roomyFrustumPlanes, 0, 100, 0, 40, 0, voxelKey, 0)
+			local cappedSlack = voxelProofs[voxelKey].X - 5
+			voxelProofs[voxelKey] = nil
+			search:searchSingleVoxel(5, 0, roomyFrustumPlanes, 0, 1000, 0, 40, 0, voxelKey, 0)
+			local hugeSlack = voxelProofs[voxelKey].X - 5
+			expect(cappedSlack >= widerSlack).toBe(true)
+			expect(cappedSlack < 100).toBe(true)
+			expect(hugeSlack).toBeCloseTo(cappedSlack, 5)
+			-- The cap is documented spec, so the stored slack at the cap is
+			-- exactly the cap shaved by the safety margin, and retuning either
+			-- constant without the other shows up here.
+			expect(cappedSlack).toBeCloseTo(VisibilitySearch.SLACK_CAP - VisibilitySearch.SLACK_SAFETY, 5)
+		end)
+
+		it("gives a straddling voxel its measured exit clearance as slack", function()
+			-- Voxel (14, 20, 0) pokes through the roomy frustum's right side
+			-- plane, so it's visible, and stays visible until motion
+			-- could sweep that plane fully past it (about 0.57 voxels here).
+			local voxelKey = Vector3.new(14, 20, 0)
+			local search = cullThrottle._search
+			local getBoxTests = countBoxTests()
+
+			search:searchSingleVoxel(0, 0, roomyFrustumPlanes, 0b11111, math.huge, 14, 20, 0, voxelKey, 0)
+			expect(getBoxTests()).toBe(1)
+			expect(search._visibleVoxelCount).toBe(1)
+
+			local proof = cullThrottle._visibilityCache._voxelProofs[voxelKey]
+			expect(proof.X > 0.4).toBe(true)
+			expect(proof.X < 0.7).toBe(true)
+
+			-- Motion under the exit clearance trusts the proof, with no frustum math.
+			search:searchSingleVoxel(0.3, 0, roomyFrustumPlanes, 0b11111, math.huge, 14, 20, 0, voxelKey, 0)
+			expect(getBoxTests()).toBe(1)
+			expect(search._visibleVoxelCount).toBe(2)
+
+			-- Motion past it forces a re-proof.
+			search:searchSingleVoxel(proof.X + 0.001, 0, roomyFrustumPlanes, 0b11111, math.huge, 14, 20, 0, voxelKey, 0)
+			expect(getBoxTests()).toBe(2)
+		end)
+
+		it("charges rotation against each proof at its own arm", function()
+			local voxelKey = Vector3.new(0, 40, 0)
+			local search = cullThrottle._search
+			local getBoxTests = countBoxTests()
+
+			search:searchSingleVoxel(0, 0, roomyFrustumPlanes, 0b11111, math.huge, 0, 40, 0, voxelKey, 0)
+			expect(getBoxTests()).toBe(1)
+
+			-- The cell sits about 40 voxels out, so its rotation budget is its
+			-- own slack over roughly that arm, not over a global worst case.
+			local proof = cullThrottle._visibilityCache._voxelProofs[voxelKey]
+			local rotationBudget = proof.X / proof.Z
+			expect(rotationBudget > 0.1).toBe(true)
+
+			-- Bound the stored slack by the cell's true clearance to the nearest
+			-- plane first, so the arm identity below can't be satisfied by a bug
+			-- that inflates the slack on both sides at once.
+			local maxSlack = trueInsideClearance(roomyFrustumPlanes, 0, 40, 0, 1, 41, 1)
+			expect(proof.X > 0).toBe(true)
+			expect(proof.X < maxSlack).toBe(true)
+
+			-- The stored arm is this cell's own geometry, its center distance
+			-- plus the covering half diagonal plus the stored slack, so a global
+			-- or hardcoded arm would show up here.
+			expect(proof.Z).toBeCloseTo(Vector3.new(0.5, 40.5, 0.5).Magnitude + math.sqrt(3) / 2 + proof.X, 3)
+
+			search:searchSingleVoxel(
+				0,
+				rotationBudget * 0.99,
+				roomyFrustumPlanes,
+				0b11111,
+				math.huge,
+				0,
+				40,
+				0,
+				voxelKey,
+				0
+			)
+			expect(getBoxTests()).toBe(1)
+
+			search:searchSingleVoxel(
+				0,
+				rotationBudget * 1.01,
+				roomyFrustumPlanes,
+				0b11111,
+				math.huge,
+				0,
+				40,
+				0,
+				voxelKey,
+				0
+			)
+			expect(getBoxTests()).toBe(2)
+		end)
+
+		it("re-tests scattered expired voxels without re-subdividing the volume", function()
+			-- Two occupied voxels share a volume. One holds a valid proof and the
+			-- other holds none. The walk should keep the proven one, test just the
+			-- unproven cell, and never push child volumes. The math.huge visible
+			-- expiry can never lapse.
+			local provenKey = Vector3.new(1, 41, 1)
+			local unprovenKey = Vector3.new(2, 41, 2)
+			local search = cullThrottle._search
+			local voxelProofs = cullThrottle._visibilityCache._voxelProofs
+			search._searchVoxelKeys[1] = provenKey
+			search._searchVoxelKeys[2] = unprovenKey
+			voxelProofs[provenKey] = visibleVoxelProof(math.huge, 0)
+
+			local getBoxTests = countBoxTests()
+
+			search:searchVolume(0, 0, roomyFrustumPlanes, 0, 40, 0, 4, 44, 4, 1, 2, 0b11111, math.huge, 0)
+
+			-- There's one cell test for the unproven voxel, with no volume box test
+			-- and no splits.
+			expect(getBoxTests()).toBe(1)
+			expect(search._volumesToCheckSize).toBe(0)
+			expect(search._visibleVoxelCount).toBe(2)
+			expect(voxelProofs[unprovenKey]).toBeDefined()
+		end)
+
+		it("resolves the same visible set from cached proofs after small camera motion", function()
+			local camera = workspace.CurrentCamera
+			local parts = {}
+			for i = 1, 5 do
+				local part = createMockPart((camera.CFrame * CFrame.new(0, 0, -100 * i)).Position)
+				cullThrottle:AddObject(part)
+				table.insert(parts, part)
+			end
+
+			cullThrottle._config.searchTimeBudget = 1
+			cullThrottle._config.ingestTimeBudget = 1
+
+			local search = cullThrottle._search
+			cullThrottle:_findVisibleObjects(os.clock())
+
+			local firstSet = {}
+			local firstCount = 0
+			for i = 1, search._visibleVoxelCount do
+				firstSet[search._pendingVoxelKeys[i]] = true
+				firstCount += 1
+			end
+			expect(firstCount).toBeGreaterThan(0)
+
+			-- Drift the camera slightly. Every proof the first pass stamped must
+			-- either survive this much motion or re-prove to the same verdict,
+			-- so the visible set cannot change while the scene and the frustum
+			-- stay put. A proof stamped with swapped or inflated components
+			-- produces a correct first frame and a wrong second one.
+			cullThrottle._motion._accumT = 0.05
+
+			cullThrottle:_findVisibleObjects(os.clock())
+
+			local secondCount = 0
+			for i = 1, search._visibleVoxelCount do
+				expect(firstSet[search._pendingVoxelKeys[i]]).toBe(true)
+				secondCount += 1
+			end
+			expect(secondCount).toBe(firstCount)
+
+			for _, part in parts do
+				part:Destroy()
+			end
+		end)
+
+		it("keeps proofs with enough clearance across a small field of view change", function()
+			local camera = workspace.CurrentCamera
+			local parts = {}
+			for i = 1, 5 do
+				local part = createMockPart((camera.CFrame * CFrame.new(0, 0, -100 * i)).Position)
+				cullThrottle:AddObject(part)
+				table.insert(parts, part)
+			end
+
+			cullThrottle._config.searchTimeBudget = 1
+			cullThrottle._config.ingestTimeBudget = 1
+
+			local search = cullThrottle._search
+			local getBoxTests = countBoxTests()
+			cullThrottle:_findVisibleObjects(os.clock())
+			local coldBoxTests = getBoxTests()
+
+			local firstSet = {}
+			local firstCount = 0
+			for i = 1, search._visibleVoxelCount do
+				firstSet[search._pendingVoxelKeys[i]] = true
+				firstCount += 1
+			end
+			expect(firstCount).toBeGreaterThan(0)
+
+			-- Nudge the field of view a couple of degrees wider. The side planes
+			-- only swing by the half-angle deltas, so proofs minted with more
+			-- clearance than that motion must survive, and the warm pass must
+			-- trust them instead of re-testing every box from scratch. We refresh
+			-- the camera cache synchronously, the same work the deferred projection
+			-- signal would do, rather than yielding a frame for it. Yielding lets
+			-- the live camera drift, and that drift charges extra rotation onto the
+			-- motion accumulator that expires the proofs and makes the box-test
+			-- count flaky.
+			camera.FieldOfView += 2
+			CameraCache.fovChanged()
+
+			cullThrottle:_findVisibleObjects(os.clock())
+			local warmBoxTests = getBoxTests() - coldBoxTests
+
+			-- Widening the frustum cannot cull anything that was visible, and the
+			-- objects sit dead ahead, so the visible set must come back unchanged.
+			local secondCount = 0
+			for i = 1, search._visibleVoxelCount do
+				expect(firstSet[search._pendingVoxelKeys[i]]).toBe(true)
+				secondCount += 1
+			end
+			expect(secondCount).toBe(firstCount)
+			expect(warmBoxTests).toBeLessThan(coldBoxTests)
+
+			for _, part in parts do
+				part:Destroy()
+			end
+		end)
+
+		it("keeps worst-case float rounding under the slack shave at the flush limits", function()
+			-- Proofs pack into 32-bit floats, so a trust comparison can be off
+			-- by about 1.2e-7 of the compared magnitude (docs/MATH.md section
+			-- 10). The odometers flush before translation plus render distance
+			-- change passes its limit or rotation passes its limit, so the
+			-- compared magnitude stays under T + R * a for arms out to 1000
+			-- voxels, and that worst case must stay under the shave or a
+			-- rounded proof could outlive its verdict. Retuning the shave or
+			-- either flush limit without the others breaks the inequality.
+			local roundingRate = 1.2e-7
+			local armBound = 1000
+			local comparedMagnitude = CameraMotion.ACCUM_TRANSLATION_FLUSH_LIMIT
+				+ CameraMotion.ACCUM_ROTATION_FLUSH_LIMIT * armBound
+			expect(roundingRate * comparedMagnitude < VisibilitySearch.SLACK_SAFETY).toBe(true)
+		end)
+	end)
+
+	describe("Whole-frame replay", function()
+		local savedCameraCFrame
+
+		beforeEach(function()
+			savedCameraCFrame = workspace.CurrentCamera.CFrame
+			-- A canonical world-aligned pose makes the staged scenes below
+			-- deterministic. The camera cache refresh is called synchronously
+			-- rather than waiting on the deferred change signal.
+			workspace.CurrentCamera.CFrame = CFrame.new(Vector3.new(50, 50, 50), Vector3.new(50, 50, -1000))
+			CameraCache.cframeChanged()
+			-- A generous budget keeps every anchor pass complete, so replay
+			-- eligibility is decided by the watched inputs alone.
+			cullThrottle._config.searchTimeBudget = 1
+		end)
+
+		afterEach(function()
+			workspace.CurrentCamera.CFrame = savedCameraCFrame
+			task.wait()
+		end)
+
+		--[[
+			Stages a handful of parts down the view at increasing depth and
+			returns them for cleanup.
+		]]
+		local function stageViewParts(): { Part }
+			local camera = workspace.CurrentCamera
+			local parts = {}
+			for i = 1, 5 do
+				local part = createMockPart((camera.CFrame * CFrame.new(0, 0, -100 * i)).Position)
+				cullThrottle:AddObject(part)
+				table.insert(parts, part)
+			end
+			return parts
+		end
+
+		--[[
+			Destroys the staged parts once a test has captured everything it
+			asserts on.
+		]]
+		local function destroyParts(parts: { Part })
+			for _, part in parts do
+				part:Destroy()
+			end
+		end
+
+		it("replays the last pass and reproduces its output while every input holds still", function()
+			local parts = stageViewParts()
+			local search = cullThrottle._search
+
+			local getSeeds = countSeedPasses()
+			cullThrottle:_findVisibleObjects(os.clock())
+			local fullCount = search._visibleVoxelCount
+			local fullKeys = {}
+			for i = 1, fullCount do
+				fullKeys[i] = search._pendingVoxelKeys[i]
+			end
+
+			-- Nothing the pass reads has changed, so the next frame restores
+			-- the same output without seeding a pass.
+			cullThrottle:_findVisibleObjects(os.clock())
+			local seeds = getSeeds()
+			local replayCount = search._visibleVoxelCount
+			local sameKeys = replayCount == fullCount
+			if sameKeys then
+				for i = 1, replayCount do
+					if search._pendingVoxelKeys[i] ~= fullKeys[i] then
+						sameKeys = false
+						break
+					end
+				end
+			end
+			destroyParts(parts)
+			expect(fullCount).toBeGreaterThan(0)
+			expect(seeds).toBe(1)
+			expect(replayCount).toBe(fullCount)
+			expect(sameKeys).toBe(true)
+		end)
+
+		it("re-searches after any translation and re-arms on the next still frame", function()
+			local parts = stageViewParts()
+			local camera = workspace.CurrentCamera
+
+			local getSeeds = countSeedPasses()
+			cullThrottle:_findVisibleObjects(os.clock())
+			cullThrottle:_findVisibleObjects(os.clock())
+
+			-- One stud is a hundredth of a voxel, far under any proof's
+			-- clearance, but any charged translation at all re-runs the pass.
+			camera.CFrame += Vector3.new(1, 0, 0)
+			CameraCache.cframeChanged()
+			cullThrottle:_findVisibleObjects(os.clock())
+
+			-- The fresh pass re-anchored, so the next still frame replays again.
+			cullThrottle:_findVisibleObjects(os.clock())
+
+			local seeds = getSeeds()
+			destroyParts(parts)
+			expect(seeds).toBe(2)
+		end)
+
+		it("re-searches after a pure rotation", function()
+			local parts = stageViewParts()
+			local camera = workspace.CurrentCamera
+
+			local getSeeds = countSeedPasses()
+			cullThrottle:_findVisibleObjects(os.clock())
+			cullThrottle:_findVisibleObjects(os.clock())
+
+			camera.CFrame = camera.CFrame * CFrame.Angles(0, math.rad(1), 0)
+			CameraCache.cframeChanged()
+			cullThrottle:_findVisibleObjects(os.clock())
+
+			local seeds = getSeeds()
+			destroyParts(parts)
+			expect(seeds).toBe(2)
+		end)
+
+		it("re-searches after a projection change", function()
+			local parts = stageViewParts()
+			local camera = workspace.CurrentCamera
+
+			local getSeeds = countSeedPasses()
+			cullThrottle:_findVisibleObjects(os.clock())
+			cullThrottle:_findVisibleObjects(os.clock())
+
+			-- The projection change charges the rotation accumulator, which the
+			-- gate watches. The cache refresh is synchronous, and the suite's
+			-- teardown restores the field of view.
+			camera.FieldOfView += 10
+			CameraCache.fovChanged()
+			cullThrottle:_findVisibleObjects(os.clock())
+
+			local seeds = getSeeds()
+			destroyParts(parts)
+			expect(seeds).toBe(2)
+		end)
+
+		it("re-searches after a render distance change", function()
+			local parts = stageViewParts()
+			cullThrottle:SetRenderDistanceRange(NumberRange.new(400, 400))
+
+			local getSeeds = countSeedPasses()
+			cullThrottle:_findVisibleObjects(os.clock())
+			cullThrottle:_findVisibleObjects(os.clock())
+
+			-- The far plane move charges the render distance accumulator.
+			cullThrottle:SetRenderDistanceRange(NumberRange.new(300, 300))
+			cullThrottle:_findVisibleObjects(os.clock())
+
+			local seeds = getSeeds()
+			destroyParts(parts)
+			expect(seeds).toBe(2)
+		end)
+
+		it("re-searches the frame an object claims a fresh voxel and surfaces it immediately", function()
+			local parts = stageViewParts()
+			local camera = workspace.CurrentCamera
+			local search = cullThrottle._search
+
+			local getSeeds = countSeedPasses()
+			cullThrottle:_findVisibleObjects(os.clock())
+			cullThrottle:_findVisibleObjects(os.clock())
+
+			-- The newcomer lands in a voxel of its own, which changes the
+			-- occupied key set the seeding scans, so this frame must re-search
+			-- and surface the fresh voxel rather than replaying a set that
+			-- predates it.
+			local newcomer = createMockPart((camera.CFrame * CFrame.new(120, 0, -250)).Position)
+			cullThrottle:AddObject(newcomer)
+			local newcomerKey = next(cullThrottle._lifecycle._objects[newcomer].voxelKeys)
+			cullThrottle:_findVisibleObjects(os.clock())
+
+			local seeds = getSeeds()
+			local found = false
+			for i = 1, search._visibleVoxelCount do
+				if search._pendingVoxelKeys[i] == newcomerKey then
+					found = true
+					break
+				end
+			end
+			newcomer:Destroy()
+			destroyParts(parts)
+			expect(seeds).toBe(2)
+			expect(found).toBe(true)
+		end)
+
+		it("keeps replaying when an object joins an already occupied voxel, and still ingests it", function()
+			local camera = workspace.CurrentCamera
+			local anchorPart = createMockPart((camera.CFrame * CFrame.new(0, 0, -250)).Position)
+			cullThrottle:AddObject(anchorPart)
+
+			local getSeeds = countSeedPasses()
+			cullThrottle:_findVisibleObjects(os.clock())
+
+			-- The newcomer shares the anchor part's voxel, so the occupied key
+			-- set is unchanged and the frame replays, while the ingest reads
+			-- the voxel's live contents and stages the newcomer anyway.
+			local newcomer = createMockPart((camera.CFrame * CFrame.new(2, 0, -250)).Position)
+			cullThrottle:AddObject(newcomer)
+			cullThrottle:_findVisibleObjects(os.clock())
+
+			local seeds = getSeeds()
+			local ingest = cullThrottle._ingest
+			local staged = false
+			for i = 1, ingest._stagedSize do
+				if ingest._stagedObjects[i].object == newcomer then
+					staged = true
+					break
+				end
+			end
+			newcomer:Destroy()
+			anchorPart:Destroy()
+			expect(seeds).toBe(1)
+			expect(staged).toBe(true)
+		end)
+
+		it("replays across umbra reuse frames and re-searches when an occluder mutates", function()
+			cullThrottle:SetRenderDistanceRange(NumberRange.new(600, 600))
+			local camera = workspace.CurrentCamera
+			local wall = createMockPart((camera.CFrame * CFrame.new(0, 0, -350)).Position, Vector3.new(400, 400, 40))
+			cullThrottle._occlusion:_registerOccluder(wall)
+			local hidden = createMockPart((camera.CFrame * CFrame.new(0, 0, -500)).Position)
+			cullThrottle:AddObject(hidden)
+
+			local getSeeds = countSeedPasses()
+			cullThrottle:_findVisibleObjects(os.clock())
+			local occludedFull = cullThrottle._perfMetrics._occludedVoxelCount
+
+			-- The still frame reuses the built umbrae without bumping the build
+			-- count, so the search replays and restores the occluded tally.
+			cullThrottle:_findVisibleObjects(os.clock())
+			local seedsAfterStill = getSeeds()
+			local occludedReplay = cullThrottle._perfMetrics._occludedVoxelCount
+
+			-- An occluder mutation moves the generation, which both rebuilds
+			-- the umbrae and re-runs the search.
+			cullThrottle._occlusion:_bumpGeneration()
+			cullThrottle:_findVisibleObjects(os.clock())
+			local seedsAfterMutation = getSeeds()
+
+			wall:Destroy()
+			hidden:Destroy()
+			expect(occludedFull).toBeGreaterThan(0)
+			expect(seedsAfterStill).toBe(1)
+			expect(occludedReplay).toBe(occludedFull)
+			expect(seedsAfterMutation).toBe(2)
+		end)
+
+		it("re-searches when the occluder cap changes even with no umbrae built", function()
+			cullThrottle:SetRenderDistanceRange(NumberRange.new(600, 600))
+			local camera = workspace.CurrentCamera
+			local wall = createMockPart((camera.CFrame * CFrame.new(0, 0, -350)).Position, Vector3.new(400, 400, 40))
+			cullThrottle._occlusion:_registerOccluder(wall)
+			local hidden = createMockPart((camera.CFrame * CFrame.new(0, 0, -500)).Position)
+			cullThrottle:AddObject(hidden)
+
+			-- The first frame builds the umbra and stamps hidden proofs behind
+			-- the wall. Turning around leaves the wall outside the frustum, so
+			-- the umbrae tear down while those proofs stay valid, and the next
+			-- still frame arms the replay with occlusion still enabled.
+			cullThrottle:_findVisibleObjects(os.clock())
+			camera.CFrame = CFrame.new(Vector3.new(50, 50, 50), Vector3.new(50, 50, 1000))
+			CameraCache.cframeChanged()
+			cullThrottle:_findVisibleObjects(os.clock())
+
+			local getSeeds = countSeedPasses()
+			cullThrottle:_findVisibleObjects(os.clock())
+			expect(getSeeds()).toBe(0)
+
+			-- Dropping the cap to zero stops the seeding from honoring cached
+			-- occlusion proofs, which can change the output with no umbrae
+			-- built and no generation moved, so the gate watches the cap by
+			-- value.
+			cullThrottle:SetMaxOccluders(0)
+			cullThrottle:_findVisibleObjects(os.clock())
+
+			local seeds = getSeeds()
+			wall:Destroy()
+			hidden:Destroy()
+			expect(seeds).toBe(1)
+		end)
+
+		it("re-searches when the umbra build count moves alone", function()
+			local parts = stageViewParts()
+
+			local getSeeds = countSeedPasses()
+			cullThrottle:_findVisibleObjects(os.clock())
+			cullThrottle:_findVisibleObjects(os.clock())
+
+			-- Bumping the counter directly moves exactly one watched input
+			-- while every accumulator, generation, and buffer stays
+			-- bit-identical, so only the gate's own comparison can catch it.
+			cullThrottle._occlusion._buildCount += 1
+			cullThrottle:_findVisibleObjects(os.clock())
+
+			local seeds = getSeeds()
+			destroyParts(parts)
+			expect(seeds).toBe(2)
+		end)
+
+		it("re-searches when the occluder generation moves alone", function()
+			local parts = stageViewParts()
+
+			local getSeeds = countSeedPasses()
+			cullThrottle:_findVisibleObjects(os.clock())
+			cullThrottle:_findVisibleObjects(os.clock())
+
+			-- With no occluders registered nothing else in the frame reads
+			-- the generation, so the bump isolates the gate's comparison of
+			-- it.
+			cullThrottle._occlusion._generation += 1
+			cullThrottle:_findVisibleObjects(os.clock())
+
+			local seeds = getSeeds()
+			destroyParts(parts)
+			expect(seeds).toBe(2)
+		end)
+
+		it("re-searches when the clear generation moves alone", function()
+			local parts = stageViewParts()
+
+			local getSeeds = countSeedPasses()
+			cullThrottle:_findVisibleObjects(os.clock())
+			cullThrottle:_findVisibleObjects(os.clock())
+
+			-- The clear generation is watched independently of its hidden
+			-- sibling, so moving it alone must re-run the pass too.
+			cullThrottle._occlusion._clearGeneration += 1
+			cullThrottle:_findVisibleObjects(os.clock())
+
+			local seeds = getSeeds()
+			destroyParts(parts)
+			expect(seeds).toBe(2)
+		end)
+
+		it("re-searches the frame a voxel empties and stops surfacing it", function()
+			local parts = stageViewParts()
+			local search = cullThrottle._search
+			local removed = table.remove(parts)
+			local removedKey = next(cullThrottle._lifecycle._objects[removed].voxelKeys)
+
+			local getSeeds = countSeedPasses()
+			cullThrottle:_findVisibleObjects(os.clock())
+			local surfacedBefore = false
+			for i = 1, search._visibleVoxelCount do
+				if search._pendingVoxelKeys[i] == removedKey then
+					surfacedBefore = true
+					break
+				end
+			end
+			cullThrottle:_findVisibleObjects(os.clock())
+
+			-- Removing the only object in its voxel shrinks the occupied key
+			-- set the seeding scans, which moves the occupancy generation, so
+			-- this frame must re-search and drop the emptied voxel rather
+			-- than replaying a set that still holds it.
+			cullThrottle:RemoveObject(removed)
+			cullThrottle:_findVisibleObjects(os.clock())
+
+			local seeds = getSeeds()
+			local surfacedAfter = false
+			for i = 1, search._visibleVoxelCount do
+				if search._pendingVoxelKeys[i] == removedKey then
+					surfacedAfter = true
+					break
+				end
+			end
+			removed:Destroy()
+			destroyParts(parts)
+			expect(surfacedBefore).toBe(true)
+			expect(seeds).toBe(2)
+			expect(surfacedAfter).toBe(false)
+		end)
+
+		it("re-searches after a cache flush", function()
+			local parts = stageViewParts()
+
+			local getSeeds = countSeedPasses()
+			cullThrottle:_findVisibleObjects(os.clock())
+			cullThrottle:_findVisibleObjects(os.clock())
+
+			-- A flush re-anchors the odometer at zero, which can coincide with
+			-- the anchored readings, so the gate watches the flush count rather
+			-- than trusting the accumulators alone.
+			cullThrottle._motion:flushVisibilityCache()
+			cullThrottle:_findVisibleObjects(os.clock())
+
+			local seeds = getSeeds()
+			destroyParts(parts)
+			expect(seeds).toBe(2)
+		end)
+
+		it("never replays off a pass the budget truncated", function()
+			-- Six buckets ride the frustum's right side plane at increasing
+			-- depth, the same staging as the budget fallback test above, so a
+			-- zero budget is guaranteed to leave volumes for the fallback.
+			local search = cullThrottle._search
+			local voxelProofs = cullThrottle._visibilityCache._voxelProofs
+			local part = createMockPart()
+			local keys = {
+				Vector3.new(5, 5, 1),
+				Vector3.new(5, 9, 1),
+				Vector3.new(9, 13, 1),
+				Vector3.new(13, 17, 1),
+				Vector3.new(13, 21, 1),
+				Vector3.new(17, 25, 1),
+			}
+			for _, key in keys do
+				cullThrottle._grid:insertToVoxel(key, stubObjectData(part))
+				voxelProofs[key] = visibleVoxelProof(math.huge, 0)
+			end
+
+			patchFunction(CameraCache, "getPlanesAndBounds", function()
+				return roomyFrustumPlanes, Vector3.new(0, 0, 0), Vector3.new(19, 27, 3)
+			end)
+
+			local getSeeds = countSeedPasses()
+
+			-- The zero budget truncates the pass, which must leave the replay
+			-- disarmed even though every proof it consulted was valid.
+			cullThrottle._config.searchTimeBudget = 0
+			search:run(os.clock())
+			local perfMetrics = cullThrottle._perfMetrics
+			expect(perfMetrics._skippedSearch[perfMetrics._skippedFramesCursor]).toBeGreaterThan(0)
+			expect(search._replayReady).toBe(false)
+
+			-- A complete pass arms it, and the identical call after replays.
+			cullThrottle._config.searchTimeBudget = 1
+			search:clearVisibleVoxels()
+			search:run(os.clock())
+			expect(search._replayReady).toBe(true)
+			expect(getSeeds()).toBe(2)
+			expect(search._visibleVoxelCount).toBe(6)
+
+			search:clearVisibleVoxels()
+			search:run(os.clock())
+			expect(getSeeds()).toBe(2)
+			expect(search._visibleVoxelCount).toBe(6)
+
+			part:Destroy()
+		end)
+	end)
+
+	describe("Visible voxel ordering", function()
+		it("accumulates every added voxel into the pending buffer", function()
+			-- addVoxelKeyToVisible fills the pending buffer the sort under
+			-- test consumes. The order within the buffer is pinned
+			-- behaviorally by the stability test below, so this only asserts
+			-- the contents are complete.
+			cullThrottle:SetVoxelSize(100)
+			local cameraVoxel = CameraCache.Position // 100
+
+			cullThrottle._search:addVoxelKeyToVisible(cameraVoxel + Vector3.new(3, 0, 0))
+			cullThrottle._search:addVoxelKeyToVisible(cameraVoxel + Vector3.new(1, 0, 0))
+
+			expect(cullThrottle._search._visibleVoxelCount).toBe(2)
+			local seen = {}
+			for i = 1, cullThrottle._search._visibleVoxelCount do
+				seen[cullThrottle._search._pendingVoxelKeys[i]] = true
+			end
+			expect(seen[cameraVoxel + Vector3.new(3, 0, 0)]).toBe(true)
+			expect(seen[cameraVoxel + Vector3.new(1, 0, 0)]).toBe(true)
+		end)
+
+		it("resets the visible count while leaving the pending slots in place for reuse", function()
+			local search = cullThrottle._search
+			local keys = { Vector3.new(1, 1, 1), Vector3.new(2, 2, 2) }
+			for _, key in keys do
+				search:addVoxelKeyToVisible(key)
+			end
+
+			search:clearVisibleVoxels()
+
+			-- Only the count resets. The slots keep their entries because the
+			-- next pass overwrites from slot one, and the whole-frame replay
+			-- depends on cleared slots staying untouched.
+			expect(search._visibleVoxelCount).toBe(0)
+			for i, key in keys do
+				expect(search._pendingVoxelKeys[i]).toBe(key)
+			end
+		end)
+
+		it("sorts visible voxels closest-first by manhattan distance to the camera", function()
+			cullThrottle:SetVoxelSize(100)
+			local cameraVoxel = CameraCache.Position // 100
+
+			-- The offsets go in out of distance order so the sort has work to do.
+			local offsets = {
+				Vector3.new(5, 0, 0), -- This one sits at distance 5.
+				Vector3.new(0, 0, 0), -- This one sits at distance 0 (it's the camera's own voxel).
+				Vector3.new(-2, 1, 0), -- This one sits at distance 3.
+				Vector3.new(1, 0, 0), -- This one sits at distance 1.
+				Vector3.new(2, 2, 2), -- This one sits at distance 6.
+				Vector3.new(0, -3, 1), -- This one sits at distance 4.
+			}
+			for _, offset in offsets do
+				cullThrottle._search:addVoxelKeyToVisible(cameraVoxel + offset)
+			end
+
+			cullThrottle._search:sortVisibleVoxelKeys()
+
+			expect(cullThrottle._search._visibleVoxelCount).toBe(#offsets)
+
+			-- Output distances are non-decreasing, and the nearest voxel is first.
+			local previousDistance = -1
+			for i = 1, cullThrottle._search._visibleVoxelCount do
+				local difference = cullThrottle._search._visibleVoxelKeys[i] - cameraVoxel
+				local distance = math.abs(difference.X) + math.abs(difference.Y) + math.abs(difference.Z)
+				expect(distance).toBeGreaterThanOrEqual(previousDistance)
+				previousDistance = distance
+			end
+			expect(cullThrottle._search._visibleVoxelKeys[1]).toBe(cameraVoxel)
+		end)
+
+		it("preserves every voxel exactly once through the sort, including ties", function()
+			cullThrottle:SetVoxelSize(100)
+			local cameraVoxel = CameraCache.Position // 100
+
+			-- This is a spread of distinct voxels, several of which tie on distance.
+			local added = {}
+			for x = -3, 3 do
+				for y = -1, 1 do
+					local key = cameraVoxel + Vector3.new(x, y, 0)
+					cullThrottle._search:addVoxelKeyToVisible(key)
+					added[key] = true
+				end
+			end
+
+			cullThrottle._search:sortVisibleVoxelKeys()
+
+			local seen = {}
+			for i = 1, cullThrottle._search._visibleVoxelCount do
+				local key = cullThrottle._search._visibleVoxelKeys[i]
+				seen[key] = (seen[key] or 0) + 1
+			end
+
+			-- The same set comes out as went in, with each added key present
+			-- exactly once and nothing extra.
+			local addedCount = 0
+			for key in added do
+				expect(seen[key]).toBe(1)
+				addedCount += 1
+			end
+			expect(cullThrottle._search._visibleVoxelCount).toBe(addedCount)
+		end)
+
+		it("keeps equal-distance voxels in their original order through the sort", function()
+			cullThrottle:SetVoxelSize(100)
+			local cameraVoxel = CameraCache.Position // 100
+
+			-- All four offsets sit at manhattan distance two in distinct
+			-- directions, so the documented stability is the only thing that
+			-- can order them.
+			local equalOffsets = {
+				Vector3.new(2, 0, 0),
+				Vector3.new(0, 2, 0),
+				Vector3.new(1, 1, 0),
+				Vector3.new(0, 1, 1),
+			}
+			for _, offset in equalOffsets do
+				cullThrottle._search:addVoxelKeyToVisible(cameraVoxel + offset)
+			end
+
+			cullThrottle._search:sortVisibleVoxelKeys()
+
+			for i, offset in equalOffsets do
+				expect(cullThrottle._search._visibleVoxelKeys[i]).toBe(cameraVoxel + offset)
+			end
+		end)
+
+		it("sorts correctly on a second batch with a smaller max distance", function()
+			cullThrottle:SetVoxelSize(100)
+			local cameraVoxel = CameraCache.Position // 100
+
+			-- The first sort fills the reused scratch counts out to a wide max
+			-- distance, leaving stale prefix sums behind in the higher buckets.
+			local wideOffsets = {
+				Vector3.new(3, 2, 1), -- This one sits at distance 6.
+				Vector3.new(1, 0, 0), -- This one sits at distance 1.
+				Vector3.new(2, 2, 0), -- This one sits at distance 4.
+			}
+			for _, offset in wideOffsets do
+				cullThrottle._search:addVoxelKeyToVisible(cameraVoxel + offset)
+			end
+			cullThrottle._search:sortVisibleVoxelKeys()
+
+			-- The second batch tops out at distance 2, well inside the stale
+			-- range, so only a correct reset of the reused counts can place its
+			-- voxels in the right slots.
+			cullThrottle._search:clearVisibleVoxels()
+			local narrowOffsets = {
+				Vector3.new(0, 2, 0), -- This one sits at distance 2.
+				Vector3.new(0, 0, 0), -- This one sits at distance 0.
+				Vector3.new(-1, 0, 0), -- This one sits at distance 1.
+			}
+			for _, offset in narrowOffsets do
+				cullThrottle._search:addVoxelKeyToVisible(cameraVoxel + offset)
+			end
+			cullThrottle._search:sortVisibleVoxelKeys()
+
+			expect(cullThrottle._search._visibleVoxelCount).toBe(3)
+			expect(cullThrottle._search._visibleVoxelKeys[1]).toBe(cameraVoxel)
+			expect(cullThrottle._search._visibleVoxelKeys[2]).toBe(cameraVoxel + Vector3.new(-1, 0, 0))
+			expect(cullThrottle._search._visibleVoxelKeys[3]).toBe(cameraVoxel + Vector3.new(0, 2, 0))
+		end)
+
+		it("sorts an empty batch without erroring and passes a lone voxel straight through", function()
+			cullThrottle:SetVoxelSize(100)
+			local cameraVoxel = CameraCache.Position // 100
+
+			expect(function()
+				cullThrottle._search:sortVisibleVoxelKeys()
+			end).never.toThrow()
+			expect(cullThrottle._search._visibleVoxelCount).toBe(0)
+
+			local onlyKey = cameraVoxel + Vector3.new(7, -2, 4)
+			cullThrottle._search:addVoxelKeyToVisible(onlyKey)
+			cullThrottle._search:sortVisibleVoxelKeys()
+			expect(cullThrottle._search._visibleVoxelCount).toBe(1)
+			expect(cullThrottle._search._visibleVoxelKeys[1]).toBe(onlyKey)
+		end)
+
+		it("keeps visible voxels ordered closest-first end to end", function()
+			-- Spread objects through the view at increasing depth so the search
+			-- produces a multi-voxel batch to order.
+			local camera = workspace.CurrentCamera
+			local parts = {}
+			for i = 1, 7 do
+				local part = createMockPart((camera.CFrame * CFrame.new(0, 0, -120 * i)).Position)
+				cullThrottle:AddObject(part)
+				table.insert(parts, part)
+			end
+
+			-- Generous budgets let the search and ingest both run to completion.
+			cullThrottle._config.searchTimeBudget = 1
+			cullThrottle._config.ingestTimeBudget = 1
+			cullThrottle:_findVisibleObjects(os.clock())
+
+			-- The sort only matters when several voxels are visible, so prove
+			-- the staging produced a batch.
+			expect(cullThrottle._search._visibleVoxelCount).toBeGreaterThan(1)
+
+			-- The batch must come out non-decreasing in manhattan distance to
+			-- the camera (the ingest passes depend on it).
+			local cameraVoxel = CameraCache.Position // cullThrottle._config.voxelSize
+			local previousDistance = -1
+			for i = 1, cullThrottle._search._visibleVoxelCount do
+				local difference = cullThrottle._search._visibleVoxelKeys[i] - cameraVoxel
+				local distance = math.abs(difference.X) + math.abs(difference.Y) + math.abs(difference.Z)
+				expect(distance).toBeGreaterThanOrEqual(previousDistance)
+				previousDistance = distance
+			end
+
+			for _, part in parts do
+				part:Destroy()
+			end
+		end)
+	end)
+
+	describe("Buffer lifecycle", function()
+		it("preserves live buffers when resized to current occupancy", function()
+			local search = cullThrottle._search
+			local keys = { Vector3.new(1, 1, 1), Vector3.new(2, 2, 2), Vector3.new(3, 3, 3) }
+			for i, key in keys do
+				search._visibleVoxelKeys[i] = key
+				search._pendingVoxelKeys[i] = key
+				search._searchVoxelKeys[i] = key
+			end
+			search._visibleVoxelCount = 3
+			search:pushVolume(1, 2, 3, 4, 5, 6, 1, 3, 0b10101, 0.5, 0b11)
+
+			search:resizeBuffers()
+
+			for i, key in keys do
+				expect(search._visibleVoxelKeys[i]).toBe(key)
+				expect(search._pendingVoxelKeys[i]).toBe(key)
+				-- The leftover volume's [lo, hi] slice indexes into the seed
+				-- buffer, so those slots must survive alongside it.
+				expect(search._searchVoxelKeys[i]).toBe(key)
+			end
+			-- The leftover volume survives with every field intact.
+			expect(volumeCount(search)).toBe(1)
+			local volume = popVolume(search)
+			expect(volume.x0).toBe(1)
+			expect(volume.y0).toBe(2)
+			expect(volume.z0).toBe(3)
+			expect(volume.x1).toBe(4)
+			expect(volume.y1).toBe(5)
+			expect(volume.z1).toBe(6)
+			expect(volume.lo).toBe(1)
+			expect(volume.hi).toBe(3)
+			expect(volume.planeMask).toBe(0b10101)
+			expect(volume.inheritedSlack).toBe(0.5)
+			expect(volume.umbraMask).toBe(0b11)
+		end)
+
+		it("rebuilds the seed and proof-walk scratch buffers on resize", function()
+			-- A burst frame can leave these two scratch buffers holding thousands
+			-- of slots that every later frame clears without shrinking. Capacity
+			-- isn't observable from Luau, so the rebuild is pinned by the buffers
+			-- coming back as fresh tables. With no volumes left on the stack,
+			-- nothing references the old contents.
+			local search = cullThrottle._search
+			for i = 1, 64 do
+				search._searchVoxelKeys[i] = Vector3.new(i, 0, 0)
+				search._unprovenVoxelKeys[i] = Vector3.new(i, 1, 0)
+			end
+			local searchKeysBefore = search._searchVoxelKeys
+			local unprovenBefore = search._unprovenVoxelKeys
+
+			search:resizeBuffers()
+
+			expect(search._searchVoxelKeys).never.toBe(searchKeysBefore)
+			expect(search._unprovenVoxelKeys).never.toBe(unprovenBefore)
+		end)
+
+		it("preserves the visible voxel keys when the backing tables are resized", function()
+			-- The subject here is the facade's _resizeTables, exercised here
+			-- because the sorted visible list is the buffer it must not corrupt.
+			cullThrottle:SetVoxelSize(100)
+			local cameraVoxel = CameraCache.Position // 100
+
+			cullThrottle._search:addVoxelKeyToVisible(cameraVoxel + Vector3.new(1, 0, 0))
+			cullThrottle._search:addVoxelKeyToVisible(cameraVoxel + Vector3.new(2, 0, 0))
+			cullThrottle._search:addVoxelKeyToVisible(cameraVoxel + Vector3.new(3, 0, 0))
+			cullThrottle._search:sortVisibleVoxelKeys()
+
+			local expectedCount = cullThrottle._search._visibleVoxelCount
+			local before = {}
+			for i = 1, expectedCount do
+				before[i] = cullThrottle._search._visibleVoxelKeys[i]
+			end
+
+			cullThrottle:_resizeTables()
+
+			-- The resize trims the unused tail without dropping any live key.
+			expect(cullThrottle._search._visibleVoxelCount).toBe(expectedCount)
+			for i = 1, expectedCount do
+				expect(cullThrottle._search._visibleVoxelKeys[i]).toBe(before[i])
+			end
+		end)
+
+		it("clears the buffers and disarms the replay on destroy", function()
+			local part = createMockPart()
+			local search = cullThrottle._search
+			cullThrottle._grid:insertToVoxel(Vector3.new(1, 1, 0), stubObjectData(part))
+			cullThrottle._grid:insertToVoxel(Vector3.new(0, 1, 1), stubObjectData(part))
+			patchFunction(CameraCache, "getPlanesAndBounds", function()
+				return straddlingFrustumPlanes, Vector3.new(0, 0, 0), Vector3.new(3, 3, 3)
+			end)
+
+			-- A complete pass fills the seed and pending buffers and arms the
+			-- replay, and the sort fills the ordered list and the distance
+			-- scratch.
+			cullThrottle._config.searchTimeBudget = 1
+			search:run(os.clock())
+			search:sortVisibleVoxelKeys()
+			expect(search._replayReady).toBe(true)
+			expect(search._visibleVoxelCount).toBe(2)
+
+			search:destroy()
+
+			-- Everything the buffers referenced is released, and the replay
+			-- can't hand back output that no longer exists.
+			expect(search._replayReady).toBe(false)
+			expect(search._visibleVoxelCount).toBe(0)
+			expect(search._volumesToCheckSize).toBe(0)
+			expect(next(search._searchVoxelKeys)).toBeNil()
+			expect(next(search._pendingVoxelKeys)).toBeNil()
+			expect(next(search._visibleVoxelKeys)).toBeNil()
+			expect(next(search._pendingVoxelDistances)).toBeNil()
+			expect(next(search._volumesToCheck)).toBeNil()
+
+			part:Destroy()
+		end)
+	end)
+end)

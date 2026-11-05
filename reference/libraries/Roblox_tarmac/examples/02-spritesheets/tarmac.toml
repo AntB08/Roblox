@@ -1,0 +1,20 @@
+name = "02-spritesheets"
+
+[[inputs]]
+glob = "pack-these/**/*.png"
+
+# Set packable to true to tell Tarmac that we're okay with these images being
+# packed into spritesheets.
+packable = true
+
+codegen = true
+codegen-path = "pack-these/init.lua"
+codegen-base-path = "pack-these"
+
+[[inputs]]
+glob = "dont-pack-these/**/*.png"
+
+# packable defaults to false, but we can also explicitly specify it.
+packable = false
+
+codegen = true

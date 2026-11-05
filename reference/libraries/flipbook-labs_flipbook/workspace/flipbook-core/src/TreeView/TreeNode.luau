@@ -1,0 +1,213 @@
+local Selection = game:GetService("Selection")
+
+local Foundation = require("@rbxpkg/Foundation")
+local React = require("@pkg/React")
+local ReactCharm = require("@pkg/ReactCharm")
+
+local PinnedInstanceStore = require("@root/Storybook/PinnedInstanceStore")
+local Types = require("@root/TreeView/types")
+local useTreeNodeIcon = require("@root/TreeView/useTreeNodeIcon")
+
+local Icon = Foundation.Icon
+local IconName = Foundation.Enums.IconName
+local IconSize = Foundation.Enums.IconSize
+local IconVariant = Foundation.Enums.IconVariant
+local Text = Foundation.Text
+local View = Foundation.View
+local useTokens = Foundation.Hooks.useTokens
+local withCommonProps = Foundation.Utility.withCommonProps
+
+local e = React.createElement
+local useCallback = React.useCallback
+local useMemo = React.useMemo
+local useState = React.useState
+local useRef = React.useRef
+
+local useSignalState = ReactCharm.useSignalState
+
+type TreeNodeStore = Types.TreeNodeStore
+
+type TreeNodeProps = {
+	node: TreeNodeStore,
+	onActivated: (node: TreeNodeStore) -> ()?,
+} & Foundation.CommonProps
+
+local function TreeNode(props: TreeNodeProps)
+	local ancestors = useSignalState(props.node.getAncestors)
+	local icon = useSignalState(props.node.getIcon)
+	local instance = useSignalState(props.node.getInstance)
+	local isExpanded = useSignalState(props.node.getIsExpanded)
+	local isSelected = useSignalState(props.node.getIsSelected)
+	local isVisible = useSignalState(props.node.getIsVisible)
+	local isFiltered = useSignalState(props.node.getIsFiltered)
+	local name = useSignalState(props.node.getName)
+	local nodeChildren = useSignalState(props.node.getChildren)
+	local iconName, iconStyle = useTreeNodeIcon(icon :: Types.TreeNodeIcon)
+
+	local isContextMenuOpen, setIsContextMenuOpen = useState(false)
+	local ref = useRef(nil :: GuiObject?)
+
+	local tokens = useTokens()
+	local pinnedInstanceStore = useSignalState(PinnedInstanceStore.get)
+	local isPinned = if instance then pinnedInstanceStore.isPinned(instance) else false
+
+	local children = useMemo(function()
+		local elements: { [string]: React.ReactNode } = {}
+
+		for index, childNode in nodeChildren do
+			elements[childNode.getName()] = e(TreeNode, {
+				LayoutOrder = index,
+				node = childNode,
+				onActivated = props.onActivated,
+			})
+		end
+
+		return elements
+	end, { nodeChildren })
+
+	local onActivated = useCallback(function()
+		props.node.activate()
+
+		if props.onActivated ~= nil then
+			props.onActivated(props.node)
+		end
+	end, { props.onActivated, props.node } :: { unknown })
+
+	local onSecondaryActivated = useCallback(function()
+		setIsContextMenuOpen(true)
+	end, {})
+
+	local onTogglePin = useCallback(
+		function()
+			if instance then
+				if isPinned then
+					pinnedInstanceStore.unpin(instance)
+					props.node.setIsPinned(false)
+				else
+					pinnedInstanceStore.pin(instance)
+					props.node.setIsPinned(true)
+				end
+			end
+		end,
+		{
+			instance,
+			isPinned,
+			pinnedInstanceStore.pin,
+			pinnedInstanceStore.unpin,
+			props.node.setIsPinned,
+		} :: { unknown }
+	)
+
+	local contextMenuItems = useMemo(function()
+		local items: { Foundation.MenuItem } = {}
+
+		if icon == Types.TreeNodeIcon.Storybook then
+			table.insert(items, {
+				id = "pin",
+				text = if isPinned then "Unpin" else "Pin",
+				onActivated = function()
+					onTogglePin()
+					setIsContextMenuOpen(false)
+				end,
+			})
+		end
+
+		if instance then
+			table.insert(items, {
+				id = "select-in-explorer",
+				text = "Select in Explorer",
+				onActivated = function()
+					Selection:Set({ instance })
+					setIsContextMenuOpen(false)
+				end,
+			})
+		end
+
+		if #nodeChildren > 0 then
+			table.insert(items, {
+				id = "expand-all",
+				text = "Expand all",
+				onActivated = function()
+					props.node.expandDown()
+					setIsContextMenuOpen(false)
+				end,
+			})
+			table.insert(items, {
+				id = "collapse-all",
+				text = "Collapse all",
+				onActivated = function()
+					props.node.collapseDown()
+					setIsContextMenuOpen(false)
+				end,
+			})
+		end
+
+		return items
+	end, { isPinned, icon, instance, nodeChildren, props.node } :: { unknown })
+
+	if isVisible == false or isFiltered == true then
+		return nil
+	end
+
+	return e(
+		View,
+		withCommonProps(props, {
+			tag = "auto-y col size-full-0",
+		}),
+		{
+			Node = e(View, {
+				LayoutOrder = 1,
+				backgroundStyle = if isSelected then tokens.Color.ActionEmphasis.Background else nil,
+				onActivated = onActivated,
+				onSecondaryActivated = onSecondaryActivated,
+				padding = {
+					left = UDim.new(0, tokens.Padding.Medium * #ancestors),
+				},
+				tag = "align-y-center auto-y gap-medium padding-right-medium padding-y-small row size-full-0",
+				ref = ref,
+			}, {
+				Icon = e(Icon, {
+					LayoutOrder = 1,
+					name = iconName,
+					size = IconSize.Small,
+					style = iconStyle,
+					variant = if isSelected then IconVariant.Filled else nil,
+				}),
+
+				Title = e(Text, {
+					LayoutOrder = 2,
+					Text = name,
+					tag = {
+						["auto-y shrink size-full-0 text-align-x-left text-label-medium text-truncate-end"] = true,
+						["content-emphasis"] = isSelected,
+					},
+				}),
+
+				Arrow = #nodeChildren > 0 and e(Icon, {
+					LayoutOrder = 3,
+					name = if isExpanded then IconName.ChevronSmallUp else IconName.ChevronSmallDown,
+					size = IconSize.XSmall,
+				}),
+			}),
+
+			ContextMenu = if isContextMenuOpen and #contextMenuItems > 0
+				then React.createElement(Foundation.Menu, {
+					isOpen = true,
+					size = Foundation.Enums.InputSize.Medium,
+					items = contextMenuItems,
+					onPressedOutside = function()
+						setIsContextMenuOpen(false)
+					end,
+					anchorRef = ref,
+				})
+				else nil,
+
+			Children = isExpanded and e(View, {
+				LayoutOrder = 2,
+				tag = "auto-xy col",
+			}, children),
+		}
+	)
+end
+
+return React.memo(TreeNode)

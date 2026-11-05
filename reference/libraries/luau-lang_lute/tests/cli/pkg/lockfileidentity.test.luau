@@ -1,0 +1,226 @@
+local fs = require("@std/fs")
+local lockfile = require("@commands/pkg/loom-core/src/lockfile")
+local manifest = require("@commands/pkg/loom-core/src/manifest")
+local path = require("@std/path")
+local store = require("@commands/pkg/loom-core/src/store")
+local system = require("@std/system")
+local test = require("@std/test")
+
+local workingDirectory = path.join(system.tmpdir(), "lute-pkg-lockfile-identity")
+local lockfilePath = path.join(workingDirectory, "pkg.lock.luau")
+
+local function writeLockfile(contents: string)
+	fs.writeStringToFile(lockfilePath, contents)
+end
+
+test.suite("RegistryLockfileIdentity", function(suite)
+	suite:beforeEach(function()
+		if fs.exists(workingDirectory) then
+			fs.removeDirectory(workingDirectory, { recursive = true })
+		end
+		fs.createDirectory(workingDirectory)
+	end)
+
+	suite:case("normalizesRegistryIdentityAndQualifiesStoreKeys", function(assert)
+		local registryUrl = "https://registry.example.com"
+		local registryUrlWithSlash = "https://registry.example.com/"
+		local identity = store.getRegistryIdentity(registryUrl)
+		local qualified = store.qualifyRegistryKey("citrus@1.0.0", registryUrl)
+
+		assert.eq(identity, store.getRegistryIdentity(registryUrlWithSlash))
+		assert.neq(identity, store.getRegistryIdentity("https://other-registry.example.com"))
+		assert.eq(qualified, `citrus@1.0.0--registry-{identity}`)
+		assert.eq(store.qualifyRegistryKey(qualified, registryUrl), qualified)
+	end)
+
+	suite:case("usesReadableCollisionSafeGitHubCheckoutKeys", function(assert)
+		local source = "https://github.com/example/fruits/"
+		local key = store.getGitHubCheckoutKey(source, "feature/member")
+
+		assert.eq(key, store.getGitHubCheckoutKey("https://github.com/example/fruits", "feature/member"))
+		assert.neq(key, store.getGitHubCheckoutKey(source, "feature-member"))
+		assert.strContains(key, "fruits--github-")
+		local revisionHash = string.match(key, "@(.+)$")
+		assert.neq(revisionHash, nil)
+		assert.eq(#(revisionHash :: string), 64)
+		assert.eq(store.getGitHubInstallPath(source, "feature/member", "modules/apple"), `@pkg/{key}/modules/apple`)
+	end)
+
+	suite:case("serializesGitHubOverrideTargetsOnlyWhenPresent", function(assert)
+		local withoutTarget = lockfile.serializeOverrides({
+			apple = {
+				name = "apple",
+				sourceKind = "github",
+				source = "https://github.com/example/fruits",
+				rev = "v1.0.0",
+			},
+		})
+		local withTarget = lockfile.serializeOverrides({
+			apple = {
+				name = "apple",
+				sourceKind = "github",
+				source = "https://github.com/example/fruits",
+				rev = "v1.0.0",
+				target = "modules/apple",
+			},
+		})
+
+		assert.eq(withoutTarget.apple, "github:https://github.com/example/fruits@v1.0.0")
+		assert.eq(withTarget.apple, "github:https://github.com/example/fruits@v1.0.0:modules/apple")
+	end)
+
+	suite:case("matchesGitHubTargetsExactly", function(assert)
+		local spec: manifest.GitHubDependencySpec = {
+			name = "apple",
+			sourceKind = "github",
+			source = "https://github.com/example/fruits",
+			rev = "v1.0.0",
+			target = "modules/apple",
+		}
+		local function makePackage(target: string): lockfile.LockfileDependency
+			return {
+				name = "apple",
+				sourceKind = "github",
+				source = "https://github.com/example/fruits",
+				rev = "v1.0.0",
+				target = target,
+				installPath = "@pkg/fruits/modules/apple",
+				dependencies = {},
+			}
+		end
+
+		assert.that(lockfile.isSameSource(makePackage("modules/apple"), spec, path.format(workingDirectory)))
+		assert.eq(lockfile.isSameSource(makePackage("./modules/apple"), spec, path.format(workingDirectory)), false)
+	end)
+
+	suite:case("parsesOptionalRegistryFieldsInVersionThreeLockfiles", function(assert)
+		writeLockfile([[return {
+	version = 3,
+	registry = "https://root-registry.example.com",
+	dependencies = {
+		citrus = "citrus@1.0.0",
+	},
+	packages = {
+		["citrus@1.0.0"] = {
+			name = "citrus",
+			rev = "1.0.0",
+			source = "citrus",
+			sourceKind = "registry",
+			registry = "https://package-registry.example.com",
+			installPath = "@pkg/citrus@1.0.0",
+			dependencies = {},
+		},
+	},
+}
+]])
+
+		local lock = lockfile.parseFile(path.format(lockfilePath))
+		assert.eq(lock.registry, "https://root-registry.example.com")
+		assert.eq(lock.packages["citrus@1.0.0"].registry, "https://package-registry.example.com")
+	end)
+
+	suite:case("continuesToParseVersionThreeLockfilesWithoutRegistryFields", function(assert)
+		writeLockfile([[return {
+	version = 3,
+	dependencies = {
+		citrus = "citrus@1.0.0",
+	},
+	packages = {
+		["citrus@1.0.0"] = {
+			name = "citrus",
+			rev = "1.0.0",
+			source = "citrus",
+			sourceKind = "registry",
+			installPath = "@pkg/citrus@1.0.0",
+			dependencies = {},
+		},
+	},
+}
+]])
+
+		local lock = lockfile.parseFile(path.format(lockfilePath))
+		assert.eq(lock.registry, nil)
+		assert.eq(lock.packages["citrus@1.0.0"].registry, nil)
+	end)
+
+	suite:case("rejectsNonStringRegistryFields", function(assert)
+		writeLockfile([[return {
+	version = 3,
+	registry = false,
+	dependencies = {},
+	packages = {},
+}
+]])
+
+		assert.throwsWith("Expected 'registry' field to be a string or nil", function()
+			lockfile.parseFile(path.format(lockfilePath))
+		end)
+
+		writeLockfile([[return {
+	version = 3,
+	dependencies = {
+		citrus = "citrus@1.0.0",
+	},
+	packages = {
+		["citrus@1.0.0"] = {
+			name = "citrus",
+			rev = "1.0.0",
+			source = "citrus",
+			sourceKind = "registry",
+			registry = false,
+			installPath = "@pkg/citrus@1.0.0",
+			dependencies = {},
+		},
+	},
+}
+]])
+
+		assert.throwsWith("Expected 'registry' field to be a string or nil for dependency 'citrus@1.0.0'", function()
+			lockfile.parseFile(path.format(lockfilePath))
+		end)
+	end)
+
+	suite:case("doesNotReuseGitHubEntriesWithAnIncorrectTargetInstallPath", function(assert)
+		fs.writeStringToFile(
+			path.join(workingDirectory, "pkg.luau"),
+			[[return {
+	package = {
+		name = "root",
+		version = "1.0.0",
+		dependencies = {
+			apple = {
+				sourceKind = "github",
+				source = "https://github.com/example/fruits",
+				rev = "v1.0.0",
+				target = "modules/apple",
+			},
+		},
+	},
+}]]
+		)
+		writeLockfile([[return {
+	version = 5,
+	dependencies = {
+		apple = "apple@v1.0.0",
+	},
+	packages = {
+		["apple@v1.0.0"] = {
+			name = "apple",
+			rev = "v1.0.0",
+			source = "https://github.com/example/fruits",
+			sourceKind = "github",
+			target = "modules/apple",
+			installPath = "@pkg/not-the-github-artifact/modules/apple",
+			dependencies = {},
+		},
+	},
+}
+]])
+
+		local lock = lockfile.parseFile(path.format(lockfilePath))
+		local rootManifest = manifest.parseFile(path.format(path.join(workingDirectory, "pkg.luau")))
+		local satisfied, reason = lockfile.satisfiesManifest(lock, rootManifest, path.format(workingDirectory), false)
+		assert.eq(satisfied, false)
+		assert.eq(reason, "github store path changed: apple@v1.0.0")
+	end)
+end)

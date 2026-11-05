@@ -1,0 +1,8 @@
+{
+    "name": "StreamingDebugger",
+
+    "tree": 
+    {
+        "$path": "Plugin"
+    }
+}

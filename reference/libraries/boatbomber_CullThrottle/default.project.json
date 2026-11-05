@@ -1,0 +1,7 @@
+{
+  "name": "CullThrottle",
+  "globIgnorePaths": ["**/__tests__", "**/jest.config.luau"],
+  "tree": {
+    "$path": "dist/src"
+  }
+}

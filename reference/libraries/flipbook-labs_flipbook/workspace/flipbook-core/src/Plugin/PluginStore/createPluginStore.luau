@@ -1,0 +1,31 @@
+local Charm = require("@pkg/Charm")
+
+local CharmTypes = require("@root/Common/CharmTypes")
+local CommonTypes = require("@root/Common/types")
+
+type Pluginlike = CommonTypes.Pluginlike
+
+export type PluginStore = {
+	getPlugin: CharmTypes.Getter<Pluginlike?>,
+	setPlugin: CharmTypes.Setter<Pluginlike?>,
+}
+
+--[[
+	This is a basic store to keep track of the Plugin instance.
+
+	A quirk of the `plugin` keyword is that it's only defined in top-level
+	scripts, like `init.server.luau`. It must be passed along by reference after
+	that point, as attempting to use `plugin` in a ModuleScript will result in
+	nil value. To work around this, we just toss the plugin instance into this
+	store to share it around other parts of the app
+]]
+local function createPluginStore(): PluginStore
+	local getPlugin, setPlugin = Charm.signal(nil :: Pluginlike?)
+
+	return {
+		getPlugin = getPlugin,
+		setPlugin = setPlugin,
+	}
+end
+
+return createPluginStore

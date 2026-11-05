@@ -1,0 +1,14 @@
+{
+	"name": "Rbx-Gravity-Controller",
+	"tree": {
+		"$className": "DataModel",
+		"ServerScriptService": {
+			"$className": "ServerScriptService",
+			"$path": "src/ServerScriptService"
+		},
+		"StarterPack": {
+			"$className": "StarterPack",
+			"$path": "src/StarterPack"
+		}
+	}
+}

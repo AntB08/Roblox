@@ -1,0 +1,11 @@
+{
+    "name": "DecalProjector",
+
+    "tree": {
+        "$path": "Plugin",
+		
+		"Packages": {
+			"$path": "Packages"
+		}
+    }
+}

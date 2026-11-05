@@ -1,0 +1,13 @@
+gitSourceBranch = "main" # This means we will have to commit and push before building docs
+
+classOrder = [
+    "SmartBone",
+    "BoneTree",
+    "Bone",
+    "ColliderObject",
+    "Collider"
+]
+
+[docusaurus]
+url = "https://smartbone.org"
+baseUrl = "/"

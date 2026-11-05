@@ -1,0 +1,64 @@
+{
+	"name": "example",
+	"tree": {
+		"$className": "DataModel",
+		"Workspace": {
+			"$className": "Workspace",
+			"$path": "example/workspace"
+		
+		},
+
+		"ReplicatedFirst": {
+			"$className": "ReplicatedFirst",
+			"Examples": {
+				"$path": "src/ReplicatedFirst/Examples"
+			},
+			"Packages": {
+				"$path": "src/ReplicatedFirst/Packages"
+			}
+
+		},
+
+		"ServerScriptService": {
+			"$className": "ServerScriptService",
+			"Examples": {
+				"$path": "src/ServerScriptService/Examples"
+			},
+			"Packages": {
+				"$path": "src/ServerScriptService/Packages"
+			}
+		},
+
+
+		"StarterPlayer": {
+			"$className": "StarterPlayer",
+			"StarterPlayerScripts": {
+				"$className": "StarterPlayerScripts",
+				"$path": "example/client"
+			}
+		},
+		"Lighting": {
+			"$className": "Lighting",
+			"$path": "example/lighting",
+			"$properties": {
+				"Brightness": 3,
+				"EnvironmentDiffuseScale": 1,
+				"EnvironmentSpecularScale": 1,
+				"GlobalShadows": true,
+				"ShadowSoftness": 1,
+				"Technology": "ShadowMap"
+			}
+		},
+		"Players": {
+			"$className": "Players",
+			"$properties": {
+				"CharacterAutoLoads": false
+			}
+		},
+		"StarterGui": {
+			"$className": "StarterGui",
+			"$path": "example/gui"
+		}
+	}
+}
+  

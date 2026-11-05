@@ -1,0 +1,8 @@
+{
+	"name": "Adonis_Loader",
+	"emitLegacyScripts": true,
+	"tree": {
+		"$className": "Model",
+		"$path": "../Loader"
+	}
+}

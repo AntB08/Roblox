@@ -1,0 +1,7 @@
+{
+  "name": "Satchel",
+  "emitLegacyScripts": false,
+  "tree": {
+    "$path": "models"
+  }
+}

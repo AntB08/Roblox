@@ -1,0 +1,31 @@
+{
+	"name": "Adonis",
+	"emitLegacyScripts": true,
+	"tree": {
+		"$className": "DataModel",
+
+		"ServerScriptService": {
+			"$className": "ServerScriptService",
+
+			"Adonis_Rojo": {
+				"$className": "Folder",
+				"MainModule": {
+					"$path": "MainModule"
+				},
+
+				"LICENSE": {
+					"$path": "LICENSE.luau"
+				},
+				
+				"Adonis_Loader": {
+					"$className": "Model",
+					"$path": "Loader",
+
+					"LICENSE": {
+						"$path": "LICENSE.luau"
+					}
+				}
+			}
+		}
+	}
+}

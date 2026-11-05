@@ -1,0 +1,11 @@
+{
+  "name": "conch_plugin",
+  "emitLegacyScripts": true,
+  "tree": {
+    "$className": "Folder",
+
+    "src": {
+      "$path": "src"
+    }
+  }
+}

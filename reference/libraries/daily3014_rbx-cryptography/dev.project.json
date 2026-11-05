@@ -1,0 +1,37 @@
+{
+	"name": "Cryptography",
+	"tree": {
+		"$className": "DataModel",
+		"ReplicatedStorage": {
+			"$ignoreUnknownInstances": true,
+			"Cryptography": {
+				"$path": "src"
+			},
+			"CryptographyTests": {
+				"$className": "Folder",
+				"src": {
+					"$path": "src"
+				},
+				"tests": {
+					"$path": "tests"
+				}
+			}
+		},
+		"ServerStorage": {
+			"$ignoreUnknownInstances": true
+		},
+		"ServerScriptService": {
+			"$ignoreUnknownInstances": true
+		},
+		"StarterPlayer": {
+			"$ignoreUnknownInstances": true,
+			"StarterPlayerScripts": {
+				"$className": "StarterPlayerScripts",
+				"$ignoreUnknownInstances": true,
+				"RunCryptographyBench": {
+					"$path": "tests/RunBench.client.luau"
+				}
+			}
+		}
+	}
+}

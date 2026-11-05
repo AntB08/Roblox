@@ -1,0 +1,66 @@
+{
+	"name": "crunchyroll-test",
+	
+	"globIgnorePaths": [ "**/mirror_list/**" ],
+
+	"emitLegacyScripts": false,
+
+	"tree": {
+		"$className": "DataModel",
+
+		"ReplicatedStorage": {
+			"client": {
+				"$path": "tests/roblox/client"
+			},
+
+			"assets": {
+				"$path": "tests/roblox/assets"
+			},
+			
+			"benches": {
+				"$path": "benches"
+			},
+
+			"crunchyroll": {
+				"$path": "src"
+			}
+		},
+
+		"Workspace": {
+			"Baseplate": {
+				"$className": "Part",
+				"$properties": {
+					"Anchored": true,
+					
+					"BottomSurface": "Smooth",
+					"CFrame": {
+						"CFrame": {
+							"position": [0, -8, 0],
+							"orientation": [
+								[1, 0, 0],
+								[0, 1, 0],
+								[0, 0, 1]
+							]
+						}
+					},
+					"Color": [0.356862, 0.356862, 0.356862],
+					"Size": [2048, 16, 2048],
+					"TopSurface": "Smooth"
+				},
+
+				"Texture": {
+					"$className": "Texture",
+
+					"$properties": {
+						"Color3": [0, 0, 0],
+						"Face": "Top",
+						"StudsPerTileU": 8,
+						"StudsPerTileV": 8,
+						"Texture": "rbxassetid://6372755229",
+						"Transparency": 0.8
+					}
+				}
+			}
+		}
+	}
+}

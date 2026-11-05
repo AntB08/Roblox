@@ -1,0 +1,13 @@
+{
+    "name": "net",
+    "tree": {
+      "$path": "../out",
+      "TS": {
+        "$path": "../include",
+        "node_modules": {
+          "$path": "../node_modules/@rbxts"
+        }
+      }
+    }
+  }
+  
