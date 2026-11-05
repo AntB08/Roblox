@@ -275,16 +275,7 @@ describe("Wallet", function()
 		expect(function() wallet:trySpend(-5) end).toThrow("positive")
 	end)
 
-	describe.each({
-		{ 10, true, 90 },
-		{ 100, true, 0 },
-		{ 100.5, false, 100 },
-	})("trySpend(%s)", function(amount, ok, remaining)
-		it("returns " .. tostring(ok), function()
-			expect(wallet:trySpend(amount)).toBe(ok)
-			expect(wallet.balance).toBe(remaining)
-		end)
-	end)
+end)
 end)
 ```
 
@@ -859,39 +850,9 @@ Streaming coding rules:
 - **Data ping** (Server Stats) close to network ping. A growing gap means replication queues are backing up because the server sends more than the network can carry.
 - If the heartbeat stays low after optimizing, Roblox offers **Extended Services for Compute** to reserve more server CPU. That is a paid last resort, not a substitute for optimizing.
 
-### 11.2 Self-monitoring module (server)
+### 11.2 Self-monitoring
 
-```lua
--- ServerScriptService/Server/HealthMonitor.server.luau
-local RunService = game:GetService("RunService")
-local Stats = game:GetService("Stats")
-local Players = game:GetService("Players")
-
-local WINDOW = 60
-local frames, worst, accum = 0, 0, 0
-
-RunService.Heartbeat:Connect(function(dt)
-	frames += 1
-	accum += dt
-	if dt > worst then worst = dt end
-end)
-
-task.spawn(function()
-	while true do
-		task.wait(WINDOW)
-		local fps = frames / math.max(accum, 1e-3)
-		local memMB = Stats:GetTotalMemoryUsageMb()
-		local players = #Players:GetPlayers()
-		if fps < 50 or worst > 0.1 then
-			warn(("[Health] heartbeat %.1f fps, worst frame %d ms, mem %d MB, players %d")
-				:format(fps, worst * 1000, memMB, players))
-		end
-		frames, worst, accum = 0, 0, 0
-	end
-end)
-```
-
-`Stats:GetTotalMemoryUsageMb()` and `Stats:GetMemoryUsageMbForTag(Enum.DeveloperMemoryTag.X)` work on both server and client. Use them for coarse self-reporting, or send a periodic `LogCustomEvent("ServerMemoryMB", memMB)` sample from **one** server out of every N, to stay within analytics rate limits.
+Accumulate `RunService.Heartbeat` dt for 60 s on the server and `warn` when the average falls below 50 FPS or the worst frame is over 100 ms. Include `Stats:GetTotalMemoryUsageMb()` and the player count in the message. `Stats:GetMemoryUsageMbForTag(Enum.DeveloperMemoryTag.X)` gives per-category numbers. To stay within analytics rate limits, send a periodic `LogCustomEvent("ServerMemoryMB", mb)` sample from only a fraction of servers.
 
 ### 11.3 Network bandwidth budgets [heuristic]
 
@@ -1426,19 +1387,6 @@ POST-RELEASE (first hour, then 24 h)
 [ ] +24 h: D0 funnel steps unchanged or better; economy sources/sinks sane
 [ ] +7 d: D1/D7 vs previous cohorts and benchmark; decide keep / iterate / revert
 ```
-
----
-
-## 21. Putting it together: the bot's workflow per feature
-
-1. Write the **test plan** (§1.1) and its **analytics events** (§13) together with the feature design.
-2. Put the logic in pure modules and write **Jest specs** first or alongside (§3.2), with mocks for DataStores and services.
-3. Build. Run specs in Studio, then **Server & Clients** with 2–3 clients plus **Network Simulator**.
-4. Profile the feature in the **MicroProfiler** with `debug.profilebegin` labels. Check **F9 Memory** before and after 10 minutes of use (leaks).
-5. Check the **per-tier budget** (§7.2), and test on a real phone or the baseline device.
-6. Add regression lines, then open a PR, where CI runs lint, build and cloud Jest (§3.4).
-7. Release with the checklist (§20). Monitor errors, crashes and the funnel (§19, §14).
-8. After 7–14 days, read the KPIs against the benchmark (§16), then form a hypothesis and run an experiment (§15).
 
 ---
 
