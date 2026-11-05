@@ -26,6 +26,8 @@ raw reference for exact APIs.
 | Coming up with ideas, scoping an MVP, milestones, docs templates, postmortems | `knowledge/14-production-scope-and-idea-generation.md` |
 | Is this API/rule still current? Deprecations, forced migrations, policy timeline | `knowledge/15-platform-changes-and-deprecations.md` |
 | What reviewers praise/criticize in builds, UI, icons, thumbnails; self-critique checklist | `knowledge/16-devforum-art-building-feedback.md` |
+| Outside tools: Blender, Blockbench, Substance, Photoshop/Photopea/Krita/GIMP, Aseprite, Figma, Audacity/LMMS/BandLab, sfxr | `knowledge/17-external-tools-3d-2d-audio.md` (+ Blender manual in `reference/tools/blender-manual/`) |
+| Best YouTube lessons per topic (summarized), Studio plugins, dev tools | `knowledge/18-video-lessons-plugins-and-dev-tools.md` (+ full catalog `reference/video-library/`) |
 
 ## Start every new game from the template
 Copy `templates/starter-game/` (Rojo project: ProfileStore data, validated remotes, idempotent
