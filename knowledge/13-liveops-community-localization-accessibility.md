@@ -1319,7 +1319,7 @@ Details are in the monetization chapter. The live-ops rules:
 
 ## Sources
 
-Local creator-docs snapshot (`/home/user/Roblox/reference/creator-docs/content/en-us`):
+Local creator-docs snapshot (`reference/creator-docs/content/en-us`):
 - `production/configs.md`, `production/experiments.md`; `reference/engine/classes/ConfigService.yaml`, `ConfigSnapshot.yaml`
 - `projects/update-games.md` (Restart servers, `ServerRestartScheduled`); `reference/engine/classes/DataModel.yaml`; `reference/engine/enums/CloseReason.yaml`; `reference/engine/classes/TeleportOptions.yaml`
 - `cloud-services/data-stores/versioning-listing-and-caching.md` (versions, snapshots), `cloud-services/data-stores/best-practices.md`, `cloud-services/data-stores/right-to-be-forgotten.md`, `cloud-services/memory-stores/*`, `cloud-services/data-stores-vs-memory-stores.md`

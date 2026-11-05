@@ -2,7 +2,7 @@
 
 > Chapter purpose: give a Claude Code agent a repeatable procedure for taking an ORIGINAL Roblox game from a blank page to a live, iterating product, working alongside a human owner. Covers ideation, validation, scoping, prototyping, milestones, team roles, documentation, version control, collaboration, commissioning, budgets, kill/pivot decisions, and data-driven iteration. Templates are in Part 9; a full worked example is in Part 10.
 >
-> Written 2026-11-05. Platform facts were checked against the local official docs (`/home/user/Roblox/reference/creator-docs/content/en-us/`). Community anecdotes come from DevForum, press and podcasts. Several of those pages could not be fetched directly from this environment, so the anecdotes here are summarized from search-result excerpts and attributed. Treat any number from them as a single developer's report, not a platform statistic.
+> Written 2026-11-05. Platform facts were checked against the local official docs (`reference/creator-docs/content/en-us/`). Community anecdotes come from DevForum, press and podcasts. Several of those pages could not be fetched directly from this environment, so the anecdotes here are summarized from search-result excerpts and attributed. Treat any number from them as a single developer's report, not a platform statistic.
 
 ---
 
@@ -627,7 +627,7 @@ Roblox's RDC 2025 announcements describe discovery ranking that optimizes for di
 
 ## Sources
 
-**Official Roblox documentation (local copy: `/home/user/Roblox/reference/creator-docs/content/en-us/`)**
+**Official Roblox documentation (local copy: `reference/creator-docs/content/en-us/`)**
 - `production/game-design/prototyping.md` — paper vs. Studio prototyping, finding the fun, best practices.
 - `production/roblox-user-base.md` — platform strengths, demographics (13+ majority), session behavior, social factors.
 - `production/publishing/ip-guidelines.md` — IP policy, copyright/trademark basics, enforcement.

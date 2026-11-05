@@ -1148,7 +1148,7 @@ Take a proven loop and change **exactly one or two** of: the *verb* (click → t
 
 ## Sources
 
-Official Roblox docs (local mirror `/home/user/Roblox/.sources/Roblox_creator-docs/content/en-us`):
+Official Roblox docs (local mirror `reference/creator-docs/content/en-us`):
 - `production/game-design/core-loops.md`, `balance-virtual-economies.md`, `monetization-foundations.md`, `liveops-essentials.md`, `subscription-design.md`
 - `production/monetization/paid-random-items.md` (odds disclosure), `developer-exchange.md` (DevEx $0.0038 / $0.0054), `price-optimization.md`, `regional-pricing.md`, `subscriptions.md`
 - `production/rewarded-video-guides.md` and `production/promotion/rewarded-video-playbooks/{incremental-sim,tycoon,obby,survival,shooter,rpg,sports}.md` (opt-in/frequency benchmarks, placement strategies)

@@ -1501,7 +1501,7 @@ Level design implications:
 
 ## Sources
 
-Local official docs (Roblox Creator Docs mirror, `/home/user/Roblox/reference/creator-docs/content/en-us`):
+Local official docs (Roblox Creator Docs mirror, `reference/creator-docs/content/en-us`):
 - `characters/pathfinding.md`: agent parameters (AgentRadius 2, AgentHeight 5, AgentCanJump, AgentCanClimb, WaypointSpacing 4, Costs), PathfindingModifier (Label, PassThrough), PathfindingLink, Path.Blocked, streaming compatibility, limits (3,000 studs, 20,000 nodes)
 - `workspace/streaming/index.md`, `techniques.md`: StreamingTargetRadius (1024 recommended), StreamingMinRadius, StreamOutBehavior (Opportunistic recommended), ModelStreamingMode (Atomic/Persistent/PersistentPerPlayer), PersistentLoaded
 - `reference/engine/classes/Humanoid.yaml`: WalkSpeed 16, JumpHeight, JumpPower, UseJumpPower, MaxSlopeAngle, MoveTo

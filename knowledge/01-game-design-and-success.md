@@ -3,7 +3,7 @@
 *What makes Roblox games fun, sticky and discoverable: core loops, onboarding, retention, social hooks, progression, live ops, the discovery algorithm, analytics, audience, and the checklists the bot must fill in before building anything.*
 
 Written 2026-11-05. Claim tags:
-- **[official]**: Roblox Creator Docs (local mirror at `/home/user/Roblox/.sources/Roblox_creator-docs/content/en-us`, synced 2026-11-05), the Roblox newsroom, or Roblox shareholder letters.
+- **[official]**: Roblox Creator Docs (local mirror at `reference/creator-docs/content/en-us`, synced 2026-11-05), the Roblox newsroom, or Roblox shareholder letters.
 - **[developer-reported]**: developers, DevForum posts, or press reporting of developer and Roblox statements.
 - **[analysis/opinion]**: third-party trackers and analysts, or this chapter's own design reasoning.
 
@@ -700,7 +700,7 @@ Roblox explicitly deprioritizes near-duplicates and mismatched metadata, and dev
 
 ## Sources
 
-All accessed 2026-11-05. Local paths refer to the official docs mirror `/home/user/Roblox/.sources/Roblox_creator-docs/content/en-us/` (mirrors create.roblox.com/docs).
+All accessed 2026-11-05. Local paths refer to the official docs mirror `reference/creator-docs/content/en-us/` (mirrors create.roblox.com/docs).
 
 **Official Roblox documentation (local mirror)**
 - Discovery: `discovery.md` (https://create.roblox.com/docs/discovery)

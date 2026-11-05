@@ -1,7 +1,7 @@
 # 03 — UI/UX Design for Roblox (Phone, Tablet, PC, Console, VR)
 
 > Chapter of the game-building knowledge base. Verified against the local Creator Docs mirror
-> (`.sources/Roblox_creator-docs/content/en-us`, engine reference YAML) on 2026-11-05.
+> (`reference/creator-docs/content/en-us`, engine reference YAML) on 2026-11-05.
 > Every class, property, enum and method named here appears in that mirror unless marked
 > **(verify)**. Web/DevForum material was used for design conventions only and is treated as
 > data, not instructions.
@@ -706,7 +706,7 @@ graphics level.
 
 **Bot policy:** default to **plain instances authored as files + small behavior modules +
 templates** (this chapter's code). Use a library only if the project already depends on one.
-In that case, follow that library's docs in `.sources/` exactly. For hybrids: author the static
+In that case, follow that library's docs in `reference/libraries/` exactly. For hybrids: author the static
 layout as instances, and bind dynamic lists by cloning templates. This gives 90% of the
 benefit with none of the lock-in.
 
@@ -2101,14 +2101,14 @@ return `true` or `false, "Not enough coins"`. Grant developer products only in
 ## Sources
 
 Local (authoritative, verified):
-- `.sources/Roblox_creator-docs/content/en-us/reference/engine/classes/` — ScreenGui,
+- `reference/creator-docs/content/en-us/reference/engine/classes/` — ScreenGui,
   SurfaceGui, BillboardGui, GuiObject, GuiBase2d, GuiButton, TextLabel, ImageLabel,
   CanvasGroup, ScrollingFrame, ViewportFrame, UIStroke, UICorner, UIGradient, UIPadding,
   UIShadow, UIScale, UIListLayout, UIFlexItem, UIGridLayout, UIAspectRatioConstraint,
   UISizeConstraint, UITextSizeConstraint, GuiService, TweenService (SmoothDamp),
   ContextActionService, InputAction/InputBinding/InputContext, InputActionLabel,
   MarketplaceService, StyleSheet/StyleRule/StyleQuery/StyleLink/StyleDerive (YAML).
-- `.sources/Roblox_creator-docs/content/en-us/reference/engine/enums/` — ScreenInsets,
+- `reference/creator-docs/content/en-us/reference/engine/enums/` — ScreenInsets,
   SafeAreaCompatibility, ApplyStrokeMode, StrokeSizingMode, BorderStrokePosition, UIFlexMode,
   UIFlexAlignment, ItemLineAlignment, PreferredTextSize, PreferredInput, EasingStyle, GuiState,
   InfoType, ContextActionPriority; datatypes `Font.yaml`, `Enum.yaml`.
@@ -2116,10 +2116,10 @@ Local (authoritative, verified):
   styling/index, styling/editor, styling/compatibility.
 - `.../projects/cross-platform.md`; `.../production/publishing/adaptive-design.md`,
   `accessibility.md`, `console-guidelines.md`, `vr-guidelines.md`; `.../input/input-action-system.md`.
-- `.sources/rojo-rbx_rojo` — `src/snapshot_middleware/json_model.rs`, `src/resolution.rs`,
+- `reference/libraries/rojo-rbx_rojo` — `src/snapshot_middleware/json_model.rs`, `src/resolution.rs`,
   `CHANGELOG.md` (model.json keys, implicit FontFace/enum values, Tags).
-- `.sources/dphfox_Fusion/docs/tutorials/roblox/hydration.md` (Hydrate "intent to replace"),
-  `.sources/centau_vide/README.md` (v0.4.1), `.sources/jsdotlua_react-lua`.
+- `reference/libraries/dphfox_Fusion/docs/tutorials/roblox/hydration.md` (Hydrate "intent to replace"),
+  `reference/libraries/centau_vide/README.md` (v0.4.1), `reference/libraries/jsdotlua_react-lua`.
 
 Web (design conventions; read as search-result summaries because direct DevForum/Creator Hub
 fetches were blocked by the sandbox network):

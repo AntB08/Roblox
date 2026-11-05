@@ -2,7 +2,7 @@
 
 > Chapter goal: give the bot everything it needs to make an ORIGINAL Roblox game look good. That means the kind of build that gets praised in DevForum "Creations Feedback" threads, on Roblox dev X/Twitter, and in ArtStation/Polycount-style critique, while still running on a low-end phone.
 >
-> Written 2026-11-05. Property names, class defaults and enum values were checked against the local API reference (`.sources/Roblox_creator-docs/content/en-us/reference/engine/**.yaml`) and the client API dump (`.sources/MaximumADHD_Roblox-Client-Tracker/Full-API-Dump.json`).
+> Written 2026-11-05. Property names, class defaults and enum values were checked against the local API reference (`reference/creator-docs/content/en-us/reference/engine/**.yaml`) and the client API dump (`reference/libraries/MaximumADHD_Roblox-Client-Tracker/Full-API-Dump.json`).
 >
 > Tags: **[official]** = Roblox docs or API reference. **[community]** = DevForum and other community sources: opinions, so treat them as starting points. **[synth]** = a starting value I derived from official tutorial numbers plus community posts. Always tune [synth] values by eye in the actual scene.
 
@@ -846,7 +846,7 @@ Strategy: build the game version first. Then make a **separate "showcase" lighti
 
 ## Sources
 
-Official (local mirror of Roblox/creator-docs, `.sources/Roblox_creator-docs/content/en-us/`, plus the API dump):
+Official (local mirror of Roblox/creator-docs, `reference/creator-docs/content/en-us/`, plus the API dump):
 - Global lighting — `environment/lighting.md` — https://create.roblox.com/docs/environment/lighting
 - Atmospheric effects — `environment/atmosphere.md` — https://create.roblox.com/docs/environment/atmosphere
 - Skyboxes — `environment/skybox.md` — https://create.roblox.com/docs/environment/skybox

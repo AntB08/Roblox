@@ -1290,7 +1290,7 @@ Roblox runs on low-end phones (2–3 GB RAM). Art is usually the biggest memory 
 
 ## Sources
 
-Local official docs (`/home/user/Roblox/reference/creator-docs/content/en-us/`):
+Local official docs (`reference/creator-docs/content/en-us/`):
 - `art/blender.md` (units, import/export axes, FBX scale table)
 - `art/modeling/specifications.md`, `export-requirements.md`, `texture-specifications.md`, `surface-appearance.md`, `assign-textures.md`, `reimport.md`, `rigging.md`, `roblox-blender-plugin.md`
 - `parts/meshes.md` (importer naming conventions, RenderFidelity distances, CollisionFidelity), `parts/solid-modeling.md`, `parts/procedural-models.md`, `parts/model-generation.md`, `parts/models.md`, `parts/textures-decals.md`, `parts/materials.md`

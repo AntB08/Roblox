@@ -1,7 +1,7 @@
 # 04 — Production-Quality Luau Engineering for Roblox
 
 > Audience: a Claude Code bot that builds original Roblox games in Luau (Rojo/Wally toolchain or Studio).
-> Accurate as of 2026-11-05. APIs were checked against the local engine reference mirror (Studio `0.746`, `/home/user/Roblox/.sources/Roblox_creator-docs/content/en-us/reference/engine`). Library versions checked locally: ProfileStore 1.0.3, sleitnick/trove 1.8.0, sleitnick/signal 2.0.3, evaera/promise 4.0.0, jecs 0.11.0, Blink 0.18.9, StyLua 0.32.0.
+> Accurate as of 2026-11-05. APIs were checked against the local engine reference mirror (Studio `0.746`, `reference/creator-docs/content/en-us/reference/engine`). Library versions checked locally: ProfileStore 1.0.3, sleitnick/trove 1.8.0, sleitnick/signal 2.0.3, evaera/promise 4.0.0, jecs 0.11.0, Blink 0.18.9, StyLua 0.32.0.
 
 ---
 
@@ -1813,7 +1813,7 @@ RunService.Heartbeat:Connect(function(dt)
 end)
 ```
 
-jecs features: relationships (`jecs.pair(ChildOf, parent)`), wildcards, hooks (`OnAdd` / `OnChange` / `OnRemove`), cached queries (`:cached()`), and query filters (`:with`, `:without`). See `/home/user/Roblox/.sources/Ukendio_jecs/how_to/`.
+jecs features: relationships (`jecs.pair(ChildOf, parent)`), wildcards, hooks (`OnAdd` / `OnChange` / `OnRemove`), cached queries (`:cached()`), and query filters (`:with`, `:without`). See `reference/libraries/Ukendio_jecs/how_to/`.
 
 ---
 ## 8. Generic round-based game loop
@@ -2578,9 +2578,9 @@ my-game/
 ## Sources
 
 Local (verified):
-- Engine API reference YAML (Studio 0.746): `/home/user/Roblox/.sources/Roblox_creator-docs/content/en-us/reference/engine/` — classes `RemoteEvent`, `UnreliableRemoteEvent`, `DataStoreService`, `GlobalDataStore`, `OrderedDataStore`, `MemoryStore*`, `MessagingService`, `MarketplaceService` (BindReceiptHandler), `TeleportService`, `TeleportOptions`, `TextService`, `TextChatService`, `HttpService`, `Players`, `Player`, `Workspace` (AuthorityMode, SignalBehavior, PlayerCharacterDestroyBehavior), `RunService`, `Actor`, `Model`; enums `RunContext`, `ModelStreamingMode`, `AuthorityMode`; libraries `task`, `buffer`, `table`.
+- Engine API reference YAML (Studio 0.746): `reference/creator-docs/content/en-us/reference/engine/` — classes `RemoteEvent`, `UnreliableRemoteEvent`, `DataStoreService`, `GlobalDataStore`, `OrderedDataStore`, `MemoryStore*`, `MessagingService`, `MarketplaceService` (BindReceiptHandler), `TeleportService`, `TeleportOptions`, `TextService`, `TextChatService`, `HttpService`, `Players`, `Player`, `Workspace` (AuthorityMode, SignalBehavior, PlayerCharacterDestroyBehavior), `RunService`, `Actor`, `Model`; enums `RunContext`, `ModelStreamingMode`, `AuthorityMode`; libraries `task`, `buffer`, `table`.
 - Creator docs: `cloud-services/data-stores/error-codes-and-limits.md`, `cloud-services/memory-stores/index.md`, `cloud-services/cross-server-messaging.md`, `cloud-services/http-service.md`, `scripting/events/remote.md`, `scripting/events/deferred.md`, `scripting/security/*`, `projects/server-authority/index.md`, `ui/text-filtering.md`, `chat/in-experience-text-chat.md`.
-- Luau: `/home/user/Roblox/.sources/luau-lang_site/src/content/docs/` (syntax incl. `const`, type functions, OOP typing), `news/2025-12-19-luau-recap-runtime-2025.md`; RFCs `/home/user/Roblox/.sources/luau-lang_rfcs/docs/`.
+- Luau: `reference/luau/src/content/docs/` (syntax incl. `const`, type functions, OOP typing), `news/2025-12-19-luau-recap-runtime-2025.md`; RFCs `reference/luau/docs/`.
 - Libraries: `MadStudioRoblox_ProfileStore` (ProfileStore.luau, docs/tutorial, docs/devproducts, docs/api), `Sleitnick_RbxUtil` (trove 1.8.0, signal 2.0.3), `Sleitnick_Knit/ARCHIVAL.md`, `evaera_roblox-lua-promise`, `1Axen_blink/docs`, `Ukendio_jecs/how_to`, `Kampfkarren_selene/docs`, `JohnnyMorganz_StyLua`, `JohnnyMorganz_luau-lsp`, `rojo-rbx_rojo`, `UpliftGames_wally`.
 
 Web (2025–2026):

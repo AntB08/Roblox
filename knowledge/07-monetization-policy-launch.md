@@ -1,7 +1,7 @@
 # 07 — Monetization, Economy, Policy & Launch
 
 > Snapshot date: **2026-11-05**. Most facts come from the local official Creator Docs mirror
-> (`.sources/Roblox_creator-docs`, last commit 2026-11-05) and were checked against 2025–2026
+> (`reference/creator-docs`, last commit 2026-11-05) and were checked against 2025–2026
 > newsroom and DevForum coverage. Roblox changes numbers often (rates, fees, thresholds). Before
 > you quote a number to the user as current, run `scripts/kb_search.sh "<topic>" docs`.
 > Items marked **[UNCERTAIN]** could not be confirmed from a primary source.
@@ -471,7 +471,7 @@ These are common Roblox price points, not official requirements. Prices ending i
 - Disclose that it's an ad. Don't let the character take damage while an ad plays (pause damage or use safe zones).
 - Optional setting: **"Exclude your most likely purchasers"**, if the same reward can also be bought.
 - Flow: client calls `AdService:GetAdAvailabilityNowAsync(Enum.AdFormat.RewardedVideo)` → server calls `AdService:CreateAdRewardFromDevProductId(id)` and `AdService:ShowRewardedVideoAdAsync(player, reward)` → reward granted through **your existing ProcessReceipt** (`ProductPurchaseChannel.AdReward`). Track it with `RegisterAdOpportunityAsync` and placement IDs.
-- Full sample: `.sources/.../production/promotion/rewarded-video-ads.md`. Don't add a **second** `ProcessReceipt`. Add the ad reward product to the grants table in §3.2.
+- Full sample: `reference/creator-docs/content/en-us/production/promotion/rewarded-video-ads.md`. Don't add a **second** `ProcessReceipt`. Add the ad reward product to the grants table in §3.2.
 
 ---
 
@@ -1064,7 +1064,7 @@ end)
 
 ## Sources
 
-**Local official docs mirror** (`/home/user/Roblox/.sources/Roblox_creator-docs/content/en-us`, commit dated 2026-11-05; same content as `reference/creator-docs`):
+**Local official docs mirror** (`reference/creator-docs/content/en-us`, commit dated 2026-11-05; same content as `reference/creator-docs`):
 - `production/monetization/`: `index.md`, `passes.md`, `developer-products.md`, `subscriptions.md`, `private-servers.md`, `paid-access-robux.md`, `paid-access-local-currency.md`, `avatar-items.md`, `avatar-creation-token.md`, `immersive-ads.md`, `commerce-products.md`, `developer-exchange.md`, `18-plus-devex-rate.md`, `engagement-based-payouts.md`, `roblox-plus.md`, `robux-transfers.md`, `shop.md`, `managed-pricing.md`, `price-optimization.md`, `regional-pricing.md`, `paid-random-items.md`
 - `creator-rewards.md`, `discovery.md`, `marketplace/marketplace-fees-and-commissions.md`
 - `production/promotion/`: `content-maturity.md`, `rewarded-video-ads.md`, `ads-manager.md`, `search-ads.md`, `advertise-on-roblox.md`, `ad-integrations.md`, `comply-with-advertising-standards.md`, `social-media-links.md`

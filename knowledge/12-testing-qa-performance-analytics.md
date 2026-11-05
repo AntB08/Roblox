@@ -1,8 +1,8 @@
 # 12 — Testing, QA, Performance and Analytics
 
-> Chapter scope: how to prove a Roblox game works (QA process, Studio test modes, automated tests, CI), how to keep it fast (profiling tools, budgets, common performance killers, server and network health), and how to measure and improve it once it is live (Roblox Analytics, `AnalyticsService` custom events, funnels, experiments, KPIs, live ops, error monitoring, crash analysis).
+> Scope: QA process, Studio test modes, automated tests and CI, performance profiling and budgets, analytics, experiments, KPIs, live ops, error and crash monitoring.
 >
-> Last verified: 2026-11-05 against the local creator-docs snapshot (`reference/creator-docs/content/en-us`), the Jest Roblox repo (`reference/libraries/Roblox_jest-roblox`) and the Lune repo (`reference/libraries/lune-org_lune`). Facts marked **[heuristic]** are community or studio rules of thumb, not Roblox-published limits. Facts marked **[verify]** could not be confirmed against official docs from this environment and should be checked before you depend on them.
+> Last verified: 2026-11-05 against the local creator-docs snapshot (`reference/creator-docs/content/en-us`), the Jest Roblox repo (`reference/libraries/Roblox_jest-roblox`) and the Lune repo (`reference/libraries/lune-org_lune`). Facts marked **[heuristic]** are community or studio rules of thumb, not Roblox-published limits. **[verify]** means it could not be confirmed against official docs here.
 
 ---
 
@@ -11,7 +11,7 @@
 1. **Test in the right mode.** Use **Test** (F5) for quick solo checks, **Server & Clients** with 2–3 clients (up to 8) for anything that replicates, and real devices for performance numbers. Studio runs server and client in one process, so its memory and FPS figures are *not* representative.
 2. **Never point Studio at production DataStores.** Keep a separate **test universe** (a copy of the game) with "Enable Studio Access to API Services" on, and turn it off in the live game. In unit tests, inject a mock DataStore instead of calling `DataStoreService` directly.
 3. **Write pure logic as ModuleScripts with dependency injection** so you can unit-test them with **Jest Roblox** (`roblox/jest` + `roblox/jest-globals`, v3.x via Wally). Run them in Studio, or headless in CI through the **Open Cloud Luau Execution API** against a *test place*.
-4. **Every release goes through the same checklist:** smoke test, regression list, multi-client test, low-end phone test, DataStore save/load round-trip, purchase test, error-report check one hour after publish. (Checklist in §16.)
+4. **Every release goes through the same checklist:** smoke test, regression list, multi-client test, low-end phone test, DataStore save/load round-trip, purchase test, error-report check one hour after publish. (Checklist in §20.)
 5. **Frame budget:** 16.67 ms per frame for 60 FPS, 33.3 ms for 30 FPS. The server heartbeat is capped at 60 Hz; sustained values below ~55 mean the server is overloaded.
 6. **Server memory:** the server gets `6.25 GiB + 100 MiB × peak players`. Stay below 50% of that. On the client, design for **2–4 GB Android phones** (about 60% of Android players, and Android is about 65% of a typical game's players).
 7. **The top performance killers** are per-frame loops that do real work, unthrottled `Touched` handlers, many server-side Humanoids, unanchored decorative parts, Precise collision fidelity on meshes, server-side tweens, large layered transparent effects, and remotes fired every frame. Fix those first.
@@ -53,7 +53,7 @@ Label each case by realm and add exploit, DataStore, edge, UI and network cases.
 
 ### 1.2 Smoke test (every build, about 5 minutes)
 
-A smoke test answers one question: *is the build fundamentally playable?* Run it after every meaningful change, and always before publishing.
+Is the build playable at all? Run after every meaningful change and before every publish.
 
 1. Start **Test** (F5). The Output window shows **no red errors** during load.
 2. The player spawns, moves, jumps and the camera behaves.
@@ -63,11 +63,11 @@ A smoke test answers one question: *is the build fundamentally playable?* Run it
 6. Start **Server & Clients** with 2 clients. Each client sees the other, and shared state (leaderboards, doors, NPCs) matches on both.
 7. Open the Developer Console (F9) on a client. The Log tab has no new errors or warnings flood.
 
-If any step fails, the build is not shippable. Fix it before continuing with feature work.
+Any failure means the build doesn't ship.
 
 ### 1.3 Regression checklist (per release)
 
-Keep `qa/regression.md` in the repo and grow it every time a bug is fixed: *each fixed bug adds one line that would have caught it*. Group the lines by system:
+Keep `qa/regression.md` in the repo. Each fixed bug adds one line that would have caught it:
 
 ```
 [Core]       spawn, respawn after death, reset character, team assignment
@@ -571,11 +571,11 @@ Automated tests prove the game *works*. Playtests show whether it is *understand
 
 Add a small, rate-limited feedback UI (for example after 10 minutes of play, or from the settings menu): a 1–5 rating plus an optional category (Bug / Confusing / Suggestion) plus short text. On the server, **filter text** with `TextService:FilterStringAsync` before storing or displaying it, store it in a DataStore or MemoryStore queue in a separate "Feedback" store, and log `LogCustomEvent(player, "FeedbackRating", rating)` for aggregation. Never ask for personal information.
 
-The Creator Hub **Feedback** page (Analytics → Feedback) also shows platform ratings and comments. Check it after each update.
+Also check the Creator Hub **Feedback** page after each update.
 
 ### 5.4 What to observe in data (FTUE)
 
-The **onboarding funnel** (§10) is the quantitative version of a playtest. Typical FTUE steps: joined → loaded → closed intro → first core action → first reward → first upgrade or purchase with soft currency → second loop → first session reaches 5 min → second session (D1). Look for the **single largest drop** between consecutive steps and fix that first.
+The **onboarding funnel** (§14) is the quantitative version of a playtest. Find the **single largest drop** between consecutive steps and fix that first.
 
 ---
 
@@ -1271,7 +1271,7 @@ POST-RELEASE (first hour, then 24 h)
 
 ## Sources
 
-Local creator-docs (`/home/user/Roblox/reference/creator-docs/content/en-us/`):
+Local creator-docs (`reference/creator-docs/content/en-us/`):
 - Studio: `studio/testing-modes.md`, `includes/studio/playtest-modes.md`, `studio/device-simulator.md`, `studio/network-simulator.md`, `studio/developer-console.md`.
 - Performance: `performance-optimization/identify.md`, `design.md`, `improve.md`, `test-on-hardware.md`, `scene-analysis.md`, `microprofiler/index.md`, `microprofiler/use-microprofiler.md`; `workspace/streaming/index.md`.
 - Data and publishing: `cloud-services/data-stores/index.md`, `production/publishing/publish-games-and-places.md` (early testers), `production/publishing/thumbnails.md` (personalization).
@@ -1279,7 +1279,7 @@ Local creator-docs (`/home/user/Roblox/reference/creator-docs/content/en-us/`):
 - Engine API: `reference/engine/classes/AnalyticsService.yaml`, `ScriptContext.yaml`, `LogService.yaml`.
 - Open Cloud: `cloud/guides/usage-place-publishing.md`, `cloud/guides/error-reporting/index.md`, `cloud/guides/analytics/benchmarks.md`, `cloud-services/http-service.md` (Luau Execution operations), `studio/mcp-open-cloud.md` (scope `universe.place.luau-execution-session:*`).
 
-Libraries: `/home/user/Roblox/reference/libraries/Roblox_jest-roblox/docs/docs/` (GettingStarted, CLI, MockFunctions, JestBenchmarkAPI) and `scripts/run-tests.luau`; `/home/user/Roblox/reference/libraries/lune-org_lune/crates/*/types.d.luau`.
+Libraries: `reference/libraries/Roblox_jest-roblox/docs/docs/` (GettingStarted, CLI, MockFunctions, JestBenchmarkAPI) and `scripts/run-tests.luau`; `reference/libraries/lune-org_lune/crates/*/types.d.luau`.
 
 Web (treated as data): [DevForum, Open Cloud Engine API for Executing Luau](https://devforum.roblox.com/t/beta-open-cloud-engine-api-for-executing-luau/3172185); [rbxcloud luau_execution.rs](https://docs.rs/crate/rbxcloud/latest/source/src/rbx/v2/luau_execution.rs) (search snippet only); [rocale-cli](https://github.com/fitzpr/rocale-cli). The official Luau Execution reference (create.roblox.com) could not be fetched from this environment, so its fields are marked [verify].
 

@@ -1340,14 +1340,14 @@ Each phase has an **exit artifact**. Don't move on without it.
 ## Sources
 
 Local (verified):
-- Rojo 7.7.1 source: `.sources/rojo-rbx_rojo/src/cli/{build,serve,sourcemap,syncback,upload,init}.rs`, `src/project.rs`, `src/snapshot_middleware/{mod,dir,json_model,meta_file,lua,util}.rs`, `src/rojo_ref.rs`, `assets/project-templates/place/default.project.json`, `test-projects/{tags,attributes,terrain}`, `CHANGELOG.md`
-- Wally: `.sources/UpliftGames_wally/README.md`, `src/commands/`
-- luau-lsp 1.70.1: `.sources/JohnnyMorganz_luau-lsp/README.md`, `src/main.cpp`, `src/AnalyzeCli.cpp`, `editors/code/src/roblox.ts`, `CHANGELOG.md`
-- selene 0.32.0: `.sources/Kampfkarren_selene/docs/src/roblox.md`, `CHANGELOG.md`
-- StyLua 2.6.0: `.sources/JohnnyMorganz_StyLua/README.md`
-- Lune 0.11.1: `.sources/lune-org_lune/crates/lune-std-roblox/{src/lib.rs,types.d.luau}`, `crates/lune-roblox/src/lib.rs`, `crates/lune-std-{fs,net,serde,process}/types.d.luau`, `crates/lune/src/cli/`, `CHANGELOG.md`
-- Rokit 1.2.0: `.sources/rojo-rbx_rokit/README.md`, `src/cli/`
-- Roblox Creator Docs (`.sources/Roblox_creator-docs/content/en-us/`): `studio/mcp.md`, `studio/mcp-open-cloud.md`, `studio/cli.md`, `cloud/guides/usage-place-publishing.md`, `cloud/guides/usage-assets.md`, `cloud/guides/usage-messaging.md`, `cloud/reference/rate-limits.md`, `cloud/auth/api-keys.md`, `reference/cloud/openapi.json` (Luau Execution, DataStores v2, Assets, Messaging paths and schemas)
+- Rojo 7.7.1 source: `reference/libraries/rojo-rbx_rojo/src/cli/{build,serve,sourcemap,syncback,upload,init}.rs`, `src/project.rs`, `src/snapshot_middleware/{mod,dir,json_model,meta_file,lua,util}.rs`, `src/rojo_ref.rs`, `assets/project-templates/place/default.project.json`, `test-projects/{tags,attributes,terrain}`, `CHANGELOG.md`
+- Wally: `reference/libraries/UpliftGames_wally/README.md`, `src/commands/`
+- luau-lsp 1.70.1: `reference/libraries/JohnnyMorganz_luau-lsp/README.md`, `src/main.cpp`, `src/AnalyzeCli.cpp`, `editors/code/src/roblox.ts`, `CHANGELOG.md`
+- selene 0.32.0: `reference/libraries/Kampfkarren_selene/docs/src/roblox.md`, `CHANGELOG.md`
+- StyLua 2.6.0: `reference/libraries/JohnnyMorganz_StyLua/README.md`
+- Lune 0.11.1: `reference/libraries/lune-org_lune/crates/lune-std-roblox/{src/lib.rs,types.d.luau}`, `crates/lune-roblox/src/lib.rs`, `crates/lune-std-{fs,net,serde,process}/types.d.luau`, `crates/lune/src/cli/`, `CHANGELOG.md`
+- Rokit 1.2.0: `reference/libraries/rojo-rbx_rokit/README.md`, `src/cli/`
+- Roblox Creator Docs (`reference/creator-docs/content/en-us/`): `studio/mcp.md`, `studio/mcp-open-cloud.md`, `studio/cli.md`, `cloud/guides/usage-place-publishing.md`, `cloud/guides/usage-assets.md`, `cloud/guides/usage-messaging.md`, `cloud/reference/rate-limits.md`, `cloud/auth/api-keys.md`, `reference/cloud/openapi.json` (Luau Execution, DataStores v2, Assets, Messaging paths and schemas)
 - Release tags via `git ls-remote`: wally v0.3.2, darklua v0.19.0, wally-package-types v1.7.0, pesde v0.7.4
 
 Web (treated as data):
