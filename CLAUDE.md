@@ -25,6 +25,11 @@ raw reference for exact APIs.
 | Updates, events, daily rewards, codes, admin tools, community, translation, accessibility | `knowledge/13-liveops-community-localization-accessibility.md` |
 | Coming up with ideas, scoping an MVP, milestones, docs templates, postmortems | `knowledge/14-production-scope-and-idea-generation.md` |
 
+## Start every new game from the template
+Copy `templates/starter-game/` (Rojo project: ProfileStore data, validated remotes, idempotent
+purchases, policy/analytics/config wrappers, daily rewards, codes, UI/FX helpers, and one complete
+"Collect" vertical slice). Follow its README to rename and set IDs. Its own `CLAUDE.md` lists rules.
+
 ## Look up exact facts (never guess an API)
 ```bash
 scripts/kb_search.sh "TweenInfo" api        # class/property/enum reference (official YAML + API dump)
@@ -32,7 +37,10 @@ scripts/kb_search.sh "session lock" docs    # official Creator Docs (CC-BY-4.0 m
 scripts/kb_search.sh "type function" luau   # Luau language docs + RFCs
 scripts/kb_search.sh "Trove" libs           # open-source library source code
 scripts/kb_search.sh "ProfileStore" examples
+scripts/kb_search.sh "hitbox" devforum     # local DevForum mirror (build it: python3 scripts/fetch_devforum.py)
 ```
+- Check code you write into guides: `scripts/check_guide_code.py <luau-compile>` (syntax) and
+  `scripts/check_guide_api.py` (classes, services, enums, deprecated members vs the API dump).
 - Engine reference: `reference/creator-docs/content/en-us/reference/engine/classes/<Class>.yaml`
 - Full API dump (every member, tags like Deprecated): `reference/api/API-Dump.txt`
 - Luau type definitions for the engine: `reference/api/LuauTypes.d.luau`
