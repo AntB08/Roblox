@@ -82,13 +82,18 @@ class HtmlToMd(HTMLParser):
         self.pre = 0
         self.href: list[str | None] = []
         self.skip = 0
+        self.divs: list[bool] = []  # per open <div>: does it start a skipped region?
 
     def handle_starttag(self, tag, attrs):
         a = dict(attrs)
         cls = a.get("class") or ""
-        if self.skip or "lightbox-wrapper" in cls and tag == "div":
-            pass
-        if tag in ("script", "style") or (tag == "div" and "meta" == cls):
+        if tag == "div":
+            is_skip = cls == "meta"  # image caption/size box inside Discourse lightboxes
+            self.divs.append(is_skip)
+            if is_skip:
+                self.skip += 1
+                return
+        if tag in ("script", "style"):
             self.skip += 1
         elif tag == "pre":
             self.pre += 1
@@ -120,6 +125,9 @@ class HtmlToMd(HTMLParser):
             pass
 
     def handle_endtag(self, tag):
+        if tag == "div" and self.divs and self.divs.pop():
+            self.skip = max(0, self.skip - 1)
+            return
         if tag in ("script", "style"):
             self.skip = max(0, self.skip - 1)
         elif tag == "pre":
@@ -223,7 +231,32 @@ def fetch_topic(t: dict, name: str, min_reply_likes: int, index):
     return True
 
 
+def refetch_images(index, names):
+    """Re-download topics saved by the old converter (which dropped text after the first image).
+    Only files older than .sources/devforum/.fixtime (written when the converter was fixed)."""
+    marker = OUT / ".fixtime"
+    cutoff = float(marker.read_text().strip()) if marker.exists() else time.time()
+    for fn in sorted(p for n in names for p in (OUT / n).glob("*.md")):
+        if fn.stat().st_mtime >= cutoff:
+            continue
+        if "[img:" not in fn.read_text(encoding="utf-8", errors="ignore"):
+            continue
+        name = fn.parent.name
+        tid = int(fn.name.split("-", 1)[0])
+        fn.rename(fn.with_suffix(".old"))
+        ok = fetch_topic({"id": tid, "title": fn.stem, "slug": fn.stem.split("-", 1)[1]}, name, PLAN[name][4], index)
+        if ok:
+            fn.with_suffix(".old").unlink()
+        else:
+            fn.with_suffix(".old").rename(fn)
+
+
 def main(argv):
+    if "--refetch-images" in argv:
+        OUT.mkdir(parents=True, exist_ok=True)
+        with open(OUT / "index.tsv", "a", encoding="utf-8") as index:
+            refetch_images(index, [a for a in argv if not a.startswith("--")] or list(PLAN))
+        return
     names = [a for a in argv if not a.startswith("--")] or list(PLAN)
     if "--list" in argv:
         for k, v in PLAN.items():
