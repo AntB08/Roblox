@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Search the knowledge base. Usage:
 #   scripts/kb_search.sh "UpdateAsync"            # guides + reference
-#   scripts/kb_search.sh "ParticleEmitter" api    # only one area: knowledge|docs|api|luau|libs|examples|devforum (local mirror, run scripts/fetch_devforum.py first)
+#   scripts/kb_search.sh "ParticleEmitter" api    # only one area: knowledge|docs|api|luau|libs|examples|devforum|tools|videos (local mirror, run scripts/fetch_devforum.py first)
 set -euo pipefail
 cd "$(dirname "$0")/.."
 q="$1"; area="${2:-all}"
@@ -13,6 +13,9 @@ case "$area" in
   libs) paths=(reference/libraries);;
   examples) paths=(reference/example-games);;
   devforum) paths=(.sources/devforum);;
+  tools) paths=(reference/tools reference/video-library .sources/JannisX11_blockbench.net .sources/audacity_audacity-support);;
+  videos) paths=(reference/video-library);;
+  transcripts) paths=(.sources/youtube-transcripts);;
   *) paths=(knowledge reference);;
 esac
 if command -v rg >/dev/null; then rg -n -i --max-columns 200 -m 5 "$q" "${paths[@]}" | head -200

@@ -22,10 +22,14 @@ REPOS=(
   frrazer/roblox-game-boilerplate thegamerbay/simple-roblox-game
   AntonyPerez0/anomaly-grove Dekkonot/crossroads-rojo yoelthewhale/brickblast-roblox
   geartt01/astral-hatchery geartt01/bonk-blocks
+  # Tool docs (local study only; no license for redistribution)
+  JannisX11/blockbench.net audacity/audacity-support
 )
+mapfile -t -O "${#REPOS[@]}" REPOS < <(grep -v "^#" scripts/extra_repos.txt 2>/dev/null || true)
 for r in "${REPOS[@]}"; do
   d=".sources/${r//\//_}"
   if [ -d "$d/.git" ]; then git -C "$d" pull -q --depth 1 || echo "update failed: $r"
   else git clone -q --depth 1 "https://github.com/$r" "$d" || echo "clone failed: $r"; fi
 done
+[ -d .sources/blender-manual/.git ] || git clone -q --depth 1 https://projects.blender.org/blender/blender-manual.git .sources/blender-manual || echo "clone failed: blender-manual"
 du -sh .sources
