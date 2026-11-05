@@ -621,6 +621,9 @@ local SEED, SIZE, CELL = 4242, 512, 8
 local BASE_Y, AMP, WATER_Y = 0, 40, 6
 
 Terrain:Clear()
+-- Water first: FillBlock overwrites voxels, so the land columns below replace water where they rise above it.
+Terrain:FillBlock(CFrame.new(0, WATER_Y / 2, 0), Vector3.new(SIZE, WATER_Y, SIZE), Enum.Material.Water)
+
 local rng = Random.new(SEED)
 local ox, oz = rng:NextNumber(0, 1000), rng:NextNumber(0, 1000)
 
@@ -640,11 +643,10 @@ for x = -SIZE / 2, SIZE / 2 - CELL, CELL do
 	end
 	task.wait() -- yield so Studio/server stays responsive
 end
-Terrain:FillBlock(CFrame.new(0, WATER_Y / 2, 0), Vector3.new(SIZE, WATER_Y, SIZE), Enum.Material.Water)
 print("Terrain generated, seed", SEED)
 ```
 
-(`FillBlock` won't overwrite with Water where the terrain is already solid? Verify the behavior. If water floods the hills, fill water first and terrain second, or use `Terrain:ReplaceMaterial` / `WriteVoxels` with explicit occupancy.)
+(For finer control, such as caves, overhangs or smooth shorelines, use `Terrain:WriteVoxels` with explicit material and occupancy arrays per 4-stud voxel, in chunks of ≤ 64³ voxels.)
 
 ### 8.3 Terrain strategy
 
