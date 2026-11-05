@@ -1,0 +1,47 @@
+{
+  "name": "@quenty/streamingutils",
+  "version": "10.33.1",
+  "description": "Provides utilities for working with Roblox's streaming system",
+  "keywords": [
+    "Roblox",
+    "Nevermore",
+    "Lua",
+    "Streaming",
+    "Promises"
+  ],
+  "bugs": {
+    "url": "https://github.com/Quenty/NevermoreEngine/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Quenty/NevermoreEngine.git",
+    "directory": "src/streamingutils/"
+  },
+  "funding": {
+    "type": "patreon",
+    "url": "https://www.patreon.com/quenty"
+  },
+  "license": "MIT",
+  "scripts": {
+    "preinstall": "npx only-allow pnpm"
+  },
+  "contributors": [
+    "Quenty"
+  ],
+  "dependencies": {
+    "@quenty/instanceutils": "workspace:*",
+    "@quenty/loader": "workspace:*",
+    "@quenty/maid": "workspace:*",
+    "@quenty/nevermore-test-runner": "workspace:*",
+    "@quenty/playermock": "workspace:*",
+    "@quenty/promise": "workspace:*",
+    "@quenty/remoting": "workspace:*",
+    "@quenty/rx": "workspace:*",
+    "@quenty/servicebag": "workspace:*",
+    "@quenty/statestack": "workspace:*",
+    "@quentystudios/jest-lua": "3.10.0-quenty.2"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

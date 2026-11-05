@@ -1,0 +1,24 @@
+[package]
+name = "JestGlobals"
+authors = { workspace = true }
+description = { workspace = true }
+repository = { workspace = true }
+homepage = { workspace = true }
+documentation = { workspace = true }
+keywords = { workspace = true }
+version = { workspace = true }
+license = { workspace = true }
+content_root = "src"
+files = ["*", "!**/__*__/**"]
+
+[config]
+registry_index = "true"
+
+[dependencies]
+LuauPolyfill = { workspace = true }
+Expect = { path = "../expect" }
+JestEnvironment = { path = "../jest-environment" }
+JestTypes = { path = "../jest-types" }
+
+[dev_dependencies]
+JestGlobals = { path = "../jest-globals" }

@@ -1,0 +1,14 @@
+{
+  "name": "RadialImageTest",
+  "tree": {
+    "$className": "DataModel",
+    "ServerScriptService": {
+      "$properties": {
+        "LoadStringEnabled": true
+      },
+      "radial-image": {
+        "$path": ".."
+      }
+    }
+  }
+}

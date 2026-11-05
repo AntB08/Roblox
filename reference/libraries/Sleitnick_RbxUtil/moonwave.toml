@@ -1,0 +1,21 @@
+gitRepoUrl = "https://github.com/Sleitnick/RbxUtil"
+gitSourceBranch = "main"
+
+[[classOrder]]
+section = "BufferUtil"
+classes = ["BufferUtil", "BufferReader", "BufferWriter"]
+
+[[classOrder]]
+section = "Input"
+classes = ["Input", "PreferredInput", "Keyboard", "Mouse", "Touch", "Gamepad"]
+
+[[classOrder]]
+section = "Remote Comm"
+classes = ["Comm", "ServerComm", "ClientComm", "RemoteSignal", "ClientRemoteSignal", "RemoteProperty", "ClientRemoteProperty"]
+
+[home]
+enabled = true
+includeReadme = true
+
+[docusaurus]
+tagline = "Utility modules for Roblox"

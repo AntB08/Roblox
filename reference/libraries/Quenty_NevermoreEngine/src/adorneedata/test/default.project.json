@@ -1,0 +1,14 @@
+{
+  "name": "AdorneeDataTest",
+  "tree": {
+    "$className": "DataModel",
+    "ServerScriptService": {
+      "$properties": {
+        "LoadStringEnabled": true
+      },
+      "adorneedata": {
+        "$path": ".."
+      }
+    }
+  }
+}

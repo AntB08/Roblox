@@ -1,0 +1,42 @@
+{
+  "name": "@quenty/time",
+  "version": "2.8.1",
+  "description": "Time based parsing and formatting built on Roblox's DateTime, with PHP-style format codes. All calculations are in UTC.",
+  "keywords": [
+    "Roblox",
+    "Nevermore",
+    "Lua",
+    "Time"
+  ],
+  "bugs": {
+    "url": "https://github.com/Quenty/NevermoreEngine/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Quenty/NevermoreEngine.git",
+    "directory": "src/time/"
+  },
+  "funding": {
+    "type": "patreon",
+    "url": "https://www.patreon.com/quenty"
+  },
+  "license": "MIT",
+  "scripts": {
+    "preinstall": "npx only-allow pnpm"
+  },
+  "contributors": [
+    "Quenty"
+  ],
+  "dependencies": {
+    "@quenty/clienttranslator": "workspace:*",
+    "@quenty/loader": "workspace:*",
+    "@quenty/nevermore-test-runner": "workspace:*",
+    "@quentystudios/jest-lua": "3.10.0-quenty.2"
+  },
+  "devDependencies": {
+    "@quenty/loader": "workspace:*"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

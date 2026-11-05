@@ -1,0 +1,6 @@
+{
+    "name": "jest-snapshot-serializer-raw",
+    "tree": {
+        "$path": "src"
+    }
+}

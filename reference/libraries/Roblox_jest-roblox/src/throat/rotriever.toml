@@ -1,0 +1,22 @@
+[package]
+name = "Throat"
+authors = { workspace = true }
+description = "Throttle a collection of promise returning functions."
+repository = { workspace = true }
+homepage = { workspace = true }
+documentation = "https://github.com/ForbesLindesay/throat/blob/6.0.1/README.md"
+keywords = { workspace = true }
+version = { workspace = true }
+license = { workspace = true }
+content_root = "src"
+files = ["*", "!**/__*__/**"]
+
+[config]
+registry_index = "true"
+
+[dependencies]
+JestTypes = { path = "../jest-types" }
+Promise = { workspace = true }
+
+[dev_dependencies]
+JestGlobals = { path = "../jest-globals" }

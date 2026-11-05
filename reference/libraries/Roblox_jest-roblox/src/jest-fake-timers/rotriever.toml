@@ -1,0 +1,23 @@
+[package]
+name = "JestFakeTimers"
+authors = { workspace = true }
+description = { workspace = true }
+repository = { workspace = true }
+homepage = { workspace = true }
+documentation = { workspace = true }
+keywords = { workspace = true }
+version = { workspace = true }
+license = { workspace = true }
+content_root = "src"
+files = ["*", "!**/__*__/**"]
+
+[config]
+registry_index = "true"
+
+[dependencies]
+LuauPolyfill = { workspace = true }
+JestGetType = { path = "../jest-get-type" }
+JestMock = { path = "../jest-mock" }
+
+[dev_dependencies]
+JestGlobals = { path = "../jest-globals" }

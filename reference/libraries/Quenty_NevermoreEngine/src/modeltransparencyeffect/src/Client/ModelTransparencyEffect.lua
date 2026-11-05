@@ -1,0 +1,204 @@
+--!strict
+--[=[
+	Allows a model to have transparency set locally on the client
+
+	@client
+	@class ModelTransparencyEffect
+]=]
+
+local require = require(script.Parent.loader).load(script)
+
+local AccelTween = require("AccelTween")
+local BaseObject = require("BaseObject")
+local HideUtils = require("HideUtils")
+local ModelTransparencyMode = require("ModelTransparencyMode")
+local RxInstanceUtils = require("RxInstanceUtils")
+local ServiceBag = require("ServiceBag")
+local StepUtils = require("StepUtils")
+local TransparencyService = require("TransparencyService")
+
+local ModelTransparencyEffect = setmetatable({}, BaseObject)
+ModelTransparencyEffect.ClassName = "ModelTransparencyEffect"
+ModelTransparencyEffect.__index = ModelTransparencyEffect
+
+export type ModelTransparencyEffect =
+	typeof(setmetatable(
+		{} :: {
+			_serviceBag: ServiceBag.ServiceBag,
+			_transparency: AccelTween.AccelTween,
+			_transparencyService: TransparencyService.TransparencyService,
+			_transparencyServiceMethodName: ModelTransparencyMode.ModelTransparencyMode,
+			_parts: { [Instance]: boolean },
+			_startAnimation: (self: ModelTransparencyEffect) -> (),
+		},
+		{} :: typeof({ __index = ModelTransparencyEffect })
+	))
+	& BaseObject.BaseObject
+
+--[=[
+	@param serviceBag ServiceBag
+	@param adornee Instance
+	@param transparencyServiceMethodName "SetTransparency" | "SetLocalTransparencyModifier" | nil
+	@return ModelTransparencyEffect
+]=]
+function ModelTransparencyEffect.new(
+	serviceBag: ServiceBag.ServiceBag,
+	adornee: Instance,
+	transparencyServiceMethodName: ModelTransparencyMode.ModelTransparencyMode?
+): ModelTransparencyEffect
+	assert(adornee, "Bad adornee")
+
+	local self: ModelTransparencyEffect = setmetatable(BaseObject.new(adornee) :: any, ModelTransparencyEffect)
+
+	self._serviceBag = assert(serviceBag, "No serviceBag")
+
+	assert(
+		ModelTransparencyMode:IsValue(transparencyServiceMethodName) or transparencyServiceMethodName == nil,
+		"Bad transparencyServiceMethodName"
+	)
+
+	self._transparencyService = self._serviceBag:GetService(TransparencyService :: any)
+
+	self._transparency = AccelTween.new(20)
+	self._transparencyServiceMethodName = transparencyServiceMethodName or ModelTransparencyMode.TRANSPARENCY
+
+	self._startAnimation, self._maid._stop = StepUtils.bindToRenderStep(self._update :: any)
+
+	return self
+end
+
+--[=[
+	Sets the acceleration
+	@param acceleration number
+]=]
+function ModelTransparencyEffect.SetAcceleration(self: ModelTransparencyEffect, acceleration: number)
+	self._transparency.a = acceleration
+end
+
+--[=[
+	Sets the transparency
+	@param transparency number
+	@param doNotAnimate boolean?
+]=]
+function ModelTransparencyEffect.SetTransparency(
+	self: ModelTransparencyEffect,
+	transparency: number,
+	doNotAnimate: boolean?
+)
+	if self._transparency.t == transparency then
+		return
+	end
+
+	self._transparency.t = transparency
+	if doNotAnimate then
+		self._transparency.p = self._transparency.t
+	end
+
+	self:_startAnimation()
+end
+
+--[=[
+	Returns true if animation is done
+	@return boolean
+]=]
+function ModelTransparencyEffect.IsDoneAnimating(self: ModelTransparencyEffect): boolean
+	return self._transparency.rtime == 0
+end
+
+--[=[
+	Finishes the transparency animation, and then calls the callback to
+	finish the animation.
+	@param callback function
+]=]
+function ModelTransparencyEffect.FinishTransparencyAnimation(self: ModelTransparencyEffect, callback: () -> ()): ()
+	self:SetTransparency(0)
+
+	if self._transparency.rtime == 0 then
+		callback()
+	else
+		self._maid:GiveTask(task.delay(self._transparency.rtime, function()
+			callback()
+		end))
+	end
+end
+
+function ModelTransparencyEffect._update(self: ModelTransparencyEffect): boolean
+	if self._transparencyService:IsDead() then
+		return false
+	end
+
+	local transparency = self._transparency.p
+
+	for part in self:_getPartsSet() do
+		self._transparencyService[self._transparencyServiceMethodName](
+			self._transparencyService,
+			self,
+			part,
+			transparency
+		)
+	end
+
+	return self._transparency.rtime > 0
+end
+
+function ModelTransparencyEffect._getPartsSet(self: ModelTransparencyEffect)
+	if self._parts then
+		return self._parts
+	end
+
+	self:_setupParts()
+
+	return self._parts
+end
+
+function ModelTransparencyEffect._setupParts(self: ModelTransparencyEffect)
+	assert(not (self :: any)._parts, "Already initialized")
+
+	self._parts = {}
+
+	local obj = assert(self._obj, "No obj")
+
+	local transparencyServiceMethod = self._transparencyService[self._transparencyServiceMethodName]
+
+	local function canHide(part: Instance): boolean
+		return if (self._transparencyServiceMethodName == ModelTransparencyMode.LOCAL_TRANSPARENCY)
+			then HideUtils.hasLocalTransparencyModifier(part)
+			else (part:IsA("BasePart") or part:IsA("Decal"))
+	end
+
+	if canHide(obj) then
+		self._parts[obj] = true
+	end
+
+	self._maid:GiveTask(RxInstanceUtils.observeDescendantsBrio(obj, canHide):Subscribe(function(brio)
+		if brio:IsDead() then
+			return
+		end
+
+		local maid, part = brio:ToMaidAndValue()
+
+		self._parts[part] = true
+		self:_startAnimation()
+
+		maid:GiveTask(function()
+			if self._transparencyService:IsDead() or not self._parts[part] then
+				return
+			end
+
+			self._parts[part] = nil
+			transparencyServiceMethod(self._transparencyService, self, part, nil)
+		end)
+	end))
+
+	self._maid:GiveTask(function()
+		if self._transparencyService:IsDead() then
+			return
+		end
+
+		for part in self._parts do
+			transparencyServiceMethod(self._transparencyService, self, part, nil)
+		end
+	end)
+end
+
+return ModelTransparencyEffect

@@ -1,0 +1,18 @@
+[package]
+name = "lune-std-luau"
+version = "0.4.0"
+edition = "2024"
+license = "MPL-2.0"
+repository = "https://github.com/lune-org/lune"
+description = "Lune standard library - Luau"
+
+[lib]
+path = "src/lib.rs"
+
+[lints]
+workspace = true
+
+[dependencies]
+mlua = { version = "0.12.2", features = ["luau", "luau-jit"] }
+
+lune-utils = { version = "0.4.0", path = "../lune-utils" }

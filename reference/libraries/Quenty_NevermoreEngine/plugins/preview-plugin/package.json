@@ -1,0 +1,43 @@
+{
+  "name": "@quenty/preview-plugin",
+  "version": "1.0.0",
+  "description": "Preview in-game components that are procedurally generated components",
+  "keywords": [
+    "Roblox",
+    "Nevermore",
+    "Lua",
+    "Plugin"
+  ],
+  "bugs": {
+    "url": "https://github.com/Quenty/NevermoreEngine/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Quenty/NevermoreEngine.git",
+    "directory": "plugins/preview-plugin/"
+  },
+  "funding": {
+    "type": "patreon",
+    "url": "https://www.patreon.com/quenty"
+  },
+  "license": "MIT",
+  "scripts": {
+    "preinstall": "npx only-allow pnpm"
+  },
+  "contributors": [
+    "Quenty"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@quenty/baseobject": "workspace:*",
+    "@quenty/basicpane": "workspace:*",
+    "@quenty/blend": "workspace:*",
+    "@quenty/instanceutils": "workspace:*",
+    "@quenty/loader": "workspace:*",
+    "@quenty/maid": "workspace:*",
+    "@quenty/rx": "workspace:*",
+    "@quenty/servicebag": "workspace:*"
+  }
+}

@@ -1,0 +1,4 @@
+--!nonstrict
+--[[
+	@class ClientMain
+]]

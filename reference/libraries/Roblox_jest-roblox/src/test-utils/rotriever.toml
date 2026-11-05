@@ -1,0 +1,22 @@
+[package]
+name = "TestUtils"
+authors = { workspace = true }
+description = { workspace = true }
+repository = { workspace = true }
+homepage = { workspace = true }
+documentation = { workspace = true }
+keywords = { workspace = true }
+version = { workspace = true }
+license = { workspace = true }
+content_root = "src"
+files = ["*", "!**/__*__/**"]
+
+[config]
+registry_index = "true"
+
+[dependencies]
+PrettyFormat = { path = "../pretty-format" }
+ChalkLua = { workspace = true }
+JestTypes = { path = "../jest-types" }
+JestEnvironmentLuau = { path = "../jest-environment-luau" }
+LuauPolyfill = { workspace = true }

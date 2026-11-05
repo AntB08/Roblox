@@ -1,0 +1,332 @@
+--!strict
+--[=[
+	@client
+	@class PlayerProductManagerClient
+]=]
+
+local require = require(script.Parent.loader).load(script)
+
+local MarketplaceService = game:GetService("MarketplaceService")
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+local AvatarEditorInventoryServiceClient = require("AvatarEditorInventoryServiceClient")
+local Binder = require("Binder")
+local CatalogSearchServiceCache = require("CatalogSearchServiceCache")
+local EnumUtils = require("EnumUtils")
+local GameConfigAssetTypes = require("GameConfigAssetTypes")
+local MarketplaceUtils = require("MarketplaceUtils")
+local PlayerMock = require("PlayerMock")
+local PlayerProductManagerBase = require("PlayerProductManagerBase")
+local PlayerProductManagerInterface = require("PlayerProductManagerInterface")
+local Promise = require("Promise")
+local Remoting = require("Remoting")
+local ServiceBag = require("ServiceBag")
+
+local PlayerProductManagerClient = setmetatable({}, PlayerProductManagerBase)
+PlayerProductManagerClient.ClassName = "PlayerProductManagerClient"
+PlayerProductManagerClient.__index = PlayerProductManagerClient
+
+-- Structural subset of AvatarEditorInventoryServiceClient covering only the methods this
+-- manager calls. Naming the full exported type here makes the Luau solver's normalization of
+-- the PlayerProductManagerClient intersection blow up ("Code is too complex to typecheck") --
+-- AvatarEditorInventoryServiceClient and AvatarEditorInventory are both metatable/BaseObject
+-- intersection types, and nesting them inside this manager's own intersection explodes the
+-- solver. We keep call-site precision with these minimal interfaces instead.
+type AvatarEditorInventoryEntry = {
+	IsAssetIdInInventory: (self: AvatarEditorInventoryEntry, assetId: number) -> boolean,
+}
+
+type AvatarEditorInventoryQuerier = {
+	IsInventoryAccessAllowed: (self: AvatarEditorInventoryQuerier) -> boolean,
+	PromiseInventoryForAvatarAssetType: (
+		self: AvatarEditorInventoryQuerier,
+		avatarAssetType: Enum.AvatarAssetType
+	) -> Promise.Promise<AvatarEditorInventoryEntry>,
+}
+
+-- Structural subset of CatalogSearchServiceCache covering only PromiseItemDetails. Naming the
+-- full exported type here reintroduces the "Code is too complex to typecheck" blow-up --
+-- CatalogSearchServiceCache is a heavy metatable type (generic Aggregator fields), and nesting
+-- it inside this manager's own intersection explodes the solver.
+type CatalogSearchServiceCacheQuerier = {
+	PromiseItemDetails: (
+		self: CatalogSearchServiceCacheQuerier,
+		assetId: number,
+		avatarItemType: Enum.AvatarItemType
+	) -> Promise.Promise<any>,
+}
+
+export type PlayerProductManagerClient =
+	typeof(setmetatable(
+		{} :: {
+			_obj: Player,
+			_player: Player,
+			_serviceBag: ServiceBag.ServiceBag,
+			_remoting: any, -- Remoting.Remoting (naming the full type here explodes the class-intersection normalization)
+
+			_avatarEditorInventoryServiceClient: AvatarEditorInventoryQuerier,
+			_catalogSearchServiceCache: CatalogSearchServiceCacheQuerier,
+		},
+		{} :: typeof({ __index = PlayerProductManagerClient })
+	))
+	& PlayerProductManagerBase.PlayerProductManagerBase
+
+function PlayerProductManagerClient.new(player: Player, serviceBag: ServiceBag.ServiceBag): PlayerProductManagerClient
+	local self: PlayerProductManagerClient =
+		setmetatable(PlayerProductManagerBase.new(player, serviceBag) :: any, PlayerProductManagerClient)
+
+	self._avatarEditorInventoryServiceClient = self._serviceBag:GetService(AvatarEditorInventoryServiceClient :: any)
+	self._catalogSearchServiceCache = self._serviceBag:GetService(CatalogSearchServiceCache :: any)
+
+	if self._obj == Players.LocalPlayer or self._obj == PlayerMock.getMockedLocalPlayer() then
+		self._remoting = self._maid:Add(Remoting.new(self._obj, "PlayerProductManager", Remoting.Realms.CLIENT))
+
+		self:_setupAssetTracker()
+		self:_setupMembershipTracker()
+		self:_setupSubscriptionTracker()
+		self:_setupProductTracker()
+		self:_setupBundleTracker()
+		self:_connectGamePassTracker()
+
+		if RunService:IsClient() then
+			-- PromptBulkPurchaseFinished may only be subscribed from a local script; headless
+			-- (a server-run spec driving a mock local player) it can never fire anyway.
+			self:_connectBulkPurchaseMarketplace()
+		end
+	end
+
+	local impl = self._maid:Add((PlayerProductManagerInterface :: any).Client:Implement(self._obj, self))
+	self:ExportMarketTrackers(impl:GetImplParent())
+
+	return self
+end
+
+--[=[
+	Gets the current player
+	@return Player
+]=]
+function PlayerProductManagerClient.GetPlayer(self: PlayerProductManagerClient): Player
+	return self._obj
+end
+
+-- The private setup/query helpers below take `self: any` on purpose. Typing them
+-- `self: PlayerProductManagerClient` makes the solver renormalize the full class-&-base
+-- intersection at every `self:...` call inside them (and at the constructor call sites),
+-- which trips "Code is too complex to typecheck". `self: any` breaks that inference chain.
+function PlayerProductManagerClient._setupAssetTracker(self: any): ()
+	local tracker = self:GetAssetTrackerOrError(GameConfigAssetTypes.ASSET)
+	local assetOwnership = assert(tracker:GetOwnershipTracker(), "Missing ownershipTracker on client")
+
+	assetOwnership:SetQueryOwnershipCallback(function(assetId: number): Promise.Promise<boolean>
+		return self:_promiseBulkOwnsAssetQuery(assetId)
+	end)
+
+	self._maid:GiveTask(MarketplaceService.PromptPurchaseFinished:Connect(function(player, assetId, isPurchased)
+		if player == self._obj then
+			tracker:HandlePromptClosedEvent(assetId)
+			tracker:HandlePurchaseEvent(assetId, isPurchased)
+			self._remoting.AssetPromptPurchaseFinished:FireServer(assetId, isPurchased)
+		end
+	end))
+end
+
+function PlayerProductManagerClient._setupMembershipTracker(self: any): ()
+	local tracker = self:GetAssetTrackerOrError(GameConfigAssetTypes.MEMBERSHIP)
+
+	self._maid:GiveTask(MarketplaceService.PromptPremiumPurchaseFinished:Connect(function()
+		-- TODO: Fix typing, these expect a number
+		tracker:HandlePromptClosedEvent(Enum.MembershipType.Premium :: any)
+
+		-- Not great behavior but whatever
+		tracker:HandlePurchaseEvent(
+			Enum.MembershipType.Premium :: any,
+			self._obj.MembershipType == Enum.MembershipType.Premium
+		)
+	end))
+
+	-- I think this only fires on the server...
+	self._maid:GiveTask(Players.PlayerMembershipChanged:Connect(function(player)
+		if player == self._obj then
+			if player.MembershipType == Enum.MembershipType.Premium then
+				tracker:HandlePurchaseEvent(player.MembershipType, true)
+			end
+		end
+	end))
+end
+
+function PlayerProductManagerClient._setupSubscriptionTracker(self: any): ()
+	local tracker = self:GetAssetTrackerOrError(GameConfigAssetTypes.SUBSCRIPTION)
+
+	-- Main event
+	self._maid:GiveTask(
+		MarketplaceService.PromptSubscriptionPurchaseFinished:Connect(function(player, subscriptionId, didTryPurchasing)
+			if player == self._obj then
+				self._remoting.PromptSubscriptionPurchaseFinished:FireServer(subscriptionId, didTryPurchasing)
+				tracker:HandlePromptClosedEvent(subscriptionId)
+
+				if not didTryPurchasing then
+					tracker:HandlePurchaseEvent(subscriptionId, didTryPurchasing)
+				end
+			end
+		end)
+	)
+
+	-- In case it comes from the server
+	self._maid:GiveTask(
+		self._remoting.PromptSubscriptionPurchaseFinished:Connect(function(subscriptionId, didTryPurchasing)
+			tracker:HandlePromptClosedEvent(subscriptionId)
+
+			if not didTryPurchasing then
+				tracker:HandlePurchaseEvent(subscriptionId, didTryPurchasing)
+			end
+		end)
+	)
+
+	self._maid:GiveTask(self._remoting.UserSubscriptionStatusChanged:Connect(function(subscriptionId)
+		tracker:HandlePurchaseEvent(subscriptionId, true)
+	end))
+end
+
+function PlayerProductManagerClient._connectBulkPurchaseMarketplace(self: any): ()
+	self._maid:GiveTask(MarketplaceService.PromptBulkPurchaseFinished:Connect(function(player, status, results)
+		if player ~= self._obj then
+			return
+		end
+
+		-- Update ownership information
+		if status == Enum.MarketplaceBulkPurchasePromptStatus.Completed then
+			for _, item in results.Items do
+				local tracker
+				if item.type == Enum.MarketplaceProductType.AvatarAsset then
+					tracker = self:GetAssetTrackerOrError(GameConfigAssetTypes.ASSET)
+				elseif item.type == Enum.MarketplaceProductType.AvatarBundle then
+					tracker = self:GetAssetTrackerOrError(GameConfigAssetTypes.BUNDLE)
+				else
+					warn(
+						string.format(
+							"[PlayerProductManagerClient] - Unknown Enum.MarketplaceProductType %q",
+							tostring(item.type)
+						)
+					)
+					continue
+				end
+
+				if item.status == Enum.MarketplaceItemPurchaseStatus.Success then
+					tracker:HandlePurchaseEvent(tonumber(item.id) or item.id, true)
+				else
+					tracker:HandlePurchaseEvent(tonumber(item.id) or item.id, false)
+				end
+			end
+		end
+	end))
+end
+
+function PlayerProductManagerClient._setupProductTracker(self: any): ()
+	local tracker = self:GetAssetTrackerOrError(GameConfigAssetTypes.PRODUCT)
+
+	self._maid:GiveTask(
+		MarketplaceService.PromptProductPurchaseFinished:Connect(function(userId, productId, isPurchased)
+			if self._obj.UserId == userId then
+				tracker:HandlePromptClosedEvent(productId)
+
+				-- We only read from the server purchase event
+				if not isPurchased then
+					tracker:HandlePurchaseEvent(productId, isPurchased)
+				end
+
+				self._remoting.PromptProductPurchaseFinished:FireServer(productId, isPurchased)
+			end
+		end)
+	)
+
+	self._maid:GiveTask(self._remoting.DeveloperProductPurchased:Connect(function(productId)
+		local assetTracker = self:GetAssetTrackerOrError(GameConfigAssetTypes.PRODUCT)
+		assetTracker:HandlePurchaseEvent(productId, true)
+	end))
+end
+
+function PlayerProductManagerClient._connectGamePassTracker(self: any): ()
+	self._maid:GiveTask(
+		MarketplaceService.PromptGamePassPurchaseFinished:Connect(function(player, gamePassId, isPurchased)
+			assert(type(isPurchased) == "boolean", "Bad isPurchased")
+
+			if player == self._obj then
+				self:_handleGamePassPromptFinished(gamePassId, isPurchased)
+			end
+		end)
+	)
+end
+
+function PlayerProductManagerClient._handleGamePassPromptFinished(
+	self: any,
+	gamePassId: number,
+	isPurchased: boolean
+): ()
+	PlayerProductManagerBase._handleGamePassPromptFinished(self, gamePassId, isPurchased)
+
+	if not self._remoting.Destroy then
+		return
+	end
+
+	self._remoting.PromptGamePassPurchaseFinished:FireServer(gamePassId, isPurchased)
+end
+
+function PlayerProductManagerClient._setupBundleTracker(self: any): ()
+	local tracker = self:GetAssetTrackerOrError(GameConfigAssetTypes.BUNDLE)
+
+	local bundleOwnership = assert(tracker:GetOwnershipTracker(), "Missing ownershipTracker on client")
+
+	bundleOwnership:SetQueryOwnershipCallback(function(assetId: number): Promise.Promise<boolean>
+		return self:_promiseBulkOwnsBundleQuery(assetId)
+	end)
+
+	self._maid:GiveTask(MarketplaceService.PromptBundlePurchaseFinished:Connect(function(player, bundleId, isPurchased)
+		if player == self._obj then
+			tracker:HandlePromptClosedEvent(bundleId)
+			tracker:HandlePurchaseEvent(bundleId, isPurchased)
+
+			self._remoting.PromptBundlePurchaseFinished:FireServer(bundleId, isPurchased)
+		end
+	end))
+end
+
+function PlayerProductManagerClient._promiseBulkOwnsAssetQuery(self: any, assetId: number): Promise.Promise<boolean>
+	if self._avatarEditorInventoryServiceClient:IsInventoryAccessAllowed() then
+		-- When scrolling through a ton of entries in the avatar editor we want to query
+		-- this is typically faster. We really hope we aren't the Roblox account.
+		local detailsPromise: Promise.Promise<any> =
+			self._catalogSearchServiceCache:PromiseItemDetails(assetId, Enum.AvatarItemType.Asset)
+
+		return detailsPromise:Then(function(itemDetails: any): Promise.Promise<boolean>
+			-- https://devforum.roblox.com/t/avatareditorservicegetitemdetails-returns-ownership-where-as-avatareditorservicegetbatchitemdetails-does-not/3257431
+
+			local assetType: Enum.AvatarAssetType? =
+				EnumUtils.toEnum(Enum.AvatarAssetType, itemDetails.AssetType) :: any
+			if not assetType then
+				-- TODO: Fallback to standard query?
+				return Promise.rejected("Failed to get assetType") :: any
+			end
+
+			local inventoryPromise: Promise.Promise<AvatarEditorInventoryEntry> =
+				self._avatarEditorInventoryServiceClient:PromiseInventoryForAvatarAssetType(assetType)
+
+			return inventoryPromise:Then(
+					function(inventory: AvatarEditorInventoryEntry): boolean
+						return inventory:IsAssetIdInInventory(assetId)
+					end
+				) :: Promise.Promise<boolean>
+		end)
+	end
+
+	return MarketplaceUtils.promisePlayerOwnsAsset(self._player, assetId) :: Promise.Promise<boolean>
+end
+
+function PlayerProductManagerClient._promiseBulkOwnsBundleQuery(self: any, bundleId: number): Promise.Promise<boolean>
+	return MarketplaceUtils.promisePlayerOwnsBundle(self._player, bundleId)
+end
+
+return Binder.new(
+		"PlayerProductManager",
+		PlayerProductManagerClient :: any
+	) :: Binder.Binder<PlayerProductManagerClient>

@@ -1,0 +1,40 @@
+{
+  "name": "@quenty/scrollingframe",
+  "version": "12.22.3",
+  "description": "Creates an inertia based scrolling frame that is animated and has inertia frames Alternative to a Roblox ScrollingFrame with inertia scrolling and complete control over behavior and style",
+  "keywords": [
+    "Roblox",
+    "Nevermore",
+    "Lua",
+    "ScrollingFrame"
+  ],
+  "bugs": {
+    "url": "https://github.com/Quenty/NevermoreEngine/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Quenty/NevermoreEngine.git",
+    "directory": "src/scrollingframe/"
+  },
+  "funding": {
+    "type": "patreon",
+    "url": "https://www.patreon.com/quenty"
+  },
+  "license": "MIT",
+  "scripts": {
+    "preinstall": "npx only-allow pnpm"
+  },
+  "contributors": [
+    "Quenty"
+  ],
+  "dependencies": {
+    "@quenty/loader": "workspace:*",
+    "@quenty/maid": "workspace:*",
+    "@quenty/signal": "workspace:*",
+    "@quenty/spring": "workspace:*",
+    "@quenty/table": "workspace:*"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

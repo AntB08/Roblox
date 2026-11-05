@@ -1,0 +1,14 @@
+{
+  "name": "VoiceChatTest",
+  "tree": {
+    "$className": "DataModel",
+    "ServerScriptService": {
+      "$properties": {
+        "LoadStringEnabled": true
+      },
+      "voicechat": {
+        "$path": ".."
+      }
+    }
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "name": "GameConfigTest",
+  "tree": {
+    "$className": "DataModel",
+    "ServerScriptService": {
+      "$properties": {
+        "LoadStringEnabled": true
+      },
+      "gameconfig": {
+        "$className": "Folder",
+        "test": {
+          "$path": "modules"
+        },
+        "gameconfig": {
+          "$path": ".."
+        },
+        "jest.config": {
+          "$path": "jest.config.lua"
+        }
+      },
+      "Script": {
+        "$path": "scripts/Server"
+      }
+    },
+    "StarterPlayer": {
+      "StarterPlayerScripts": {
+        "Main": {
+          "$path": "scripts/Client"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "name": "@quenty/singleton",
+  "version": "6.17.3",
+  "description": "Provides a way to transform from a class to a singleton",
+  "keywords": [
+    "Roblox",
+    "Nevermore",
+    "Lua",
+    "singleton"
+  ],
+  "bugs": {
+    "url": "https://github.com/Quenty/NevermoreEngine/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Quenty/NevermoreEngine.git",
+    "directory": "src/singleton/"
+  },
+  "funding": {
+    "type": "patreon",
+    "url": "https://www.patreon.com/quenty"
+  },
+  "license": "MIT",
+  "scripts": {
+    "preinstall": "npx only-allow pnpm"
+  },
+  "contributors": [
+    "Quenty"
+  ],
+  "dependencies": {
+    "@quenty/loader": "workspace:*",
+    "@quenty/maid": "workspace:*",
+    "@quenty/servicebag": "workspace:*"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

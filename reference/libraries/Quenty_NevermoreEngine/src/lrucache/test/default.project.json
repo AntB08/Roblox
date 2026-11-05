@@ -1,0 +1,14 @@
+{
+  "name": "LrucacheTest",
+  "tree": {
+    "$className": "DataModel",
+    "ServerScriptService": {
+      "$properties": {
+        "LoadStringEnabled": true
+      },
+      "lrucache": {
+        "$path": ".."
+      }
+    }
+  }
+}

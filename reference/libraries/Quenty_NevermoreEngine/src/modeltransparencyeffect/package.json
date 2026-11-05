@@ -1,0 +1,44 @@
+{
+  "name": "@quenty/modeltransparencyeffect",
+  "version": "11.30.1",
+  "description": "Allows a model to have transparent set locally on the client",
+  "keywords": [
+    "Roblox",
+    "Nevermore",
+    "Lua",
+    "Transparency"
+  ],
+  "bugs": {
+    "url": "https://github.com/Quenty/NevermoreEngine/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Quenty/NevermoreEngine.git",
+    "directory": "src/modeltransparencyeffect/"
+  },
+  "funding": {
+    "type": "patreon",
+    "url": "https://www.patreon.com/quenty"
+  },
+  "license": "MIT",
+  "scripts": {
+    "preinstall": "npx only-allow pnpm"
+  },
+  "contributors": [
+    "Quenty"
+  ],
+  "dependencies": {
+    "@quenty/acceltween": "workspace:*",
+    "@quenty/baseobject": "workspace:*",
+    "@quenty/enums": "workspace:*",
+    "@quenty/hide": "workspace:*",
+    "@quenty/instanceutils": "workspace:*",
+    "@quenty/loader": "workspace:*",
+    "@quenty/servicebag": "workspace:*",
+    "@quenty/steputils": "workspace:*",
+    "@quenty/transparencyservice": "workspace:*"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

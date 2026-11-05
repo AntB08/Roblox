@@ -1,0 +1,32 @@
+[package]
+name = "JestRunner"
+authors = { workspace = true }
+description = { workspace = true }
+repository = { workspace = true }
+homepage = { workspace = true }
+documentation = { workspace = true }
+keywords = { workspace = true }
+version = { workspace = true }
+license = { workspace = true }
+content_root = "src"
+files = ["*", "!**/__*__/**"]
+
+[config]
+registry_index = "true"
+
+[dependencies]
+Promise = { workspace = true }
+ChalkLua = { workspace = true }
+JestTestResult = { path = "../jest-test-result" }
+JestTypes = { path = "../jest-types" }
+JestUtil = { path = "../jest-util" }
+JestConsole = { path = "../jest-console" }
+JestEnvironment = { path = "../jest-environment" }
+JestMessageUtil = { path = "../jest-message-util" }
+JestRuntime = { path = "../jest-runtime" }
+JestCircus = { path = "../jest-circus" }
+Throat = { path = "../throat" }
+RobloxShared = { path = "../roblox-shared" }
+
+[dev_dependencies]
+JestGlobals = { path = "../jest-globals" }

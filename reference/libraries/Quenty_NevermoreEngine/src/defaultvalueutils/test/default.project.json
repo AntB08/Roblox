@@ -1,0 +1,14 @@
+{
+  "name": "DefaultValueUtilsTest",
+  "tree": {
+    "$className": "DataModel",
+    "ServerScriptService": {
+      "$properties": {
+        "LoadStringEnabled": true
+      },
+      "defaultvalueutils": {
+        "$path": ".."
+      }
+    }
+  }
+}

@@ -1,0 +1,28 @@
+[package]
+name = "JestDiff"
+authors = { workspace = true }
+description = "Display differences clearly so people can review changes confidently."
+repository = { workspace = true }
+homepage = { workspace = true }
+documentation = "https://github.com/jestjs/jest/blob/v27.4.7/packages/jest-diff/README.md"
+keywords = { workspace = true }
+version = { workspace = true }
+license = { workspace = true }
+content_root = "src"
+files = ["*", "!**/__*__/**"]
+
+[config]
+registry_index = "true"
+
+[dependencies]
+DiffSequences = { path = "../diff-sequences" }
+JestGetType = { path = "../jest-get-type" }
+PrettyFormat = { path = "../pretty-format" }
+JestTypes = { path = "../jest-types" }
+ChalkLua = { workspace = true }
+LuauPolyfill = { workspace = true }
+Symbol = { workspace = true }
+
+[dev_dependencies]
+JestGlobals = { path = "../jest-globals" }
+TestUtils = { path = "../test-utils" }

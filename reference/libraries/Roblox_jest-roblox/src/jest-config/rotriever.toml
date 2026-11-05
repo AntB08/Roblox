@@ -1,0 +1,32 @@
+[package]
+name = "JestConfig"
+authors = { workspace = true }
+description = { workspace = true }
+repository = { workspace = true }
+homepage = { workspace = true }
+documentation = { workspace = true }
+keywords = { workspace = true }
+version = { workspace = true }
+license = { workspace = true }
+content_root = "src"
+files = ["*", "!**/__*__/**"]
+
+[config]
+registry_index = "true"
+
+[dependencies]
+LuauPolyfill = { workspace = true }
+Promise = { workspace = true }
+ChalkLua = { workspace = true }
+RegExp = { workspace = true }
+JestTypes = { path = "../jest-types" }
+JestGetType = { path = "../jest-get-type" }
+JestUtil = { path = "../jest-util" }
+JestEnvironmentLuau = { path = "../jest-environment-luau" }
+JestValidate = { path = "../jest-validate" }
+RobloxShared = { path = "../roblox-shared" }
+
+[dev_dependencies]
+JestGlobals = { path = "../jest-globals" }
+JestSnapshotSerializerRaw = { path = "../jest-snapshot-serializer-raw" }
+PrettyFormat = { path = "../pretty-format" }

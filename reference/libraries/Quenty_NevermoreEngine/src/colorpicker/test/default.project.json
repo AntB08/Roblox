@@ -1,0 +1,14 @@
+{
+  "name": "ColorPickerTest",
+  "tree": {
+    "$className": "DataModel",
+    "ServerScriptService": {
+      "$properties": {
+        "LoadStringEnabled": true
+      },
+      "colorpicker": {
+        "$path": ".."
+      }
+    }
+  }
+}

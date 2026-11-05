@@ -1,0 +1,40 @@
+{
+  "name": "@quenty/parttouchingcalculator",
+  "version": "14.57.1",
+  "description": "Determines if parts are touching or not",
+  "keywords": [
+    "Roblox",
+    "Nevermore",
+    "Lua",
+    "Collision"
+  ],
+  "bugs": {
+    "url": "https://github.com/Quenty/NevermoreEngine/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Quenty/NevermoreEngine.git",
+    "directory": "src/parttouchingcalculator/"
+  },
+  "funding": {
+    "type": "patreon",
+    "url": "https://www.patreon.com/quenty"
+  },
+  "license": "MIT",
+  "scripts": {
+    "preinstall": "npx only-allow pnpm"
+  },
+  "contributors": [
+    "Quenty"
+  ],
+  "dependencies": {
+    "@quenty/binder": "workspace:*",
+    "@quenty/boundingboxutils": "workspace:*",
+    "@quenty/characterutils": "workspace:*",
+    "@quenty/loader": "workspace:*",
+    "@quenty/qgui": "workspace:*"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

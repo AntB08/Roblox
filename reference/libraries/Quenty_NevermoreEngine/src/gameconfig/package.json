@@ -1,0 +1,65 @@
+{
+  "name": "@quenty/gameconfig",
+  "version": "12.72.1",
+  "description": "Configuration service to specify Roblox badges, products, and other specific assets.",
+  "keywords": [
+    "Roblox",
+    "Nevermore",
+    "Lua"
+  ],
+  "bugs": {
+    "url": "https://github.com/Quenty/NevermoreEngine/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Quenty/NevermoreEngine.git",
+    "directory": "src/gameconfig/"
+  },
+  "funding": {
+    "type": "patreon",
+    "url": "https://www.patreon.com/quenty"
+  },
+  "license": "MIT",
+  "scripts": {
+    "preinstall": "npx only-allow pnpm"
+  },
+  "contributors": [
+    "Quenty"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@quenty/attributeutils": "workspace:*",
+    "@quenty/badgeutils": "workspace:*",
+    "@quenty/baseobject": "workspace:*",
+    "@quenty/binder": "workspace:*",
+    "@quenty/brio": "workspace:*",
+    "@quenty/canceltoken": "workspace:*",
+    "@quenty/clienttranslator": "workspace:*",
+    "@quenty/cmdrservice": "workspace:*",
+    "@quenty/enums": "workspace:*",
+    "@quenty/gameversionutils": "workspace:*",
+    "@quenty/instanceutils": "workspace:*",
+    "@quenty/loader": "workspace:*",
+    "@quenty/maid": "workspace:*",
+    "@quenty/marketplaceutils": "workspace:*",
+    "@quenty/nevermore-test-runner": "workspace:*",
+    "@quenty/nevermoreclimanifest": "workspace:*",
+    "@quenty/observablecollection": "workspace:*",
+    "@quenty/playerutils": "workspace:*",
+    "@quenty/preferredparentutils": "workspace:*",
+    "@quenty/promise": "workspace:*",
+    "@quenty/pseudolocalize": "workspace:*",
+    "@quenty/remotefunctionutils": "workspace:*",
+    "@quenty/remoting": "workspace:*",
+    "@quenty/rx": "workspace:*",
+    "@quenty/rxbinderutils": "workspace:*",
+    "@quenty/servicebag": "workspace:*",
+    "@quenty/statestack": "workspace:*",
+    "@quenty/string": "workspace:*",
+    "@quenty/table": "workspace:*",
+    "@quenty/valueobject": "workspace:*",
+    "@quentystudios/jest-lua": "3.10.0-quenty.2"
+  }
+}

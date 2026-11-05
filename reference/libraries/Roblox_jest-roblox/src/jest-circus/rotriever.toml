@@ -1,0 +1,39 @@
+[package]
+name = "JestCircus"
+authors = { workspace = true }
+description = { workspace = true }
+repository = { workspace = true }
+homepage = { workspace = true }
+documentation = { workspace = true }
+keywords = { workspace = true }
+version = { workspace = true }
+license = { workspace = true }
+content_root = "src"
+files = ["*", "!**/__*__/**"]
+
+[config]
+registry_index = "true"
+
+[dependencies]
+LuauPolyfill = { workspace = true }
+Promise = { workspace = true }
+RegExp = { workspace = true }
+ChalkLua = { workspace = true }
+Symbol = { workspace = true }
+JestTypes = { path = "../jest-types" }
+JestMatcherUtils = { path = "../jest-matcher-utils" }
+JestMessageUtil = { path = "../jest-message-util" }
+PrettyFormat = { path = "../pretty-format" }
+JestEach = { path = "../jest-each" }
+JestUtil = { path = "../jest-util" }
+JestTestResult = { path = "../jest-test-result" }
+JestEnvironment = { path = "../jest-environment" }
+JestSnapshot = { path = "../jest-snapshot" }
+Expect = { path = "../expect" }
+RobloxShared = { path = "../roblox-shared" }
+JestRuntime = { path = "../jest-runtime" }
+Throat = { path = "../throat" }
+
+[dev_dependencies]
+JestGlobals = { path = "../jest-globals" }
+JestSnapshotSerializerRaw = { path = "../jest-snapshot-serializer-raw" }

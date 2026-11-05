@@ -1,0 +1,14 @@
+{
+  "npmClient": "pnpm",
+  "packages": ["src/*", "tools/*"],
+  "command": {
+    "publish": {},
+    "version": {
+      "conventionalCommits": true,
+      "createRelease": "github",
+      "message": "chore(release): %s [skip ci]"
+    }
+  },
+  "version": "independent",
+  "$schema": "node_modules/lerna/schemas/lerna-schema.json"
+}

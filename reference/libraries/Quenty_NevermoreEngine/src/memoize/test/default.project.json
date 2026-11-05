@@ -1,0 +1,14 @@
+{
+  "name": "MemoizeTest",
+  "tree": {
+    "$className": "DataModel",
+    "ServerScriptService": {
+      "$properties": {
+        "LoadStringEnabled": true
+      },
+      "memoize": {
+        "$path": ".."
+      }
+    }
+  }
+}

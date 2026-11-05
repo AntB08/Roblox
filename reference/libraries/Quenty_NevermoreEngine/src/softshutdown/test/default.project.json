@@ -1,0 +1,14 @@
+{
+  "name": "SoftShutdownTest",
+  "tree": {
+    "$className": "DataModel",
+    "ServerScriptService": {
+      "$properties": {
+        "LoadStringEnabled": true
+      },
+      "QuentySoftShutdown": {
+        "$path": "scripts/Server"
+      }
+    }
+  }
+}

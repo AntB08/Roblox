@@ -1,0 +1,87 @@
+--!strict
+--[=[
+	@class SecretsServiceClient
+]=]
+
+local require = require(script.Parent.loader).load(script)
+
+local Maid = require("Maid")
+local Promise = require("Promise")
+local PromiseGetRemoteFunction = require("PromiseGetRemoteFunction")
+local RemoteFunctionUtils = require("RemoteFunctionUtils")
+local SecretsCmdrTypeUtils = require("SecretsCmdrTypeUtils")
+local SecretsServiceConstants = require("SecretsServiceConstants")
+local ServiceBag = require("ServiceBag")
+
+local SecretsServiceClient = {}
+SecretsServiceClient.ServiceName = "SecretsServiceClient"
+
+export type SecretsServiceClient = typeof(setmetatable(
+	{} :: {
+		_serviceBag: ServiceBag.ServiceBag,
+		_maid: Maid.Maid,
+		_cmdrService: any,
+		_permissionsService: any,
+		_remoteFunctionPromise: Promise.Promise<any>?,
+	},
+	{} :: typeof({ __index = SecretsServiceClient })
+))
+
+function SecretsServiceClient.Init(self: SecretsServiceClient, serviceBag: ServiceBag.ServiceBag): ()
+	assert(not (self :: any)._serviceBag, "Already initialized")
+	self._serviceBag = assert(serviceBag, "No serviceBag")
+	self._maid = Maid.new()
+
+	-- External
+	self._cmdrService = self._serviceBag:GetService(require("CmdrServiceClient"))
+	self._serviceBag:GetService(require("DataStoreServiceClient"))
+	self._permissionsService = self._serviceBag:GetService(require("PermissionServiceClient"))
+end
+
+function SecretsServiceClient.Start(self: SecretsServiceClient): ()
+	self:_registerCmdrTypes()
+end
+
+function SecretsServiceClient.PromiseSecretKeyNamesList(self: SecretsServiceClient): Promise.Promise<{ string }>
+	return (
+		self:_promiseRemoteFunction()
+			:Then(function(remoteFunction)
+				return self._maid:GivePromise(
+					RemoteFunctionUtils.promiseInvokeServer(
+						remoteFunction,
+						SecretsServiceConstants.REQUEST_SECRET_KEY_NAMES_LIST
+					)
+				)
+			end)
+			:Then(function(ok, list)
+				if not ok then
+					return Promise.rejected(list or "Failed to get list")
+				else
+					return Promise.resolved(list)
+				end
+			end) :: any
+	) :: Promise.Promise<{ string }>
+end
+
+function SecretsServiceClient._registerCmdrTypes(self: SecretsServiceClient): ()
+	self._maid:GivePromise(self._cmdrService:PromiseCmdr()):Then(function(cmdr)
+		SecretsCmdrTypeUtils.registerSecretKeyTypes(cmdr, self)
+	end)
+end
+
+function SecretsServiceClient._promiseRemoteFunction(self: SecretsServiceClient): Promise.Promise<any>
+	if self._remoteFunctionPromise then
+		return self._remoteFunctionPromise
+	end
+
+	local remoteFunctionPromise =
+		self._maid:GivePromise(PromiseGetRemoteFunction(SecretsServiceConstants.REMOTE_FUNCTION_NAME))
+	self._remoteFunctionPromise = remoteFunctionPromise
+	return remoteFunctionPromise
+end
+
+function SecretsServiceClient.Destroy(self: SecretsServiceClient): ()
+	self._maid:DoCleaning()
+end
+
+return SecretsServiceClient

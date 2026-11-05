@@ -1,0 +1,49 @@
+{
+  "name": "@quenty/playerinputmode",
+  "version": "9.54.1",
+  "description": "Service that takes active input modes from the player and exposes it to every other player via the server.",
+  "keywords": [
+    "Roblox",
+    "Nevermore",
+    "Lua",
+    "Player",
+    "Input"
+  ],
+  "bugs": {
+    "url": "https://github.com/Quenty/NevermoreEngine/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Quenty/NevermoreEngine.git",
+    "directory": "src/playerinputmode/"
+  },
+  "funding": {
+    "type": "patreon",
+    "url": "https://www.patreon.com/quenty"
+  },
+  "license": "MIT",
+  "scripts": {
+    "preinstall": "npx only-allow pnpm"
+  },
+  "contributors": [
+    "Quenty"
+  ],
+  "dependencies": {
+    "@quenty/attributeutils": "workspace:*",
+    "@quenty/brio": "workspace:*",
+    "@quenty/enums": "workspace:*",
+    "@quenty/inputmode": "workspace:*",
+    "@quenty/loader": "workspace:*",
+    "@quenty/maid": "workspace:*",
+    "@quenty/playermock": "workspace:*",
+    "@quenty/playerutils": "workspace:*",
+    "@quenty/promise": "workspace:*",
+    "@quenty/remoting": "workspace:*",
+    "@quenty/rx": "workspace:*",
+    "@quenty/servicebag": "workspace:*",
+    "@quenty/table": "workspace:*"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

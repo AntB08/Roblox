@@ -1,0 +1,73 @@
+{
+  "name": "@quenty/ragdoll",
+  "version": "15.74.0",
+  "description": "Quenty's Ragdoll system for Roblox - Floppy fun ragdolls",
+  "keywords": [
+    "Roblox",
+    "Nevermore",
+    "Lua",
+    "ragdoll"
+  ],
+  "bugs": {
+    "url": "https://github.com/Quenty/NevermoreEngine/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Quenty/NevermoreEngine.git",
+    "directory": "src/ragdoll/"
+  },
+  "funding": {
+    "type": "patreon",
+    "url": "https://www.patreon.com/quenty"
+  },
+  "license": "MIT",
+  "scripts": {
+    "preinstall": "npx only-allow pnpm"
+  },
+  "contributors": [
+    "Quenty"
+  ],
+  "dependencies": {
+    "@quenty/adorneedata": "workspace:*",
+    "@quenty/attributeutils": "workspace:*",
+    "@quenty/baseobject": "workspace:*",
+    "@quenty/binder": "workspace:*",
+    "@quenty/brio": "workspace:*",
+    "@quenty/camera": "workspace:*",
+    "@quenty/cancellabledelay": "workspace:*",
+    "@quenty/characterutils": "workspace:*",
+    "@quenty/cmdrservice": "workspace:*",
+    "@quenty/draw": "workspace:*",
+    "@quenty/enumutils": "workspace:*",
+    "@quenty/hapticfeedbackutils": "workspace:*",
+    "@quenty/instanceutils": "workspace:*",
+    "@quenty/jestutils": "workspace:*",
+    "@quenty/loader": "workspace:*",
+    "@quenty/maid": "workspace:*",
+    "@quenty/motor6d": "workspace:*",
+    "@quenty/nevermore-test-runner": "workspace:*",
+    "@quenty/physicsutils": "workspace:*",
+    "@quenty/playerhumanoidbinder": "workspace:*",
+    "@quenty/playermock": "workspace:*",
+    "@quenty/playerutils": "workspace:*",
+    "@quenty/promise": "workspace:*",
+    "@quenty/qframe": "workspace:*",
+    "@quenty/r15utils": "workspace:*",
+    "@quenty/remoting": "workspace:*",
+    "@quenty/rigbuilderutils": "workspace:*",
+    "@quenty/rx": "workspace:*",
+    "@quenty/rxbinderutils": "workspace:*",
+    "@quenty/rxsignal": "workspace:*",
+    "@quenty/servicebag": "workspace:*",
+    "@quenty/spring": "workspace:*",
+    "@quenty/steputils": "workspace:*",
+    "@quenty/table": "workspace:*",
+    "@quenty/tie": "workspace:*",
+    "@quenty/valuebaseutils": "workspace:*",
+    "@quenty/valueobject": "workspace:*",
+    "@quentystudios/jest-lua": "3.10.0-quenty.2"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

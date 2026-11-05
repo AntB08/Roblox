@@ -1,0 +1,22 @@
+[package]
+name = "JestEnvironmentLuau"
+authors = { workspace = true }
+description = { workspace = true }
+repository = { workspace = true }
+homepage = { workspace = true }
+documentation = { workspace = true }
+keywords = { workspace = true }
+version = { workspace = true }
+license = { workspace = true }
+content_root = "src"
+files = ["*", "!**/__*__/**"]
+
+[config]
+registry_index = "true"
+
+[dependencies]
+Promise = { workspace = true }
+JestFakeTimers = { path = "../jest-fake-timers" }
+JestMock = { path = "../jest-mock" }
+JestTypes = { path = "../jest-types" }
+JestEnvironment = { path = "../jest-environment" }

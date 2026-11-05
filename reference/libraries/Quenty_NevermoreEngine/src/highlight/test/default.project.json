@@ -1,0 +1,14 @@
+{
+  "name": "HighlightTest",
+  "tree": {
+    "$className": "DataModel",
+    "ServerScriptService": {
+      "$properties": {
+        "LoadStringEnabled": true
+      },
+      "highlight": {
+        "$path": ".."
+      }
+    }
+  }
+}

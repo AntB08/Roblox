@@ -1,0 +1,51 @@
+{
+  "name": "@quenty/viewport",
+  "version": "11.59.1",
+  "description": "Rendering functionality for viewportFrames",
+  "keywords": [
+    "Roblox",
+    "Nevermore",
+    "Lua"
+  ],
+  "bugs": {
+    "url": "https://github.com/Quenty/NevermoreEngine/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Quenty/NevermoreEngine.git",
+    "directory": "src/viewport/"
+  },
+  "funding": {
+    "type": "patreon",
+    "url": "https://www.patreon.com/quenty"
+  },
+  "license": "MIT",
+  "scripts": {
+    "preinstall": "npx only-allow pnpm"
+  },
+  "contributors": [
+    "Quenty"
+  ],
+  "dependencies": {
+    "@quenty/adorneeutils": "workspace:*",
+    "@quenty/baseobject": "workspace:*",
+    "@quenty/basicpane": "workspace:*",
+    "@quenty/blend": "workspace:*",
+    "@quenty/camera": "workspace:*",
+    "@quenty/geometryutils": "workspace:*",
+    "@quenty/inputobjectutils": "workspace:*",
+    "@quenty/loader": "workspace:*",
+    "@quenty/maid": "workspace:*",
+    "@quenty/math": "workspace:*",
+    "@quenty/rx": "workspace:*",
+    "@quenty/signal": "workspace:*",
+    "@quenty/spring": "workspace:*",
+    "@quenty/valueobject": "workspace:*"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "devDependencies": {
+    "@quenty/insertserviceutils": "workspace:*"
+  }
+}

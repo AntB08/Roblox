@@ -1,0 +1,61 @@
+{
+  "name": "@quenty/camera",
+  "version": "14.58.1",
+  "description": "Quenty's camera system for Roblox",
+  "keywords": [
+    "Roblox",
+    "Nevermore",
+    "Lua",
+    "camera"
+  ],
+  "bugs": {
+    "url": "https://github.com/Quenty/NevermoreEngine/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Quenty/NevermoreEngine.git",
+    "directory": "src/camera/"
+  },
+  "funding": {
+    "type": "patreon",
+    "url": "https://www.patreon.com/quenty"
+  },
+  "license": "MIT",
+  "scripts": {
+    "preinstall": "npx only-allow pnpm"
+  },
+  "contributors": [
+    "Quenty"
+  ],
+  "dependencies": {
+    "@quenty/acceltween": "workspace:*",
+    "@quenty/baseobject": "workspace:*",
+    "@quenty/cframeutils": "workspace:*",
+    "@quenty/cubicspline": "workspace:*",
+    "@quenty/draw": "workspace:*",
+    "@quenty/ducktype": "workspace:*",
+    "@quenty/inputobjectutils": "workspace:*",
+    "@quenty/jestutils": "workspace:*",
+    "@quenty/loader": "workspace:*",
+    "@quenty/maid": "workspace:*",
+    "@quenty/math": "workspace:*",
+    "@quenty/nevermore-test-runner": "workspace:*",
+    "@quenty/playermock": "workspace:*",
+    "@quenty/promise": "workspace:*",
+    "@quenty/qframe": "workspace:*",
+    "@quenty/rx": "workspace:*",
+    "@quenty/servicebag": "workspace:*",
+    "@quenty/spring": "workspace:*",
+    "@quenty/steputils": "workspace:*",
+    "@quenty/transitionmodel": "workspace:*",
+    "@quenty/valueobject": "workspace:*",
+    "@quenty/vector3utils": "workspace:*",
+    "@quentystudios/jest-lua": "3.10.0-quenty.2"
+  },
+  "devDependencies": {
+    "@quenty/camerastoryutils": "workspace:*"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

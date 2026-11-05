@@ -1,0 +1,14 @@
+{
+  "name": "SoundPlayerTest",
+  "tree": {
+    "$className": "DataModel",
+    "ServerScriptService": {
+      "$properties": {
+        "LoadStringEnabled": true
+      },
+      "soundplayer": {
+        "$path": ".."
+      }
+    }
+  }
+}

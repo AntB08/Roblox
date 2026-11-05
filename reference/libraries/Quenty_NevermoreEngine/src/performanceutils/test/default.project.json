@@ -1,0 +1,14 @@
+{
+  "name": "PerformanceUtilsTest",
+  "tree": {
+    "$className": "DataModel",
+    "ServerScriptService": {
+      "$properties": {
+        "LoadStringEnabled": true
+      },
+      "performanceutils": {
+        "$path": ".."
+      }
+    }
+  }
+}

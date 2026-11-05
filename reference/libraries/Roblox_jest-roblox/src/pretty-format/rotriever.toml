@@ -1,0 +1,30 @@
+[package]
+name = "PrettyFormat"
+authors = { workspace = true }
+description = "Stringify any Luau value."
+repository = { workspace = true }
+homepage = { workspace = true }
+documentation = "https://github.com/jestjs/jest/blob/v27.4.7/packages/pretty-format/README.md"
+keywords = ["string", "serialize", "format"]
+version = { workspace = true }
+license = { workspace = true }
+content_root = "src"
+files = ["*", "!**/__*__/**"]
+
+[config]
+registry_index = "true"
+
+[dependencies]
+JestGetType = { path = "../jest-get-type" }
+ChalkLua = { workspace = true }
+LuauPolyfill = { workspace = true }
+RegExp = { workspace = true }
+ReactIs = { workspace = true }
+Symbol = { workspace = true }
+RobloxShared = { path = "../roblox-shared" }
+
+[dev_dependencies]
+React = { workspace = true }
+ReactRoblox = { workspace = true }
+ReactTestRenderer = { workspace = true }
+JestGlobals = { path = "../jest-globals" }

@@ -1,0 +1,37 @@
+{
+  "name": "@quenty/setmechanismcframe",
+  "version": "10.11.3",
+  "description": "Sets a mechanisms cframe",
+  "keywords": [
+    "Roblox",
+    "Nevermore",
+    "Lua",
+    "Assembly"
+  ],
+  "bugs": {
+    "url": "https://github.com/Quenty/NevermoreEngine/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Quenty/NevermoreEngine.git",
+    "directory": "src/setmechanismcframe/"
+  },
+  "funding": {
+    "type": "patreon",
+    "url": "https://www.patreon.com/quenty"
+  },
+  "license": "MIT",
+  "scripts": {
+    "preinstall": "npx only-allow pnpm"
+  },
+  "contributors": [
+    "Quenty"
+  ],
+  "dependencies": {
+    "@quenty/getmechanismparts": "workspace:*",
+    "@quenty/loader": "workspace:*"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

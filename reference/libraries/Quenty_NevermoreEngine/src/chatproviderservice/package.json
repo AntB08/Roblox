@@ -1,0 +1,65 @@
+{
+  "name": "@quenty/chatproviderservice",
+  "version": "9.76.1",
+  "description": "Provide wrapper around chat system to allow tags to be set",
+  "keywords": [
+    "Roblox",
+    "Nevermore",
+    "Lua",
+    "Chat"
+  ],
+  "bugs": {
+    "url": "https://github.com/Quenty/NevermoreEngine/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Quenty/NevermoreEngine.git",
+    "directory": "src/chatproviderservice/"
+  },
+  "funding": {
+    "type": "patreon",
+    "url": "https://www.patreon.com/quenty"
+  },
+  "license": "MIT",
+  "scripts": {
+    "preinstall": "npx only-allow pnpm"
+  },
+  "contributors": [
+    "Quenty"
+  ],
+  "dependencies": {
+    "@quenty/attributeutils": "workspace:*",
+    "@quenty/baseobject": "workspace:*",
+    "@quenty/binder": "workspace:*",
+    "@quenty/brio": "workspace:*",
+    "@quenty/clienttranslator": "workspace:*",
+    "@quenty/cmdrservice": "workspace:*",
+    "@quenty/color3utils": "workspace:*",
+    "@quenty/datastore": "workspace:*",
+    "@quenty/instanceutils": "workspace:*",
+    "@quenty/jestutils": "workspace:*",
+    "@quenty/loader": "workspace:*",
+    "@quenty/localizedtextutils": "workspace:*",
+    "@quenty/maid": "workspace:*",
+    "@quenty/nevermore-test-runner": "workspace:*",
+    "@quenty/permissionprovider": "workspace:*",
+    "@quenty/playerbinder": "workspace:*",
+    "@quenty/playermock": "workspace:*",
+    "@quenty/playerutils": "workspace:*",
+    "@quenty/preferredparentutils": "workspace:*",
+    "@quenty/promise": "workspace:*",
+    "@quenty/remoting": "workspace:*",
+    "@quenty/richtext": "workspace:*",
+    "@quenty/rx": "workspace:*",
+    "@quenty/rxbinderutils": "workspace:*",
+    "@quenty/servicebag": "workspace:*",
+    "@quenty/signal": "workspace:*",
+    "@quenty/string": "workspace:*",
+    "@quenty/table": "workspace:*",
+    "@quenty/valueobject": "workspace:*",
+    "@quentystudios/jest-lua": "3.10.0-quenty.2"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

@@ -1,0 +1,498 @@
+# Jest Roblox Changelog
+
+## Unreleased
+* :sparkles: String requires inside tests resolve through `ScriptService:ResolveModulePath` when the engine supports it, so every path native `require` understands (including `.config` aliases) also works under Jest. Engines without the method keep the existing resolver.
+
+## 3.20.1 (2026-08-30)
+* :broom: Bumps the version of luau-regexp used by Jest from 0.2.2 -> 0.3.0
+
+
+## 3.20.0 (2026-07-30)
+
+* :package: Jest Roblox is now published to Wally as 34 packages under the `roblox/*` scope, alongside the existing Creator Store and Rotriever releases.
+
+## 3.19.0 (2026-06-18)
+
+* :sparkles: Add `jest.retryTimes` ([#485](https://github.com/Roblox/jest-roblox-internal/pull/485))
+
+## 3.18.0 (2026-06-16)
+* :broom: Several large and rewrites to rewrite transpiled code, remove LuauPolyfill as a dependency and remove unused codepaths and modules. Switched over to the independent Symbol library instead of LuauPolyfill's Symbol. ([#475](https://github.com/Roblox/jest-roblox-internal/pull/475)) ([#480](https://github.com/Roblox/jest-roblox-internal/pull/480)) ([#481](https://github.com/Roblox/jest-roblox-internal/pull/481))
+* :broom: Removing `emittery` as a dependency and switching to direct callbacks in `jest-runner` and `jest-core`, which should result in a speedup for test runs. ([#482](https://github.com/Roblox/jest-roblox-internal/pull/482_))
+
+## 3.17.1 (2026-05-14)
+
+* :sparkles: Add `duration` field to `FormattedAssertionResult` type to match formatter behavior and upstream Jest v28 ([#476](https://github.com/Roblox/jest-roblox-internal/pull/476))
+
+## 3.17.0 (2026-05-05)
+
+* :sparkles: Exposed the `jest.retryTimes()` API for per-test retries ([#477](https://github.com/Roblox/jest-roblox-internal/pull/477))
+
+## 3.16.1 (2026-04-9)
+
+* :bug: Ensures `stackDepth` is properly passed through to configuration. ([#474](https://github.com/Roblox/jest-roblox-internal/pull/474))
+
+## 3.16.0 (2026-04-9)
+
+* :sparkles: Added `stackDepth` configuration option to optionally limit the number of call frames printed on test failures. ([#472](https://github.com/Roblox/jest-roblox-internal/pull/472))
+
+## 3.15.0 (2026-03-24)
+
+* :hammer_and_wrench: Use rocale-cli for running OCALE tests ([#469](https://github.com/Roblox/jest-roblox-internal/pull/469))
+* :sparkles: Require-by-string is now supported by Jest, including carveouts for
+ `@std` and `@rbx` that pass through to native libraries ([#469](https://github.com/Roblox/jest-roblox-internal/pull/470))
+
+## 3.14.0 (2026-01-28)
+
+* :sparkles: Added `printInstanceTags` formatting option that toggles whether Instance tags are printed in snapshots (available in `snapshot` config and `pretty-format`) ([#466](https://github.com/Roblox/jest-roblox-internal/pull/466))
+* :sparkles: Added `useStyledProperties` formatting option that uses the `GetStyled` API to read styled property values for Instance serialization (available in `snapshot` config and `pretty-format`) ([#466](https://github.com/Roblox/jest-roblox-internal/pull/466))
+* :hammer_and_wrench: Added an `args` module that parses command line arguments passed in through `roblox-cli` and moving away from relying on globals to pass arguments ([#454](https://github.com/Roblox/jest-roblox-internal/pull/454))
+* :bug: Fix the type for `each` ([#457](https://github.com/Roblox/jest-roblox-internal/pull/457))
+* :hammer_and_wrench: Run CI in OCALE ([#458](https://github.com/Roblox/jest-roblox-internal/pull/458))
+* :hammer_and_wrench: All build scripts are now in lute and unified across local and CI runs. Run `lute scripts/analyze` to run static analysis and `lute run scripts/test <config>` to run the different test configurations. ([#462](https://github.com/Roblox/jest-roblox-internal/pull/462))
+
+## 3.13.3 (2025-06-04)
+
+* :hammer_and_wrench: Rojo + Luau LSP is the new default workflow for Jest
+  development ([#453](https://github.com/Roblox/jest-roblox-internal/pull/453))
+* :bug: Fix test runtime regression due to loadstring fallback check ([#455](https://github.com/Roblox/jest-roblox-internal/pull/455))
+
+## 3.13.2 (2025-05-07)
+* :bug: Correctly pass in `path` property of `test` in the `onTestCaseResult` reporter hook ([#450](https://github.com/Roblox/jest-roblox-internal/pull/450))
+* :bug: Fix incorrect type for the `reporters` argument in runCLI ([#451](https://github.com/Roblox/jest-roblox-internal/pull/451))
+
+## 3.13.1 (2025-04-21)
+* :bug: Reinitialize global mocks after `resetAllMocks` is called ([#448](https://github.com/Roblox/jest-roblox-internal/pull/448))
+
+## 3.13.0 (2025-04-10)
+
+* :sparkles: Added support for custom reporters ([#444](https://github.com/Roblox/jest-roblox-internal/pull/444))
+* :sparkles: Added GitHub actions reporter ([#445](https://github.com/Roblox/jest-roblox-internal/pull/445))
+* :bug: Fix no test found message ([#434](https://github.com/Roblox/jest-roblox-internal/pull/434)) ([jsdotlua/jest-lua#7](https://github.com/jsdotlua/jest-lua/pull/7))
+* :bug: Perform test discovery against file system paths of tests if possible ([#434](https://github.com/Roblox/jest-roblox-internal/pull/434))
+* :bug: Fix testPathIgnorePatterns to when ignoring multiple file paths ([#446](https://github.com/Roblox/jest-roblox-internal/pull/446))
+* :hammer_and_wrench: Fix the type signatures of `jest.spyOn()` and `jest.mocked()` ([#443](https://github.com/Roblox/jest-roblox-internal/pull/443))
+* :hammer_and_wrench: Fix broken Rotriever type exports for `expect` ([#443](https://github.com/Roblox/jest-roblox-internal/pull/443))
+
+## 3.12.0 (2025-03-12)
+
+* :sparkles: Added the `expect.callable()` asymmetric matcher, which matches
+  anything that can be called like a function (including callable tables and
+  callable userdatas) ([#440](ttps://github.com/Roblox/jest-roblox-internal/pull/440))
+* :hammer_and_wrench: Fake timers warn when using zero-second delays without an
+  engine frame time unit configured ([#389](https://github.com/Roblox/jest-roblox-internal/pull/389))
+* :hammer_and_wrench: Fixed a typo in the type signature for `jest.fn()` ([#426](https://github.com/Roblox/jest-roblox-internal/pull/426))
+* :bug: Delete empty snapshot files ([#430](https://github.com/Roblox/jest-roblox-internal/pull/430))
+* :hammer_and_wrench: Fix types for new require type ([#438](https://github.com/Roblox/jest-roblox-internal/pull/438))
+* :bug: Fix string sequences that result in an invalid XML file for Rojo projects ([#439](https://github.com/Roblox/jest-roblox-internal/pull/439))
+
+
+## 3.11.1 (2025-01-10)
+
+* :hammer_and_wrench: Internal mocks from Jest's own test suite are no longer
+  shipped to end users
+
+## 3.11.0 (2025-01-07)
+* :sparkles: Added instance mocking via `mockDataModel`, used for GetService
+  mocking ([#419](https://github.com/Roblox/jest-roblox-internal/pull/419))
+* :hammer_and_wrench: Fixed RobloxInstance producing incorrect property listings when used
+  with instances with "quantum" properties (e.g. UI)
+
+## 3.10.0 (2024-10-02)
+* :sparkles: Added a fallback to use `loadstring` instead of `loadmodule` in lower privileged contexts ([#392](https://github.com/Roblox/jest-roblox-internal/pull/392))
+* :sparkles: Added `redactStackTrace` option to improve stability to snapshots that contain stacktraces ([#401](https://github.com/Roblox/jest-roblox-internal/pull/401))
+* :hammer_and_wrench: Add more helpful error message when requiring `JestGlobals` outside test environment ([#405](https://github.com/Roblox/jest-roblox-internal/pull/405))
+* :hammer_and_wrench: Error when trying to load a nonexistant `PrettyFormat` plugin ([#407](https://github.com/Roblox/jest-roblox-internal/pull/407))
+* :hammer_and_wrench: Stabilize `RobloxInstance` serialization tests ([#408](https://github.com/Roblox/jest-roblox-internal/pull/408))
+
+## 3.9.1 (2024-08-02)
+* :bug: Fix a type analysis error in `JestRuntime` ([#403](https://github.com/Roblox/jest-roblox-internal/pull/403))
+
+## 3.9.0 (2024-08-02)
+* :sparkles: Support spying on Lua globals with `spyOn` ([#397](https://github.com/Roblox/jest-roblox-internal/pull/397))
+* :bug: Expose safe APIs to read and write Roblox Instance properties in the `RobloxInstance` library for `PrettyFormat` to serialize Instances safely ([#398](https://github.com/Roblox/jest-roblox-internal/pull/398))
+* :hammer_and_wrench: Clean up package manifests, READMEs and documentation ([#400](https://github.com/Roblox/jest-roblox-internal/pull/400) [#402](https://github.com/Roblox/jest-roblox-internal/pull/402))
+
+## 3.8.1 (2024-06-18)
+* :bug: Fix mismatched test paths between reporter and runner ([#396](https://github.com/Roblox/jest-roblox-internal/pull/395))
+
+## 3.8.0 (2024-05-20)
+* :sparkles: Mock task.wait ([#388](https://github.com/Roblox/jest-roblox-internal/pull/373))
+
+## 3.7.0 (2024-04-10)
+* :sparkles: Resolve DOM paths to FS paths if possible in `JestRunner` ([#373](https://github.com/Roblox/jest-roblox-internal/pull/373))
+
+## 3.6.2 (2024-03-21)
+* :sparkles: Added jest.spyOn ([#382](https://github.com/Roblox/jest-roblox-internal/pull/382))
+* :bug: Fixed jest.mock type ([#385](https://github.com/Roblox/jest-roblox-internal/pull/385))
+
+## 3.6.1 (2024-01-16)
+* :hammer_and_wrench: Re-release of 3.6.0 with widened promise dependency that includes older versions for maximum flexibility ([#378](https://github.com/Roblox/jest-roblox-internal/pull/378))
+
+## 3.6.0 (2024-01-09)
+* :hammer_and_wrench: Upgrade promise dependency, but keep constraint wide so that all future 3.x versions are valid ([#374](https://github.com/Roblox/jest-roblox-internal/pull/374))
+* :hammer_and_wrench: Fix matching logic for RegExp objects ([#371](https://github.com/Roblox/jest-roblox-internal/pull/371))
+* :sparkles: Added `task.failing` support to easily mark tests that are suppose to fail ([#370](https://github.com/Roblox/jest-roblox-internal/pull/370))
+* :sparkles: Added `task.cancel` support to cancel timeouts started with `task.delays` ([#368](https://github.com/Roblox/jest-roblox-internal/pull/368))
+
+## 3.5.0 (2023-11-01)
+* :hammer_and_wrench: Fix an issue that was hiding error messages in test failure output ([#360](https://github.com/Roblox/jest-roblox-internal/pull/360))
+* :sparkles: Allow toThrow to match on regular expressions if the expected error matches the RegExp type (has a test and exec function) ([#357](https://github.com/Roblox/jest-roblox-internal/pull/357))
+* :sparkles: Add nil asymmetric matcher `expect.nothing()` to match against `nil` and undefined values
+
+## 3.4.1 (2023-08-25)
+* :hammer_and_wrench: Relax requirement to report a value in a JestBenchmark profiler section
+* :hammer_and_wrench: Catch error in JestBenchmark.HeartbeatReporter when a heartbeat occurs outside of a reporting section
+* :hammer_and_wrench: Export `benchmark` through `JestBenchmark.benchmark` instead of `JestBenchmark.benchmark.benchmark`
+
+## 3.4.0 (2023-08-17)
+* :sparkles: Added the [JestBenchmark](./docs/docs/JestBenchmarkAPI.md) module
+* :hammer_and_wrench: Upgrade to [v28.0.0](https://github.com/jestjs/jest/tree/v28.0.0) ([#266](https://github.com/Roblox/jest-roblox-internal/pull/266))
+
+## 3.3.0 (2023-04-26)
+* :sparkles: `pretty-format`: Added `printInstanceDefaults` formatting option that toggles whether unmodified Instance properties are printed ([#341](https://github.com/Roblox/jest-roblox-internal/pull/341))
+* :sparkles: Added `snapshotFormat` configuration option ([#341](https://github.com/Roblox/jest-roblox-internal/pull/341))
+* :sparkles: Added support for a configurable engine frame time for fake timers ([#343](https://github.com/Roblox/jest-roblox-internal/pull/343))
+
+## 3.2.5 (2023-01-19)
+* :bug: Fix error when obsolete snapshots and no file system access ([#334](https://github.com/Roblox/jest-roblox-internal/pull/334))
+
+## 3.2.4 (2023-01-13)
+* :bug: Fix separateMessageFromStack not working when there is no stack available ([#332](https://github.com/Roblox/jest-roblox-internal/pull/332))
+
+## 3.2.3 (2023-01-12)
+* :bug: Fix missing stacktraces when throwing bare strings ([#324](https://github.com/Roblox/jest-roblox-internal/pull/324))
+* :bug: Fix bad error message when test contains syntax error ([#326](https://github.com/Roblox/jest-roblox-internal/pull/326))
+* :bug: Fix setTimeout not mocked with useFakeTimers() ([#329](https://github.com/Roblox/jest-roblox-internal/pull/329))
+
+## 3.2.2 (2023-01-04)
+* :bug: Fix debugging capabilities broken recently ([#325](https://github.com/Roblox/jest-roblox-internal/pull/325))
+
+## 3.2.1 (2022-12-08)
+* :bug: Fix `loadmodule` environment table separation ([#320](https://github.com/Roblox/jest-roblox-internal/pull/320))
+
+## 3.2.0 (2022-12-06)
+* :sparkles: Added `jest.mock` and `jest.unmock` ([#243](https://github.com/Roblox/jest-roblox-internal/pull/243))
+* :sparkles: Added `jest.requireActual`([#294](https://github.com/Roblox/jest-roblox-internal/pull/294))
+* :sparkles: Jest runner caches loaded module functions to improve runtime ([#317](https://github.com/Roblox/jest-roblox-internal/pull/317))
+* :bug: Fixes error when no config is provided ([#314](https://github.com/Roblox/jest-roblox-internal/pull/314))
+* :hammer_and_wrench: Realigned packages
+  * `jest-runtime` ([#281](https://github.com/Roblox/jest-roblox-internal/pull/281))
+  * `jest-config` ([#297](https://github.com/Roblox/jest-roblox-internal/pull/297))
+  * `jest-core` ([#299](https://github.com/Roblox/jest-roblox-internal/pull/299)) ([#304](https://github.com/Roblox/jest-roblox-internal/pull/304))
+  * `expect` ([#309](https://github.com/Roblox/jest-roblox-internal/pull/299))
+
+## 3.1.1 (2022-11-1)
+* :bug: Fix `require` throwing on ModuleScripts that `return nil` and not throwing on ModuleScripts that return multiple values [#292](https://github.com/Roblox/jest-roblox-internal/pull/292)
+
+## 3.1.0 (2022-10-26)
+
+* :bug: Fix typing for expect matchers [#271](https://github.com/Roblox/jest-roblox-internal/pull/271)
+* :sparkles: export additional `expectExtended` from `JestGlobals` to allow use of custom matchers [#271](https://github.com/Roblox/jest-roblox-internal/pull/271)
+* :sparkles: Added support for `expect.resolves` and `expect.rejects` [#262](https://github.com/Roblox/jest-roblox-internal/pull/262)
+* :sparkles: Remove the need for `return {}` for test files [#279](https://github.com/Roblox/jest-roblox-internal/pull/279)
+
+## 3.0.0 (2022-09-30)
+
+* :sparkles: Added `expect.assertions(number)` and `expect.hasAssertions()` functions ([#256](https://github.com/Roblox/jest-roblox-internal/pull/256))
+
+## 3.0.0 rc 1 (2022-09-23)
+* :rotating_light: `jest.resetSnapshotSerializer` removed ([#253](https://github.com/Roblox/jest-roblox-internal/pull/253))
+* :bug: Fix `PrettyFormatPluginError` not throwing on invalid plugins ([#250](https://github.com/Roblox/jest-roblox-internal/pull/250))
+* :bug: Fix `snapshotSerializers` config option not working ([#251](https://github.com/Roblox/jest-roblox-internal/pull/251))
+* :bug: Fix crash when no tests are discovered ([#252](https://github.com/Roblox/jest-roblox-internal/pull/252))
+* :bug: Fix `testPathIgnorePatterns` config option crashing ([#259](https://github.com/Roblox/jest-roblox-internal/pull/259))
+
+## 3.0.0 rc 0 (2022-09-09)
+
+* :sparkles: Added `task.delay()` and `time()` as fake timers ([#242](https://github.com/Roblox/jest-roblox-internal/pull/242))
+* :bug: Fix test result message for failing test ([#237](https://github.com/Roblox/jest-roblox-internal/pull/237))
+* :bug: Fix `testNamePattern` config value ([#232](https://github.com/Roblox/jest-roblox-internal/pull/232))
+* :bug: Fix `.each` for template syntax ([#246](https://github.com/Roblox/jest-roblox-internal/pull/246))
+* :hammer_and_wrench: Update LuauPolyfill to [v1.0.0](https://github.com/Roblox/luau-polyfill/blob/v1.0.0/CHANGELOG.md#100) ([#237](https://github.com/Roblox/jest-roblox-internal/pull/237))
+* :hammer_and_wrench: Update Roact to [v17.0.1-rc.16](https://github.com/Roblox/roact-alignment/tree/v17.0.1-rc.16) ([#237](https://github.com/Roblox/jest-roblox-internal/pull/237))
+* :hammer_and_wrench: Explicitly license files ([#235](https://github.com/Roblox/jest-roblox-internal/pull/235))
+
+## 3.0.0 alpha 0 (2022-08-11)
+
+* :sparkles: Port `jest-config` ([#203](https://github.com/Roblox/jest-roblox-internal/pull/203))
+* :sparkles: Port `jest-core` ([#203](https://github.com/Roblox/jest-roblox-internal/pull/203))
+* :sparkles: Port `jest-validate` ([#203](https://github.com/Roblox/jest-roblox-internal/pull/203))
+* :hammer_and_wrench: Adjust other modules to work with `jest-core` ([#203](https://github.com/Roblox/jest-roblox-internal/pull/203))
+* :hammer_and_wrench: Update LuauPolyfill to [v0.4.1](https://github.com/Roblox/luau-polyfill/blob/v0.4.1/CHANGELOG.md#041) ([#215](https://github.com/Roblox/jest-roblox-internal/pull/215))
+* :hammer_and_wrench: Update Roact to [v17.0.1-rc.13](https://github.com/Roblox/roact-alignment/tree/v17.0.1-rc.13) ([#215](https://github.com/Roblox/jest-roblox-internal/pull/215))
+* :hammer_and_wrench: Update Picomatch to [v0.3.0](https://github.com/Roblox/picomatch-lua/blob/v0.3.0/CHANGELOG.md#030) ([#215](https://github.com/Roblox/jest-roblox-internal/pull/215))
+
+## 2.5.0 alpha 0 (2022-06-30)
+* :sparkles: Port `jest-runner` ([#197](https://github.com/Roblox/jest-roblox-internal/pull/197))
+* :sparkles: Port `jest-runtime` ([#178](https://github.com/Roblox/jest-roblox-internal/pull/178))
+* :sparkles: Create `jest-environment-luau`, based on `jest-environment-node` ([#197](https://github.com/Roblox/jest-roblox-internal/pull/197))
+* :hammer_and_wrench: Add integration test of ported libraries, using jest's runner to run tests. ([#197](https://github.com/Roblox/jest-roblox-internal/pull/197))
+
+## 2.4.1 (2022-05-20)
+* :hammer_and_wrench: Disable `chalk-lua` when running in Studio environment
+* :hammer_and_wrench: Extract `AssertionError` to `LuauPolyfill` ([#186](https://github.com/Roblox/jest-roblox-internal/pull/185]))
+* :bug: Fix custom throwing matchers failing when throwing strings ([#186](https://github.com/Roblox/jest-roblox-internal/pull/186))
+* :bug: Fix Jest reporters not reporting test failure to `TestService` ([#188](https://github.com/Roblox/jest-roblox-internal/pull/188))
+
+## 2.4.0 (2022-05-18)
+* :sparkles: Added adapters for Jest reporters ([#179](https://github.com/Roblox/jest-roblox-internal/pull/179))
+  * Added ability to pipe together reporters
+* :sparkles: Added ReactTestComponent serializer ([#174](https://github.com/Roblox/jest-roblox-internal/pull/174))
+* :sparkles: Added React element serializer ([#170](https://github.com/Roblox/jest-roblox-internal/pull/170))
+* :sparkles: Port `jest-reporters` ([#167](https://github.com/Roblox/jest-roblox-internal/pull/167))
+* :sparkles: Port `jest-console` ([#157](https://github.com/Roblox/jest-roblox-internal/pull/157))
+* :sparkles: Port `jest-test-result` ([#155](https://github.com/Roblox/jest-roblox-internal/pull/155))
+* :sparkles: Port `jest-types` ([#137](https://github.com/Roblox/jest-roblox-internal/pull/137))
+* :sparkles: Realigned package versions to v27.4.7 ([#135](https://github.com/Roblox/jest-roblox-internal/pull/135))
+* :sparkles: Port `jest-environment` ([#139](https://github.com/Roblox/jest-roblox-internal/pull/139))
+* :sparkles: Port `jest-each` ([#145](https://github.com/Roblox/jest-roblox-internal/pull/145) [#158](https://github.com/Roblox/jest-roblox-internal/pull/158))
+  * Support array like tables
+  * Support template like tables
+* :sparkles: Port `jest-util` and `picomatch` ([#144](https://github.com/Roblox/jest-roblox-internal/pull/144) [#154](https://github.com/Roblox/jest-roblox-internal/pull/154))
+* :bug: Clean up assertion errors warning ([#181](https://github.com/Roblox/jest-roblox-internal/pull/181))
+* :hammer_and_wrench: Apply `stylua` to the whole repo and enable check on CI ([#147](https://github.com/Roblox/jest-roblox-internal/pull/147))
+
+## 2.3.1 (2021-11-30)
+* :bug: Fix error reporters not outputting captured errors when using non-default reporters ([#131](https://github.com/Roblox/jest-roblox-internal/pull/131))
+
+## 2.3.0 (2021-11-19)
+* :sparkles: Added support for Roblox Instance objects ([#127](https://github.com/Roblox/jest-roblox-internal/pull/127))
+  * Added object serialization for Instances
+  * Added `.toMatchInstance` matcher to match against Instances
+  * `.toMatchSnapshot` now serializes and matches against Instances
+* :hammer_and_wrench: `jest.fn()` additionally returns a forwarding function for tests that require a mock to be a function
+* :hammer_and_wrench: Test reporter is now colorized and reports name of the failing test ([#126](https://github.com/Roblox/jest-roblox-internal/pull/126))
+* :bug: Fix for a bug with throwing matchers and the `Error` polyfill in `roact-alignment` ([#128](https://github.com/Roblox/jest-roblox-internal/pull/128))
+
+## 2.2.1 (2021-10-20)
+* :bug: Check that thrown message is a string when matching against a thrown string ([#124](https://github.com/Roblox/jest-roblox-internal/pull/124))
+
+## 2.2.0 (2021-10-18)
+* :sparkles: Introduced strong Luau typing ([#102](https://github.com/Roblox/jest-roblox-internal/pull/102))
+* :sparkles: Realigned package versions ([#102](https://github.com/Roblox/jest-roblox-internal/pull/102))
+  * `diff-sequences` realigned to v27.2.5
+  * `jest` realigned to v27.2.5
+  * `jest-diff` realigned to v27.2.5
+  * `jest-fake-timers` realigned to v27.0.6
+  * `jest-matcher-utils` realigned to v27.2.5
+  * `jest-snapshot` realigned to v27.0.6
+* :bug: Fix for `expect.any` not working with Roblox datatypes ([#119](https://github.com/Roblox/jest-roblox-internal/pull/119))
+* :bug: Lazy initialize `game:GetService` calls to avoid throwing in debugger ([#122](https://github.com/Roblox/jest-roblox-internal/pull/122))
+* :bug: Fix missing stacktrace entries in nested pcalls ([#121](https://github.com/Roblox/jest-roblox-internal/pull/121))
+
+## 2.1.4 (2021-09-30)
+* :sparkles: Added support and better output for [Roblox datatypes](https://developer.roblox.com/en-us/api-reference/data-types) ([#117](https://github.com/Roblox/jest-roblox-internal/pull/117))
+
+## 2.1.3 (2021-09-22)
+* :hammer_and_wrench: Bump `LuauPolyfill` to `0.2.5` to fix static analysis issues on `lua-apps`
+
+## 2.1.2 (2021-09-16)
+* :hammer_and_wrench: Bump `RegExp` to `0.1.3` and `LuauPolyfill` to `0.2.4` to remove test files from cached versions
+* :hammer_and_wrench: Republish with rotriever `0.5.0-rc.4` to remove tests from rotriever cache
+* :hammer_and_wrench: Add typing for `RegExp`
+
+## 2.1.1 (2021-09-03)
+* :bug: Resolve dependency cycle in `JestSnapshot` and `Expect`
+
+## 2.1.0 (2021-09-03)
+* :sparkles: Changed project structure to use rotriever `0.5.0` workspaces ([#96](https://github.com/Roblox/jest-roblox-internal/pull/96))
+  * This allows downstream projects to pull individual `JestRoblox` packages as dependencies
+  * For example, to pull the `JestDiff` package as a dependency:
+  ```
+  JestDiff = "github.com/Roblox/jest-roblox@2.1.0"
+
+  local JestDiff = require(Packages.JestDiff)
+  ```
+* :rotating_light: Due of the above change, `JestRoblox` is now used by pulling the `JestGlobals` package in your `rotriever.toml`:
+  * Change your `rotriever.toml` dependency to
+  ```diff
+  + JestGlobals = "github.com/Roblox/jest-roblox@2.1.0"
+  - JestRoblox = "github.com/Roblox/jest-roblox@2.0.1"
+  ```
+  * Now that the dependency is `JestGlobals`, you no longer need to get the `Globals` member of `JestRoblox`
+  ```diff
+  + local JestGlobals = require(Packages.JestGlobals)
+  + local expect = JestGlobals.expect
+  - local JestRoblox = require(Packages.JestRoblox).Globals
+  - local expect = JestRoblox.expect
+  ```
+* :hammer_and_wrench: Support for named functions in error output ([#95](https://github.com/Roblox/jest-roblox-internal/pull/95))
+* :hammer_and_wrench: Support for `LuauPolyfill` `Set` object in matchers ([#101](https://github.com/Roblox/jest-roblox-internal/pull/101))
+* :hammer_and_wrench: Remove unhelpful lines in error stacktraces ([#105](https://github.com/Roblox/jest-roblox-internal/pull/105))
+* :bug: Fix for snapshot property matchers not working ([#93](https://github.com/Roblox/jest-roblox-internal/pull/93))
+* :bug: Fix snapshot path resolution for snapshot updates on windows ([#97](https://github.com/Roblox/jest-roblox-internal/pull/97))
+* :bug: Fix for `JestSnapshot` throwing in environments where `FileSystemService` does not exist ([#103](https://github.com/Roblox/jest-roblox-internal/pull/103))
+* :bug: Fix for snapshot names with special characters  ([#108](https://github.com/Roblox/jest-roblox-internal/pull/108))
+
+## 2.0.1 (2021-08-04)
+* :bug: Fix for snapshot matchers not correctly throwing when the matcher fails ([#92](https://github.com/Roblox/jest-roblox-internal/pull/92))
+
+## 2.0.0 (2021-08-02)
+* :sparkles: Added `JestSnapshot` functionality
+  * Added `toMatchSnapshot` matcher
+  * Added `toThrowErrorMatchingSnapshot` matcher
+  * Added custom snapshot matchers and property matchers, refer to the "Snapshot Testing" section of the documentation for more info
+  * Added `UPDATESNAPSHOT` flag for updating snapshots, the value can either be `all` (by default), or `new` to only add new snapshots, this can be enabled with an `--updateSnapshot` flag in Jest Roblox CLI
+* :rotating_light: Removed colon syntax alias for initializing mock functions
+* :hammer_and_wrench: `--fastFlags.overrides "UseDateTimeType3=true"` removed as it is no longer needed
+* :bug: Fix issue with CoreScriptConverter and the Modules directory ([#79](https://github.com/Roblox/jest-roblox-internal/pull/79))
+* :bug: Fix for chalked strings throwing when used with string matchers ([#85](https://github.com/Roblox/jest-roblox-internal/pull/85))
+* :bug: `.toThrow` matchers now recognize `jest.fn` as callable ([#87](https://github.com/Roblox/jest-roblox-internal/pull/87))
+
+## 1.1.2 (2021-06-11)
+* :bug: Fix for `JestSnapshot` so that the init file returns a value ([#71](https://github.com/Roblox/jest-roblox-internal/pull/71))
+
+## 1.1.1 (2021-06-07)
+* :bug: Fix in `getType` for objects with a throwing `__index` metamethod ([#69](https://github.com/Roblox/jest-roblox-internal/pull/69))
+
+## 1.1.0 (2021-05-28)
+* :sparkles: Added `toStrictEqual` matcher
+* :rotating_light: Changed syntax for intializing mock functions from `jest:fn()` to `jest.fn()` (the colon syntax is left in for compatibility but will be removed in 2.0)
+* :rotating_light: `RegExp` is pulled out from the LuauPolyfill repo into a separate LuauRegExp repo and lazily loaded ([#62](https://github.com/Roblox/jest-roblox-internal/pull/62))
+* :hammer_and_wrench: Added instantiating mock function instance with `mockFn.new()` ([#52](https://github.com/Roblox/jest-roblox-internal/pull/52))
+* :hammer_and_wrench: Changed the `ArrayContaining` asymmetric matcher to output curly braces instead of square brackets ([#55](https://github.com/Roblox/jest-roblox-internal/pull/55))
+* :hammer_and_wrench: Added proper output formatting for Roblox `Instance` types ([#64](https://github.com/Roblox/jest-roblox-internal/pull/64))
+* :bug: Bugfix in `SpyMatchers` where function calls with `nil` arguments would not be handled correctly ([#53](https://github.com/Roblox/jest-roblox-internal/pull/53))
+
+## 1.0.0 (2021-03-30)
+* :sparkles: Added spyMatchers
+```
+expect().lastCalledWith() also aliased as expect().toHaveBeenLastCalledWith()
+expect().lastReturnedWith() also aliased as expect().toHaveLastReturnedWith()
+expect().nthCalledWith() also aliased as expect().toHaveBeenNthCalledWith()
+expect().nthReturnedWith() also aliased as expect().toHaveNthReturnedWith()
+expect().toBeCalled() also aliased as expect().toHaveBeenCalled()
+expect().toBeCalledTimes() also aliased as expect().toHaveBeenCalledTimes()
+expect().toBeCalledWith() also aliased as expect().toHaveBeenCalledWith()
+expect().toReturn() also aliased as expect().toHaveReturned()
+expect().toReturnTimes() also aliased as expect().toHaveReturnedTimes()
+expect().toReturnWith() also aliased as expect().toHaveReturnedWith()
+```
+* :sparkles: Added basic `JestMock` functionality
+  * The `jest` object can be imported from `Globals` and has the following methods:
+    * `.fn()`
+    * `.clearAllMocks()`
+    * `.resetAllMocks()`
+    * `.restoreAllMocks()`
+* :hammer_and_wrench: Added `Error` type to `JestGetType` ([#45](https://github.com/Roblox/jest-roblox-internal/pull/45))
+* :bug: Bugfix in `.toMatch` where strings go into the RegEx check ([#41](https://github.com/Roblox/jest-roblox-internal/pull/41))
+* :bug: Bugfix for `.toThrow` not matching `Error` object with same message ([#44](https://github.com/Roblox/jest-roblox-internal/pull/44))
+
+## 0.7.1 (2021-03-12)
+* :sparkles: Added chalk-enabled error output ([#38](https://github.com/Roblox/jest-roblox-internal/pull/38))
+* :hammer_and_wrench: Added `userdata` and `thread` Luau types to `JestGetType` ([#39](https://github.com/Roblox/jest-roblox-internal/pull/39))
+* :bug: Fix for checking for an `asymmetricMatch` method for objects that override `__index` metamethod ([#39](https://github.com/Roblox/jest-roblox-internal/pull/39))
+
+## 0.7.0 (2021-03-02)
+* :sparkles: Added `expect.extend()` ([#35](https://github.com/Roblox/jest-roblox-internal/pull/35))
+* :hammer_and_wrench: Added `RegExp` support to matchers ([#32](https://github.com/Roblox/jest-roblox-internal/pull/32))
+* :hammer_and_wrench: Added prototype information to matchers ([#34](https://github.com/Roblox/jest-roblox-internal/pull/34))
+
+## 0.6.0 (2021-02-22)
+* :sparkles: Added `expect().toThrow()` ([#30](https://github.com/Roblox/jest-roblox-internal/pull/30))
+
+## 0.5.0 (2021-01-29)
+* :sparkles: Initial release of Jest Roblox, TestEZ has been rebranded as of this release.
+* :sparkles: Added `expect` aligned to [Jest's expect (26.5.3)](https://jestjs.io/docs/en/26.5/expect)
+  * Requires an explicit `require` from [`JestRoblox.Globals`](https://jestjs.io/docs/en/26.5/api) to use
+  * Refer to the Jest documentation on expect for usage documentation. Refer to the `README.md` in `src/Modules/expect` for details on deviations from upstream
+  * `expect` matchers added:
+  ```
+  expect().toBe()
+  expect().toBeCloseTo()
+  expect().toBeDefined()
+  expect().toBeFalsy()
+  expect().toBeGreaterThan()
+  expect().toBeGreaterThanOrEqual()
+  expect().toBeInstanceOf()
+  expect().toBeLessThan()
+  expect().toBeLessThanOrEqual()
+  expect().toBeNan() (aliased as toBeNaN)
+  expect().toBeNil() (aliased as toBeNull)
+  expect().toBeTruthy()
+  expect().toBeUndefined()
+  expect().toContain()
+  expect().toContainEqual()
+  expect().toEqual()
+  expect().toHaveLength()
+  expect().toHaveProperty()
+  expect().toMatch()
+  expect().toMatchObject()
+  ```
+  * `asymmetricMatchers` added:
+  ```
+  expect.any()
+  expect.anything()
+  expect.arrayContaining()
+  expect.arrayNotContaining()
+  expect.objectContaining()
+  expect.objectNotContaining()
+  expect.stringContaining()
+  expect.stringNotContaining()
+  expect.stringMatching()
+  expect.stringNotMatching()
+  ```
+  * Custom `asymmetricMatchers` for any objects with a `asymmetricMatch(self, other)` method
+  * Negative variants of all the above matchers with the keyword `never`, i.e. `expect().never.toBe()` or `expect.never.stringContaining()`
+  * TestEZ `expect` will be removed soon
+
+---
+
+## TestEZ Changelog
+
+## 0.4.1 (2020-10-30)
+* `afterEach` blocks now run their code after `it` blocks fail or error
+
+## 0.4.0 (2020-10-02)
+* Added `expect.extend` which allows projects to register their own, opinionated expectations that integrates into `expect`. ([#142](https://github.com/Roblox/testez/pull/142))
+  * Modeled after [jest's implementation](https://jestjs.io/docs/en/expect#expectextendmatchers).
+  * Matchers are functions that should return an object with with two keys, boolean `pass` and a string `message`
+  * Like `context`, matchers introduced via `expect.extend` will be present on all nodes below the node that introduces the matchers.
+  * Limitations:
+    * `expect.extend` cannot be called from within `describe` blocks
+    * Custom matcher names cannot overwrite pre-existing matchers, including default matchers and matchers introduces from previous `expect.extend` calls.
+* Change the way errors are collected to call tostring on them before further processing.
+  * Luau allows non-string errors, but not concatenating non-strings or passing non-strings to `debug.traceback` as a message, so TestRunner needs to do that step. This is a temporary fix as the better solution would be to retain the error in object form for as long as possible to give the reporter more to work with.
+  * This also makes a slight change to what's in the traceback to eliminate the unnecessary line mentioning the error collection function.
+* Fix debugging of tests in Studio
+
+## 0.3.3 (2020-09-25)
+* Remove the lifecycle hooks from the session tree. This prevents the `[?]` spam from the reporter not recognizing these nodes.
+
+## 0.3.2 (2020-08-10)
+* Some cleanup of the TestEZ CLI internals
+* Added the ability to pass in a string to expect.to.throw. This will search the error message for a matching substring and report a failure if it's not there.
+
+## 0.3.1 (2020-06-22)
+* Further simplify `beforeAll` handling.
+  * `beforeAll` now runs on entering the block, rather than on the first `it` encountered after entering the block. The major difference for the moment is that a `beforeAll` will now run even if there are no `it` blocks under it, which is now consistent with how `afterAll` worked.
+  * `beforeAll` and `afterAll` now report errors by creating a dummy node in the results to contain the error. Previously, errors in `afterAll` were not reported.
+  * A failure in a `beforeAll` block will now halt all further test execution within its enclosing `describe` block except for any remaining `beforeAll` blocks and any `afterAll` blocks. Multiple `beforeAll` or `afterAll` blocks within one `describe` block should not count on running in any specific order. `afterAll` blocks should account for the possibility of a partially setup state when cleaning up.
+* Add a context object visible from lifecycle hooks and `it` blocks. This is a write-once store for whatever you need to communicate between hooks and tests. It can be ignored until you need it.
+  * In particular, you can usually just use upvalues to comminucate between hooks and tests, but that won't work if your hooks are in a separate file (e.g. `init.spec.lua`).
+  * Also, this provides a cleaner alternative to extraEnvironment for passing along helper functions to large numbers of tests as the context can be scoped to particular directories as needed.
+
+## 0.3.0 (2020-06-12)
+* Remove the `try` node type.
+  * Remove the `step` alias for `it` since that's meant for use with `try`.
+* Remove the `include` global function.
+* Remove `HACK_NO_XPCALL`. With recent changes to the definition of xpcall, this is no longer necessary. Since people are still using it, it will now print out a warning asking them to delete that call instead.
+* Major changes to the internals of test planning.
+  * The major visible change is that `describe` and `it` blocks with duplicate descriptions will now not overwrite the earlier copies of those nodes.
+  * Duplicate `it` nodes within one `describe` will raise an error.
+  * TestPlanBuilder was removed from the API.
+* Fixed a bug with how `beforeAll` and `afterAll` handled nested nodes.
+* Implemented alphabetical sorting of the entire test tree which provides deterministic tests execution order regardless of platform, architecture or tool used to load tests.
+* Fixed interactions with roblox-cli in TestEZ CLI.
+
+## 0.2.0 (2020-03-04)
+* Added support for init.spec.lua. Code in this file is treated as belonging to the directory's node in the test tree. This allows for lifecycle hooks to be attached to all files in a directory.
+* Added TestEZ CLI, a Rust tool that bundles TestEZ and Lemur, and can run tests via Lemur or Roblox-CLI ([#61](https://github.com/Roblox/testez/pull/61))
+
+## 0.1.1 (2020-01-23)
+* Added beforeAll, beforeEach, afterEach, afterAll lifecycle hooks for testing
+	* The setup and teardown behavior of these hooks attempt to reach feature parity with [jest](https://jestjs.io/docs/en/setup-teardown).
+
+
+## 0.1.0 (2019-11-01)
+* Initial release.

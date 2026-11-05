@@ -1,0 +1,14 @@
+{
+  "name": "ParticlesTest",
+  "tree": {
+    "$className": "DataModel",
+    "ServerScriptService": {
+      "$properties": {
+        "LoadStringEnabled": true
+      },
+      "particles": {
+        "$path": ".."
+      }
+    }
+  }
+}

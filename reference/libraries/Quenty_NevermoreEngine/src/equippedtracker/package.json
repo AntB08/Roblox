@@ -1,0 +1,40 @@
+{
+  "name": "@quenty/equippedtracker",
+  "version": "13.48.1",
+  "description": "Tracks the equipped player of a tool",
+  "keywords": [
+    "Roblox",
+    "Nevermore",
+    "Lua",
+    "Tool",
+    "Humanoids"
+  ],
+  "bugs": {
+    "url": "https://github.com/Quenty/NevermoreEngine/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Quenty/NevermoreEngine.git",
+    "directory": "src/equippedtracker/"
+  },
+  "funding": {
+    "type": "patreon",
+    "url": "https://www.patreon.com/quenty"
+  },
+  "license": "MIT",
+  "scripts": {
+    "preinstall": "npx only-allow pnpm"
+  },
+  "contributors": [
+    "Quenty"
+  ],
+  "dependencies": {
+    "@quenty/characterutils": "workspace:*",
+    "@quenty/loader": "workspace:*",
+    "@quenty/maid": "workspace:*",
+    "@quenty/valueobject": "workspace:*"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

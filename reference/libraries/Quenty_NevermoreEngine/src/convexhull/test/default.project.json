@@ -1,0 +1,14 @@
+{
+  "name": "ConvexHullTest",
+  "tree": {
+    "$className": "DataModel",
+    "ServerScriptService": {
+      "$properties": {
+        "LoadStringEnabled": true
+      },
+      "convexhull": {
+        "$path": ".."
+      }
+    }
+  }
+}

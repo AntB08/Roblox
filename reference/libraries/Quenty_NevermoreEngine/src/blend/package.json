@@ -1,0 +1,55 @@
+{
+  "name": "@quenty/blend",
+  "version": "12.51.1",
+  "description": "Declarative UI system.",
+  "keywords": [
+    "Roblox",
+    "Nevermore",
+    "Lua"
+  ],
+  "bugs": {
+    "url": "https://github.com/Quenty/NevermoreEngine/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Quenty/NevermoreEngine.git",
+    "directory": "src/blend/"
+  },
+  "funding": {
+    "type": "patreon",
+    "url": "https://www.patreon.com/quenty"
+  },
+  "license": "MIT",
+  "scripts": {
+    "preinstall": "npx only-allow pnpm"
+  },
+  "contributors": [
+    "Quenty"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@quenty/acceltween": "workspace:*",
+    "@quenty/brio": "workspace:*",
+    "@quenty/ducktype": "workspace:*",
+    "@quenty/instanceutils": "workspace:*",
+    "@quenty/loader": "workspace:*",
+    "@quenty/maid": "workspace:*",
+    "@quenty/nevermore-test-runner": "workspace:*",
+    "@quenty/promise": "workspace:*",
+    "@quenty/rx": "workspace:*",
+    "@quenty/signal": "workspace:*",
+    "@quenty/spring": "workspace:*",
+    "@quenty/steputils": "workspace:*",
+    "@quenty/string": "workspace:*",
+    "@quenty/uiobjectutils": "workspace:*",
+    "@quenty/valuebaseutils": "workspace:*",
+    "@quenty/valueobject": "workspace:*",
+    "@quentystudios/jest-lua": "3.10.0-quenty.2"
+  },
+  "devDependencies": {
+    "@quenty/contentproviderutils": "workspace:*",
+    "@quenty/playerthumbnailutils": "workspace:*"
+  }
+}

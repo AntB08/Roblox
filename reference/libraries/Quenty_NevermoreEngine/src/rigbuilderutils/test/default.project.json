@@ -1,0 +1,14 @@
+{
+  "name": "rigbuildertest",
+  "tree": {
+    "$className": "DataModel",
+    "ServerScriptService": {
+      "$properties": {
+        "LoadStringEnabled": true
+      },
+      "rigbuilder": {
+        "$path": ".."
+      }
+    }
+  }
+}

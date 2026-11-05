@@ -1,0 +1,37 @@
+{
+  "name": "@quenty/rodux-undo",
+  "version": "8.14.3",
+  "description": "Undo stack for rodux",
+  "keywords": [
+    "Roblox",
+    "Nevermore",
+    "Lua",
+    "Rodux"
+  ],
+  "bugs": {
+    "url": "https://github.com/Quenty/NevermoreEngine/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Quenty/NevermoreEngine.git",
+    "directory": "src/rodux-undo/"
+  },
+  "funding": {
+    "type": "patreon",
+    "url": "https://www.patreon.com/quenty"
+  },
+  "license": "MIT",
+  "scripts": {
+    "preinstall": "npx only-allow pnpm"
+  },
+  "contributors": [
+    "Quenty"
+  ],
+  "dependencies": {
+    "@quenty/loader": "workspace:*",
+    "@quenty/table": "workspace:*"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

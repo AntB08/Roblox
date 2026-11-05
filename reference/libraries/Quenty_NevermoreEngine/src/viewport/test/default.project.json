@@ -1,0 +1,14 @@
+{
+  "name": "ViewportTest",
+  "tree": {
+    "$className": "DataModel",
+    "ServerScriptService": {
+      "$properties": {
+        "LoadStringEnabled": true
+      },
+      "viewport": {
+        "$path": ".."
+      }
+    }
+  }
+}

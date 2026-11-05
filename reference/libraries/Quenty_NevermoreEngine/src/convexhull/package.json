@@ -1,0 +1,40 @@
+{
+  "name": "@quenty/convexhull",
+  "version": "4.19.3",
+  "description": "Convex hull computation algorithms",
+  "keywords": [
+    "Roblox",
+    "Nevermore",
+    "Lua",
+    "ConvexHull",
+    "Geometry"
+  ],
+  "bugs": {
+    "url": "https://github.com/Quenty/NevermoreEngine/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Quenty/NevermoreEngine.git",
+    "directory": "src/convexhull/"
+  },
+  "funding": {
+    "type": "patreon",
+    "url": "https://www.patreon.com/quenty"
+  },
+  "license": "MIT",
+  "scripts": {
+    "preinstall": "npx only-allow pnpm"
+  },
+  "contributors": [
+    "Quenty"
+  ],
+  "dependencies": {
+    "@quenty/draw": "workspace:*",
+    "@quenty/loader": "workspace:*",
+    "@quenty/queue": "workspace:*",
+    "@quenty/vector3utils": "workspace:*"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

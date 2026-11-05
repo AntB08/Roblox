@@ -1,0 +1,41 @@
+{
+  "name": "@quenty/linkutils",
+  "version": "13.39.1",
+  "description": "Utility functions for links. Links are object values pointing to other values!",
+  "keywords": [
+    "Roblox",
+    "Nevermore",
+    "Lua",
+    "Link"
+  ],
+  "bugs": {
+    "url": "https://github.com/Quenty/NevermoreEngine/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Quenty/NevermoreEngine.git",
+    "directory": "src/linkutils/"
+  },
+  "funding": {
+    "type": "patreon",
+    "url": "https://www.patreon.com/quenty"
+  },
+  "license": "MIT",
+  "scripts": {
+    "preinstall": "npx only-allow pnpm"
+  },
+  "contributors": [
+    "Quenty"
+  ],
+  "dependencies": {
+    "@quenty/brio": "workspace:*",
+    "@quenty/instanceutils": "workspace:*",
+    "@quenty/loader": "workspace:*",
+    "@quenty/maid": "workspace:*",
+    "@quenty/promise": "workspace:*",
+    "@quenty/rx": "workspace:*"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

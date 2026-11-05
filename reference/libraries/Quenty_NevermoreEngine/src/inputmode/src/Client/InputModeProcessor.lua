@@ -1,0 +1,68 @@
+--!strict
+--[=[
+	Process inputs by evaluating inputModes. Helper object..
+
+	@class InputModeProcessor
+]=]
+
+local require = require(script.Parent.loader).load(script)
+
+local InputMode = require("InputMode")
+
+local InputModeProcessor = {}
+InputModeProcessor.__index = InputModeProcessor
+InputModeProcessor.ClassName = "InputModeProcessor"
+
+export type InputModeProcessor = typeof(setmetatable(
+	{} :: {
+		_inputModes: { InputMode.InputMode },
+	},
+	{} :: typeof({ __index = InputModeProcessor })
+))
+
+--[=[
+	Construtcs a new inputModeProcessor
+	@param inputModes { InputMode }?
+	@return InputModeProcessor
+]=]
+function InputModeProcessor.new(inputModes: { InputMode.InputMode }?): InputModeProcessor
+	local self: InputModeProcessor = setmetatable({} :: any, InputModeProcessor)
+
+	self._inputModes = {}
+
+	if inputModes then
+		for _, inputMode in inputModes do
+			self:AddInputMode(inputMode :: any)
+		end
+	end
+
+	return self
+end
+
+--[=[
+	Adds an input mode to the inputModeProcessor
+	@param inputMode InputMode
+]=]
+function InputModeProcessor.AddInputMode(self: InputModeProcessor, inputMode: InputMode.InputMode): ()
+	table.insert(self._inputModes, inputMode)
+end
+
+--[=[
+	Gets all input mode inputModes being used
+	@return { InputMode }
+]=]
+function InputModeProcessor.GetStates(self: InputModeProcessor): { InputMode.InputMode }
+	return self._inputModes
+end
+
+--[=[
+	Applies the inputObject as an evaluation for the inputm odes
+	@param inputObject InputObject
+]=]
+function InputModeProcessor.Evaluate(self: InputModeProcessor, inputObject: InputObject): ()
+	for _, inputMode in self._inputModes do
+		(inputMode :: any):Evaluate(inputObject)
+	end
+end
+
+return InputModeProcessor

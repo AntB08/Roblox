@@ -1,0 +1,35 @@
+[package]
+name = "JestReporters"
+authors = { workspace = true }
+description = { workspace = true }
+repository = { workspace = true }
+homepage = { workspace = true }
+documentation = { workspace = true }
+keywords = { workspace = true }
+version = { workspace = true }
+license = { workspace = true }
+content_root = "src"
+files = ["*", "!**/__*__/**"]
+
+[config]
+registry_index = "true"
+
+[dependencies]
+LuauPolyfill = { workspace = true }
+ChalkLua = { workspace = true }
+RegExp = { workspace = true }
+JestTypes = { path = "../jest-types" }
+JestTestResult = { path = '../jest-test-result' }
+JestMessageUtil = { path = "../jest-message-util" }
+JestUtil = { path = '../jest-util' }
+TestUtils = { path = '../test-utils' }
+JestConsole = { path = '../jest-console' }
+JestMock = { path = '../jest-mock' }
+RobloxShared = { path = '../roblox-shared' }
+Path = { path = '../path' }
+
+[dev_dependencies]
+JestGlobals = { path = "../jest-globals" }
+JestConfig = { path = "../jest-config" }
+PrettyFormat = { path = "../pretty-format" }
+JestSnapshotSerializerRaw = { path = "../jest-snapshot-serializer-raw" }

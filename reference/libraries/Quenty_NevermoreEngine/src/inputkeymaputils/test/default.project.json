@@ -1,0 +1,33 @@
+{
+  "name": "InputKeyMapUtilsTest",
+  "tree": {
+    "$className": "DataModel",
+    "ServerScriptService": {
+      "$properties": {
+        "LoadStringEnabled": true
+      },
+      "inputkeymaputils": {
+        "$className": "Folder",
+        "inputkeymaputils": {
+          "$path": ".."
+        },
+        "test": {
+          "$path": "modules"
+        },
+        "jest.config": {
+          "$path": "jest.config.lua"
+        }
+      },
+      "Script": {
+        "$path": "scripts/Server"
+      }
+    },
+    "StarterPlayer": {
+      "StarterPlayerScripts": {
+        "Main": {
+          "$path": "scripts/Client"
+        }
+      }
+    }
+  }
+}

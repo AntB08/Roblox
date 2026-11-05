@@ -1,0 +1,14 @@
+{
+  "name": "CounterTest",
+  "tree": {
+    "$className": "DataModel",
+    "ServerScriptService": {
+      "$properties": {
+        "LoadStringEnabled": true
+      },
+      "counter": {
+        "$path": ".."
+      }
+    }
+  }
+}

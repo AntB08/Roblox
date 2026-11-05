@@ -1,0 +1,65 @@
+{
+  "name": "@quenty/ik",
+  "version": "15.75.0",
+  "description": "Inverse Kinematics for characters on Roblox",
+  "keywords": [
+    "Roblox",
+    "Nevermore",
+    "Lua",
+    "ik",
+    "character"
+  ],
+  "bugs": {
+    "url": "https://github.com/Quenty/NevermoreEngine/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Quenty/NevermoreEngine.git",
+    "directory": "src/ik/"
+  },
+  "funding": {
+    "type": "patreon",
+    "url": "https://www.patreon.com/quenty"
+  },
+  "license": "MIT",
+  "scripts": {
+    "preinstall": "npx only-allow pnpm"
+  },
+  "contributors": [
+    "Quenty"
+  ],
+  "dependencies": {
+    "@quenty/acceltween": "workspace:*",
+    "@quenty/baseobject": "workspace:*",
+    "@quenty/binder": "workspace:*",
+    "@quenty/brio": "workspace:*",
+    "@quenty/camera": "workspace:*",
+    "@quenty/characterutils": "workspace:*",
+    "@quenty/humanoidtracker": "workspace:*",
+    "@quenty/instanceutils": "workspace:*",
+    "@quenty/loader": "workspace:*",
+    "@quenty/maid": "workspace:*",
+    "@quenty/math": "workspace:*",
+    "@quenty/motor6d": "workspace:*",
+    "@quenty/nevermore-test-runner": "workspace:*",
+    "@quenty/optional": "workspace:*",
+    "@quenty/promise": "workspace:*",
+    "@quenty/qframe": "workspace:*",
+    "@quenty/r15utils": "workspace:*",
+    "@quenty/ragdoll": "workspace:*",
+    "@quenty/remoting": "workspace:*",
+    "@quenty/rx": "workspace:*",
+    "@quenty/servicebag": "workspace:*",
+    "@quenty/signal": "workspace:*",
+    "@quenty/table": "workspace:*",
+    "@quenty/tie": "workspace:*",
+    "@quenty/valueobject": "workspace:*",
+    "@quentystudios/jest-lua": "3.10.0-quenty.2"
+  },
+  "devDependencies": {
+    "@quenty/rigbuilderutils": "workspace:*"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

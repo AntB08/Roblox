@@ -1,0 +1,26 @@
+[package]
+name = "RobloxShared"
+authors = { workspace = true }
+description = { workspace = true }
+repository = { workspace = true }
+homepage = { workspace = true }
+documentation = { workspace = true }
+keywords = { workspace = true }
+version = { workspace = true }
+license = { workspace = true }
+content_root = "src"
+files = ["*", "!**/__*__/**"]
+
+[config]
+registry_index = "true"
+
+[dependencies]
+JestGetType = { path = "../jest-get-type" }
+LuauPolyfill = { workspace = true }
+JestMock = { path = "../jest-mock" }
+
+[dev_dependencies]
+JestGlobals = { path = "../jest-globals" }
+JestConfig = { path = "../jest-config" }
+React = { workspace = true }
+ReactRoblox = { workspace = true }

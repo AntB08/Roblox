@@ -1,0 +1,98 @@
+<p align="center">
+<img src="https://github.com/MaximumADHD/Roblox-Client-Tracker/assets/3926900/ff0ba96d-e133-48a8-8541-80fc6ca21f52">
+</p>
+
+<center>A Datamining Dumping Ground</center>
+
+<hr/>
+
+# What is this?
+
+The **Roblox Client Tracker** is an unofficial change tracker which aims to provide detailed difflogs for changes to Roblox's engine. It generates information by datamining builds of Roblox Studio retrieved from their CDN, using various publicly discovered developer channels of Roblox. The data that is analyzed and presented in this repository is generated using publicly reverse engineered Roblox protocols and file formats.
+
+# Source Code
+
+The core C#/Python code which drives this repository is available to be found here:<br/>
+https://github.com/MaximumADHD/RCT-Source
+
+# Specifications
+
+## API-Dump.json
+A JSON tree describing Roblox's classes and enums.<br/>
+
+This file is extracted using: `RobloxStudioBeta.exe -API API-Dump.json`<br/>
+It is also available at: `https://setup.rbxcdn.com/{version-$guid}-API-Dump.json`
+
+## Full-API-Dump.json
+This is a more *"complete"* version of `API-Dump.json`, which doesn't exclude any hidden engine internals.<br/>
+It includes all classes and enums omitted from the normal dump, and includes a few other notable differences and keys, like `Default` values on some properties.<br/>
+
+This file is extracted using: `RobloxStudioBeta.exe -FullAPI Full-API-Dump.json` <br/>
+It is also available at: `https://setup.rbxcdn.com/{version-$guid}-Full-API-Dump.json`
+
+## API-Dump-2.json
+A newer revision of Roblox's JSON API Dump spec.<br/>
+There are a few [technical problems](https://devforum.roblox.com/t/technical-issues-with-json-api-dump-v2/4759892) with this version, but it is otherwise useable.<br/>
+
+This file is extracted using: `RobloxStudioBeta.exe -APIV2 API-Dump-2.json` <br/>
+It is also available at: `https://setup.rbxcdn.com/{version-$guid}-API-Dump-2.json`
+
+## API-Dump.txt
+A readable version of Roblox's JSON API Dump. This file is generated from the [Roblox API Dump Tool](https://github.com/MaximumADHD/Roblox-API-Dump-Tool).
+
+## CppTree.txt
+A sorted list of undecorated C++ symbol names that could be extracted from the exe.
+
+## DeepStrings.txt
+A sorted list of dumped strings from Roblox Studio's exe. There is *some* garbage data dumped into this file, but most of it should be legible.
+
+## FVariables.txt
+A sorted list of fast variables, which are used by Roblox to toggle changes to the engine remotely on multiple platforms without having to redeploy the client.
+
+## LuauTypes.d.luau
+Manually declared set of Luau types created by engineers at Roblox, which are baked into `RobloxStudioBeta.exe`
+
+## RobloxShaderData.csv
+This CSV maps all of Roblox's known shaders, and which graphics APIs use them. Each mapped shader has a mapped name and shader-type.
+
+## rbxManifest.txt
+A file that describes (almost) every file that is expected to be extracted from the zip files specified in rbxPkgManifest.txt
+Every two lines of this file corresponds to a local file path, and the MD5 checksum expected of the file extracted to that path.
+
+This file is fetched at:<br/>
+`https://setup.rbxcdn.com/{version-$guid}-rbxManifest.txt`<br/>
+`https://setup.rbxcdn.com/channel/{channelName}/{version-$guid}-rbxManifest.txt`
+
+## rbxPkgManifest.txt
+A file that describes which zip files should be fetched from Roblox's Amazon S3 bucket.
+
+This file can be fetched at:<br/>
+`https://setup.rbxcdn.com/{version-$guid}-rbxPkgManifest.txt`<br/>
+`https://setup.rbxcdn.com/channel/{channelName}/{version-$guid}-rbxPkgManifest.txt`
+
+The file starts with a line describing the version for the package manifest schema.
+After the version, information about each file is listed sequentually as such:
+
+```
+File.ext
+MD5 Checksum
+Compressed Size
+Decompressed Size
+```
+
+These files are fetched at:<br/>
+`https://setup.rbxcdn.com/{version-$guid}-rbxPkgManifest.txt`<br/>
+`https://setup.rbxcdn.com/channel/{channelName}/{version-$guid}-{FileName}`
+
+## rbxManifest.csv
+A CSV version of `rbxManifest.txt`, made to be easier to read from GitHub.
+
+## rbxPkgManifest.csv
+A CSV version of `rbxPkgManifest.txt`, made to be easier to read from GitHub.
+
+## version.txt
+Describes the current version of Roblox Studio.<br/>
+Formatted as: **(MajorRevision).(Version).(Patch).(~~Perforce Changelist~~ Version * 1000 + #CommitsInThisVersion)**
+
+## version-guid.txt
+Describes the current GUID version of Roblox Studio.

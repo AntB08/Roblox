@@ -1,0 +1,34 @@
+{
+  "name": "@quenty/humanoidanimatorutils",
+  "version": "3.2.4",
+  "description": "Utility functions to retrieve and manipulate the Animator object on Roblox from a humanoid.",
+  "keywords": [
+    "Roblox",
+    "Nevermore",
+    "Lua",
+    "humanoids",
+    "animations"
+  ],
+  "bugs": {
+    "url": "https://github.com/Quenty/NevermoreEngine/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Quenty/NevermoreEngine.git",
+    "directory": "src/humanoidanimatorutils/"
+  },
+  "funding": {
+    "type": "patreon",
+    "url": "https://www.patreon.com/quenty"
+  },
+  "license": "MIT",
+  "scripts": {
+    "preinstall": "npx only-allow pnpm"
+  },
+  "contributors": [
+    "Quenty"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}

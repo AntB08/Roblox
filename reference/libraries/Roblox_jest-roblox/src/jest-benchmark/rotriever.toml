@@ -1,0 +1,20 @@
+[package]
+name = "JestBenchmark"
+authors = { workspace = true }
+description = { workspace = true }
+repository = { workspace = true }
+homepage = { workspace = true }
+documentation = "https://roblox.github.io/jest-roblox/jest-benchmark"
+keywords = { workspace = true }
+version = { workspace = true }
+license = { workspace = true }
+content_root = "src"
+files = ["*", "!**/__*__/**"]
+
+[config]
+registry_index = "true"
+
+[dependencies]
+JestGlobals = { path = "../jest-globals" }
+LuauPolyfill = { workspace = true }
+JestTypes = { path = "../jest-types" }
