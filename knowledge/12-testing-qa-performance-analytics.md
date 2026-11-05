@@ -274,7 +274,7 @@ end)
 end)
 ```
 
-Note: Jest Roblox matchers use dot-call syntax (`expect(x).toBe(y)`), not colon syntax. `expect(fn).toThrow("substring")` matches error text. `.never` is Jest Roblox's spelling of JavaScript's `.not` (`not` is a reserved word in Luau).
+Note the dot-call syntax (`expect(x).toBe(y)`). `.never` replaces JavaScript's `.not`, because `not` is a reserved word in Luau.
 
 **Testing DataStore-dependent code with a mock store.** Write the data layer against a tiny interface, then test with an in-memory fake:
 
@@ -314,19 +314,12 @@ function MockDataStore:UpdateAsync(key: string, transform: (any) -> any?)
 	return nextValue
 end
 
-function MockDataStore:RemoveAsync(key: string)
-	maybeFail(self)
-	local v = self.data[key]
-	self.data[key] = nil
-	return v
-end
-
 return MockDataStore
 ```
 
-Then test the retry, migration and session-lock logic of your `PlayerData` module by passing `MockDataStore.new({ failRate = 0.3, seed = 42 })`. A seeded RNG keeps the "flaky" store deterministic, so the test is not flaky itself.
+Pass `MockDataStore.new({ failRate = 0.3, seed = 42 })` to your `PlayerData` module to test retry, migration and session-lock logic. The seeded RNG keeps the flaky store deterministic.
 
-**Benchmarks.** Jest Roblox also ships a benchmark API (`JestBenchmark`, see `docs/JestBenchmarkAPI.md`). Use it for hot-path utilities such as spatial queries or damage calculation. Treat its numbers as relative, not as frame-budget truth.
+Jest Roblox also has a benchmark API (`docs/JestBenchmarkAPI.md`). Treat its numbers as relative.
 
 ### 3.3 Running tests: Studio, Lune, and Open Cloud Luau Execution
 
@@ -1013,11 +1006,6 @@ function Analytics.custom(player: Player, eventName: string, value: number?, f1:
 	safeCall(AnalyticsService.LogCustomEvent, player, eventName, value or 1, fields(f1, f2, f3))
 end
 
--- ===== Progression (not charted yet, but logged for future use) =====
-function Analytics.progression(player: Player, path: string, status: Enum.AnalyticsProgressionType, level: number, levelName: string?)
-	safeCall(AnalyticsService.LogProgressionEvent, player, path, status, level, levelName)
-end
-
 function Analytics.setEnabled(on: boolean) ENABLED = on end
 
 Players.PlayerRemoving:Connect(function(player)
@@ -1039,10 +1027,7 @@ Analytics.funnelStep(player, "Shop", sid, 3, "Purchased", "SpeedCoil")
 Analytics.custom(player, "BossDefeated", fightSeconds, "Boss - Golem", "Party - " .. partySize)
 ```
 
-Notes:
-- The onboarding funnel counts each *user's* first time, but the per-server guard here prevents spam. For "once ever" semantics, also store the completed onboarding steps in player data.
-- In Studio, keep analytics calls harmless. Use `Analytics.setEnabled(false)` in the test bootstrap so unit tests never call the real service.
-- To log a client-originated step, the client fires `RemoteEvent:FireServer("IntroClosed")`. The server checks that the name is in an allowlist and rate-limits per player, then calls `Analytics.onboarding`.
+Notes: for "once ever" onboarding, also persist completed steps in player data. Call `Analytics.setEnabled(false)` in the test bootstrap. A client-originated step arrives as a remote whose name the server checks against an allowlist and rate-limits before logging.
 
 ---
 
@@ -1103,10 +1088,7 @@ Experiment facts (verified, `production/experiments.md`):
 
 What to test in-experience: tutorial variants, starter pack price or contents, reward pacing (`coinsPerCollect`), difficulty (`bossHealth`), shop button placement, daily reward schedule.
 
-Rules:
-- **One hypothesis per experiment**, written down first: "Lowering bossHealth from 500 to 300 raises D1 by ≥ 1 point without lowering ARPU."
-- Do not peek and stop early on noise. Wait for the decision date unless early-harm shows a clear regression.
-- Don't run overlapping experiments that touch the same system.
+Rules: write one hypothesis per experiment ("bossHealth 500→300 raises D1 ≥ 1 pt without lowering ARPU"). Don't stop early on noise unless early-harm shows a clear regression. Don't overlap experiments on the same system.
 
 ### 15.2 Thumbnail and icon testing
 
@@ -1134,10 +1116,7 @@ Thumbnail iteration loop: make 3–5 visually distinct concepts (different subje
 | **PCU / CCU** | Peak concurrent users | – | depends on stage | | |
 | **Client crash rate** | | > 3% | 1–2% | < 1% | |
 
-How the KPIs relate:
-- **Revenue = DAU × ARPDAU**, and **ARPDAU = payer conversion × ARPPU**.
-- **DAU** is new users (acquisition × play-through) times retention, so D1 and D7 compound everything. Roblox's recommendation systems reward engagement and retention, so **fix retention and session time before buying ads**. The acquisition docs advise getting session time and D1 "comparable or above" similar games before scaling acquisition.
-- **PCU** matters for server fill and social proof. Small games should design for small servers (6–12) so servers feel full.
+How the KPIs relate: **Revenue = DAU × ARPDAU**, and **ARPDAU = payer conversion × ARPPU**. DAU comes from acquisition times retention, so D1 and D7 compound everything. Recommendations reward engagement, and the acquisition docs advise getting session time and D1 to at least match similar games **before** scaling ads. Small games should design for small servers (6–12) so servers feel full.
 
 ---
 
@@ -1282,11 +1261,7 @@ ScriptContext.Error:Connect(function(message, stackTrace)
 end)
 ```
 
-Notes:
-- `ScriptContext.Error` passes `(message, stackTrace, script)`. It does **not** fire for watchdog timeouts (script exhaustion).
-- **Never trust client reports.** The server validates sizes and rate-limits per player, and exploiters can spam them.
-- Signatures go into custom fields, so stay aware of the 8,000-combined-value cap. That is why messages are normalized and truncated. The Error Report dashboard remains the source of truth, and this module adds *your* breakdowns (platform, version) and alerting hooks.
-- External services: you can forward aggregated reports with `HttpService` to your own endpoint (batched, at most about 1 request per minute per server). Never send PII, and keep secrets out of client code. Use the Open Cloud Secrets Store for API keys.
+Notes: `ScriptContext.Error` passes `(message, stackTrace, script)` and does **not** fire for watchdog timeouts. Never trust client reports: validate sizes and rate-limit per player. Normalizing and truncating signatures protects the 8,000-value custom-field cap. The Error Report dashboard stays the source of truth, and this module adds platform and version breakdowns. If you forward batched reports to your own endpoint via `HttpService`, send no PII and keep keys in the Secrets Store, never in client code.
 
 ### 19.4 Crash analysis
 
