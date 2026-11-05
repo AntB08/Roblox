@@ -1301,8 +1301,6 @@ local function build(): BillboardGui
 	local scale = Instance.new("UIScale")
 	scale.Parent = gui -- scales all descendants
 
-	gui:SetAttribute("Anchor", true)
-	anchor:SetAttribute("Owner", true)
 	gui.Destroying:Once(function() anchor:Destroy() end)
 	return gui
 end

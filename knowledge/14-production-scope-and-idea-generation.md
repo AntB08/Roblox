@@ -9,17 +9,17 @@
 ## TL;DR rules for the bot
 
 1. **Never start building before you have a one-sentence hook the owner agrees with.** If you can't say "It's [familiar thing] but [twist], where you [core verb] to [goal]" in one breath, the idea isn't ready.
-2. **Generate at least 10 ideas, score them, and prototype the top 2–3.** One idea is a guess. Several ideas plus a scoring rubric is a decision.
-3. **Find the fun in 1–3 days of greybox.** A prototype tests one question ("Is grabbing and throwing other players fun for 5 minutes?"). If nobody, owner included, wants to keep playing after three days of honest iteration, kill it or pivot it.
+2. **Generate at least 10 ideas, score them, and prototype the top 2–3.**
+3. **Find the fun in 1–3 days of greybox.** Each prototype answers one question. If nobody, owner included, wants to keep playing after three days of honest iteration, kill or pivot.
 4. **Scope the MVP to the core loop plus the minimum retention hook plus the minimum monetization.** Everything else goes on the cut list. On Roblox, a small polished loop shipped in weeks beats a big unpolished one shipped in months.
 5. **Originality is non-negotiable.** No other games' names, characters, art, UI layouts, audio, or "X Simulator but it's literally X" knockoffs. Borrowing a *genre convention* is fine. Copying *expression* (art, UI, text, characters, specific level design) is not. Brand IP (anime, films, other games, real people) is off limits unless the owner holds a licence.
 6. **Use the milestone ladder:** Prototype → Vertical Slice → Alpha → Beta (private/friends) → Soft Launch (small ad spend, real players) → Launch → Live. Each gate has written exit criteria. Don't skip gates; do shrink them.
 7. **Put all code in Git with Rojo. Back up place files at every milestone.** Use Studio Version History notes on every publish. Never let the only copy of anything live in one Studio session.
-8. **Write things down, but keep it short:** a one-page GDD, one feature spec per system, a balance spreadsheet, a style guide, a changelog. Docs exist so the next session (yours or a human's) can pick up the work.
-9. **Cover each discipline honestly.** You can script, do UI layout, write data/balance, write docs, and do procedural or primitive building well. Ask for human help, or commission it, for character models, high-end props, animation polish, original music, and marketing art (icon and thumbnails), unless the owner accepts simpler placeholders.
+8. **Write short docs:** a one-page GDD, one spec per system, a balance sheet, a style guide, a changelog, so any later session can pick up the work.
+9. **Cover each discipline honestly.** You handle scripting, UI layout, data/balance, docs, and primitive/procedural building well. Ask for human help or commissions for character models, hero props, animation polish, original music, and icon/thumbnail art, unless the owner accepts placeholders.
 10. **Measure before you decide.** After soft launch, look at D1/D7 retention, session length, the FTUE funnel, conversion, and qualified play-through. Fix the biggest leak first. Use Roblox Experiments for A/B tests where you can.
 11. **Kill or pivot on evidence, not mood.** Set the kill criteria *before* soft launch (e.g., "if D1 stays under the threshold we agreed after two rounds of FTUE fixes, we pivot"). Record why in a postmortem.
-12. **Protect the human's sustainability.** Propose a cadence the owner can keep up for months (e.g., one meaningful update every 1–2 weeks, not daily crunch). Even top studios have stepped back from weekly content when it hurt quality.
+12. **Protect the human's sustainability.** Propose a cadence the owner can keep up for months, not daily crunch. Even top studios have stepped back from weekly content.
 13. **Spend money last and small.** Ads in soft launch are for buying *data* (does the game retain?), not for buying success. Commission assets only with a written brief, milestones, and clear ownership terms.
 14. **Never invent stats, quotes, or "industry benchmarks" in docs you produce.** If you cite a number, say where it came from.
 
@@ -263,20 +263,20 @@ Rules: (a) add 30–50% buffer to any estimate; (b) art and audio usually take l
 
 Roblox's collaboration doc puts it plainly: a high-quality game needs modeling, scripting, UI, audio and more, and one person rarely has all of these skills (`projects/collaboration.md`). Typical Roblox studio roles and the agent's stance on each:
 
-| Role | What they do | Agent can do well | Hand off / commission when |
-|---|---|---|---|
-| **Game designer / producer** | Vision, loops, economy, priorities, schedule | Ideation, specs, balance spreadsheets, milestone plans, risk registers, analytics plans | Owner keeps final creative say |
-| **Scripter (Luau)** | Gameplay, server authority, data saving, UI logic, tools | Most of it: architecture, systems, DataStores, anti-exploit validation, tests, Rojo project setup | Highly specialized needs (custom physics rigs, advanced shaders-like effects) may need a specialist review |
-| **Builder / level designer** | Maps, layout, greybox→final, lighting | Greybox layouts, procedural placement, modular kits from primitives, lighting presets, readable navigation | Stylized hero environments, organic terrain art, "showcase" quality maps |
-| **3D modeler** | Meshes, props, characters, UGC-style assets | Simple low-poly geometry via parts/unions, procedural meshes, specs and reference sheets | Character models, creatures, detailed props, rigged meshes. Commission, or use owner-approved licensed packs |
-| **UI/UX designer** | HUD, menus, shops, onboarding visuals | Layout, responsive scaling, UI state code, accessibility, a consistent component system | Polished icon art, illustrated buttons, branded logo |
-| **VFX artist** | Particles, beams, trails, impact effects | Functional particles and tweens, "juice" passes | Signature high-polish effects, custom textures/flipbooks |
-| **Animator** | Character and object animations | Procedural tweens, simple Motor6D/CFrame animation via code, animation-loading code | Keyframed character animations (emotes, attacks, idle personality) |
-| **Sound designer / composer** | SFX, music, mix | Choosing from licensed/free library audio (with licence checks), mixing via SoundGroups, audio code | Original music and a signature SFX set |
-| **Marketing artist** | Icon, thumbnails, ad creatives, trailers | Briefs, composition specs, in-game screenshot staging, A/B plan for thumbnails | Final illustrated icon and thumbnails (high impact on CTR) |
-| **Community manager** | Discord, socials, feedback triage, updates | Drafting changelogs, update posts, FAQ, feedback triage summaries | Owner posts publicly. Agent never posts as the owner without approval |
-| **QA / playtester** | Bug finding, balance feedback | Automated tests, test plans, multi-client Studio tests, bug triage | Real-player testing needs humans |
-| **Analyst** | Dashboards, funnels, experiments | Event instrumentation, dashboard reading guides, experiment design | — |
+| Role | Agent can do well | Hand off / commission when |
+|---|---|---|
+| **Game designer / producer** | Ideation, specs, balance spreadsheets, milestone plans, risk registers, analytics plans | Owner keeps final creative say |
+| **Scripter (Luau)** | Most of it: architecture, systems, DataStores, anti-exploit validation, tests, Rojo project setup | Highly specialized needs (custom physics rigs, advanced shaders-like effects) may need a specialist review |
+| **Builder / level designer** | Greybox layouts, procedural placement, modular kits from primitives, lighting presets, readable navigation | Stylized hero environments, organic terrain art, "showcase" quality maps |
+| **3D modeler** | Simple low-poly geometry via parts/unions, procedural meshes, specs and reference sheets | Character models, creatures, detailed props, rigged meshes. Commission, or use owner-approved licensed packs |
+| **UI/UX designer** | Layout, responsive scaling, UI state code, accessibility, a consistent component system | Polished icon art, illustrated buttons, branded logo |
+| **VFX artist** | Functional particles and tweens, "juice" passes | Signature high-polish effects, custom textures/flipbooks |
+| **Animator** | Procedural tweens, simple Motor6D/CFrame animation via code, animation-loading code | Keyframed character animations (emotes, attacks, idle personality) |
+| **Sound designer / composer** | Choosing from licensed/free library audio (with licence checks), mixing via SoundGroups, audio code | Original music and a signature SFX set |
+| **Marketing artist** | Briefs, composition specs, in-game screenshot staging, A/B plan for thumbnails | Final illustrated icon and thumbnails (high impact on CTR) |
+| **Community manager** | Drafting changelogs, update posts, FAQ, feedback triage summaries | Owner posts publicly. Agent never posts as the owner without approval |
+| **QA / playtester** | Automated tests, test plans, multi-client Studio tests, bug triage | Real-player testing needs humans |
+| **Analyst** | Event instrumentation, dashboard reading guides, experiment design | — |
 
 **Agent rule:** At project start, produce a "discipline coverage" table for this specific game, marking each row *Agent*, *Owner*, *Commission*, or *Placeholder accepted*. Re-check it at the vertical slice.
 
