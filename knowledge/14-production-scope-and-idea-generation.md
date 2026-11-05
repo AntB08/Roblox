@@ -44,7 +44,7 @@ PHASE 12 Live                         -> cadence of updates/events, data-driven 
 PHASE 13 Postmortem                   -> at every kill, pivot, or major milestone
 ```
 
-At every phase boundary the agent writes a short status note (what was done, what was learned, what's next, what needs the owner) and asks the owner for a go/no-go. The owner holds final authority on creative direction, money, publishing, and anything posted publicly.
+At every phase boundary, write a short status note (done, learned, next, needs owner) and ask for a go/no-go. The owner has final say on creative direction, money, publishing, and public posts.
 
 ### Phase 0 — Owner intake questions
 
@@ -77,8 +77,8 @@ Start from a role or wish the player wants to live out: run a bakery, be a storm
 ### 2.3 Trend remix
 Roblox moves in waves (tycoons, simulators, obbies, tower defense, "grow/steal/collect" loops, survival-horror co-op, social hangouts, fashion competitions). Trends show what the audience's recommendation feeds are rewarding *right now*.
 - Procedure: study the current top charts and the "trending/up-and-coming" sorts on the Roblox Discover page. For each trending game, write down its **core loop**, its **social hook**, and its **session shape** (how long a session is and why players come back). Then combine *one* of those structural elements with a fresh theme and a fresh mechanic.
-- Hard rule: remix *structures*, never *expression*. The brainrot wave of 2025–26 shows the risk. Bloomberg and The Star reported that the developers of *Steal a Brainrot* had filed several lawsuits against alleged copycats, including on Fortnite, alleging copying of UI elements, objects, artwork, level design, animations, and overall aesthetic. Hundreds of derivative "for Brainrots" titles flooded Roblox. Being the 300th clone means no discovery and some legal risk.
-- Timing risk: trends peak fast. By the time a solo developer ships a clone, the wave may be over. Roblox's own Q3 2026 earnings commentary noted that a large share of top games by hours had launched within the previous 90 days. The platform rewards new things, and that cuts both ways.
+- Hard rule: remix *structures*, never *expression*. Bloomberg reported that *Steal a Brainrot*'s developers filed several lawsuits against alleged copycats (alleging copied UI, objects, art, level design, and animations), while hundreds of derivative "for Brainrots" titles flooded Roblox. The 300th clone gets no discovery and carries legal risk.
+- Timing risk: trends peak fast. Coverage of Roblox's Q3 2026 earnings call reported that about 40% of the top 1,000 games by hours had launched in the previous 90 days. The platform rewards new games, and that cuts both ways.
 
 ### 2.4 "X but Y"
 Take a known genre or game shape (X) and change one major axis (Y): theme, perspective, who you play, the win condition, co-op vs. competitive, scale, or time pressure.
@@ -120,7 +120,7 @@ Bad: "An open-world adventure RPG with crafting, pets, quests, and PvP." (no hoo
 Good: "A co-op heist game where you and your friends are tiny mice stealing cheese from a sleeping giant cat, and the cat wakes up whenever anyone squeaks on voice or chat." (clear verb, goal, twist, social hook, thumbnail)
 
 ### 3.3 Thumbnail test
-Sketch or describe the icon and the first thumbnail in one sentence each. If the image needs text to make sense, the hook is weak. The official docs specify 16:9, ideally 1920×1080 thumbnails for the home page and detail page, and describe *thumbnail personalization*: Roblox reported that games using it saw an average +8.5% in qualified play-through rate during testing (`production/publishing/thumbnails.md`). Thumbnails matter enough that Roblox built a feature around them. Community threads also report player-count changes after icon changes, though that evidence is anecdotal.
+Sketch or describe the icon and the first thumbnail in one sentence each. If the image needs text to make sense, the hook is weak. The official docs specify 16:9, ideally 1920×1080 thumbnails for the home page and detail page, and describe *thumbnail personalization*: Roblox reported that games using it saw an average +8.5% in qualified play-through rate during testing (`production/publishing/thumbnails.md`).
 
 ### 3.4 Social/viral test
 Ask:
@@ -129,7 +129,7 @@ Ask:
 - Is there a moment players will want to show others (a rare drop, a funny failure, a creation)?
 
 ### 3.5 Monetization fit test
-Write three example purchases that would feel fair to a player. If you can only think of pay-to-win items, or nothing at all, mark it down. The Liftoff case study author on DevForum reported that profit was maximized by including "only just enough" game passes, not by piling them on. Again, that's one developer's report.
+Write three example purchases that would feel fair to a player. If you can only think of pay-to-win items, or nothing at all, mark it down. The Liftoff case study author on DevForum reported that profit was maximized by including "only just enough" game passes, not by piling them on.
 
 ### 3.6 Build-cost estimate
 List the systems the MVP needs (Part 5). Size each one S/M/L (S ≈ ≤1 day agent time, M ≈ 2–4 days, L ≈ 1–2 weeks, including testing), then add art needs. If the total is beyond the owner's time budget by more than 1.5×, cut scope or drop the idea.
@@ -154,9 +154,9 @@ Fail the idea if any of these are true:
 
 Pass but flag it if the idea uses a common genre convention (a rebirth system, a pet egg hatch, a tycoon dropper conveyor). Those are not owned. Just give them original names, art, numbers, and presentation.
 
-Platform facts (`production/publishing/ip-guidelines.md`): Roblox prohibits unauthorized use of IP and removes infringing content. Repeat infringers can be suspended or terminated. Copyright protects *expression*, not ideas. Crediting the original creator, not monetizing, or "seeing others do it" does **not** make infringement okay. Real cautionary tale: developer mattqdev's write-up "3.2 Million Visits on a Roblox Game in 6 Months" covers a game built on another company's franchise name (*Brawl Stars Pet Simulator*) "from launch to DMCA takedown". Six months of traction were lost to a takedown. The agent should never propose using a franchise's IP, however tempting the search volume.
+Platform facts (`production/publishing/ip-guidelines.md`): Roblox removes infringing content and can suspend repeat infringers. Copyright protects *expression*, not ideas. Crediting the creator, not monetizing, or "seeing others do it" does **not** excuse infringement. Real cautionary tale: developer mattqdev's write-up "3.2 Million Visits on a Roblox Game in 6 Months" covers a game built on another company's franchise name (*Brawl Stars Pet Simulator*) "from launch to DMCA takedown". Six months of traction were lost to a takedown. The agent should never propose using a franchise's IP, however tempting the search volume.
 
-Copyright isn't the only problem. **Platform discovery punishes clones in practice**: they compete with the original for the same recommendation slots, and players spot them.
+Clones also do badly in discovery: they compete with the original for the same recommendation slots.
 
 ---
 
@@ -178,8 +178,8 @@ Jamie Fristrom (*Dungeon Life*) described applying "new product science" to Robl
 ### 4.3 Vertical slice
 After greenlight, build **one complete slice** of the game at close to final quality: one zone/level, the full core loop, the first progression step, real UI style, real audio direction, first-pass FTUE, and saving. Purpose: prove the *production pipeline* (art style is achievable, code architecture holds) and give the owner something to show testers or collaborators. Typical size: 1–2 weeks for a small team with an agent.
 
-### 4.4 Remember the "a few days" outliers, but don't plan around them
-Press coverage of *Grow a Garden* reports that its original teenage creator built a simple version in a matter of days. Splitting Point Studios (Janzen "Jandel" Madsen) partnered after launch and scaled it with a rapid update cadence. Likewise, the *Fantasy Forest* launch post-mortem on DevForum (FriendlyStoneGolem, 2022) reports a prototype built in about two weeks: one week on features like flying and customization, one on polish and more animals. Lesson: on Roblox, small and fast is a valid strategy, *because the market tells you quickly whether the loop works*. Plan for small MVPs and fast feedback. Don't plan for virality.
+### 4.4 Small and fast works, but don't plan for virality
+Press coverage of *Grow a Garden* reports that its teenage creator built a simple version in days, and Splitting Point Studios (Janzen "Jandel" Madsen) scaled it after launch with rapid updates. The *Fantasy Forest* post-mortem (FriendlyStoneGolem, DevForum 2022) reports a two-week prototype: one week of features, one of polish. Small, fast MVPs work on Roblox because the market tells you quickly whether a loop works.
 
 ---
 
@@ -261,7 +261,7 @@ Rules: (a) add 30–50% buffer to any estimate; (b) art and audio usually take l
 
 ## Part 7 — Team Roles and How the Agent Covers Them
 
-Roblox's collaboration doc puts it plainly: a high-quality game needs modeling, scripting, UI, audio and more, and one person rarely has all of these skills (`projects/collaboration.md`). Typical Roblox studio roles and the agent's stance on each:
+Roblox's collaboration doc notes that one person rarely has every skill a game needs (`projects/collaboration.md`). Roles and the agent's stance on each:
 
 | Role | Agent can do well | Hand off / commission when |
 |---|---|---|
@@ -321,7 +321,7 @@ Store in the repo under `docs/`:
 
 ### 8.5 Budgets: ads, sponsorships, and spend discipline
 - **Ads Manager** (official docs: `production/promotion/ads-manager.md`, `search-ads.md`, `advertise-on-roblox.md`) supports daily or lifetime budgets. A DevForum announcement on Ads Manager upgrades describes a minimum campaign setup of 10 ad credits (5/day over at least 2 days), and Roblox's RDC 2025 ads recap claimed cost-per-play had dropped significantly, with players acquired for under one US cent each. These are company claims. Check the current UI for real minimums and prices.
-- **What ads are for in soft launch:** buying *a sample of real new players* to read FTUE completion, D1, and session length. The Fantasy Forest post-mortem reported a first-week spend of tens of thousands of Robux that produced under 100 concurrents, and argued the value of those first players was telling you whether the game has potential. Organic recommendation, not ads, then grew the game once engagement was proven. The author's advice: focus on engagement metrics and let the algorithm supply players.
+- **What ads are for in soft launch:** buying *a sample of real new players* to read FTUE completion, D1, and session length. In the Fantasy Forest post-mortem, a first-week spend of tens of thousands of Robux produced under 100 concurrents. The author valued those players as a signal of potential, and organic recommendation grew the game once engagement was proven.
 - **Budget rule of thumb (agent default):** split any available promo budget into (a) ~20–30% for a soft-launch data read, (b) the remainder held back for a launch push *only if* soft-launch metrics clear the agreed thresholds. Never spend the whole budget before you know retention.
 - **Influencers:** studios like Wonder Works built strategies around YouTube creators. For small teams, the cheap version is designing clip-worthy moments, then reaching out (politely, via the owner) to small and mid-size creators in the genre.
 - **Other promotion tools to wire in:** share links, invite prompts, referral systems, experience notifications, social media links, experience events (see `production/promotion/`).
@@ -575,7 +575,7 @@ Official analytics docs (`production/analytics/`) cover acquisition, engagement,
 Note from the docs: retention dips after a large influx of new users are typical and temporary. Don't panic over one cohort.
 
 ### 11.2 Small-sample caution
-A DevForum thread titled "My game is in the top 10% engagement, but no one will ever play it" got replies pointing out that tiny samples distort averages (a single long session can skew the mean). Before acting on metrics, check the number of users in the cohort. With small numbers, use qualitative playtests instead.
+Replies to the DevForum thread "My game is in the top 10% engagement, but no one will ever play it" noted that tiny samples distort averages. Check cohort size before acting, and use playtests when numbers are small.
 
 ### 11.3 Experiments
 Roblox's Experiments feature (`production/experiments.md`) supports A/B tests with built-in and custom metrics (custom events, economy, funnel), early-harm detection, targeting, and a sample-ratio-mismatch check. Agent procedure:
@@ -589,7 +589,7 @@ Roblox's Experiments feature (`production/experiments.md`) supports A/B tests wi
 `Measure → Find the biggest leak → Hypothesis → Smallest change → Ship (or experiment) → Measure`. One major change per update, so you can tell what worked. Write a changelog line for each.
 
 ### 11.5 Signals from discovery
-Roblox's RDC 2025 announcements describe discovery ranking that optimizes for different audience segments and for both quick-hit and long-return games. Third-party commentary claims early retention is a heavy ranking signal, but Roblox hasn't published exact weights. The practical conclusion is the same either way: **engagement and retention earn traffic; launch spend alone does not.** The Fantasy Forest and Liftoff post-mortems both point to engagement/retention as the deciding factor, in opposite directions.
+Roblox's RDC 2025 announcements describe discovery ranking that optimizes for different audience segments and for both quick-hit and long-return games. Third-party commentary claims early retention is a heavy ranking signal, but Roblox hasn't published exact weights. The practical conclusion is the same either way: **engagement and retention earn traffic; launch spend alone does not.**
 
 ---
 
@@ -609,8 +609,7 @@ Roblox's RDC 2025 announcements describe discovery ranking that optimizes for di
 | Owner exhausted / lost interest | Missed reviews, no time | **Pause or shrink** the cadence; consider a final "complete" update and move on. |
 
 ### 12.2 Kill well
-- A Game Developer blog post-mortem about cancelling a project after roughly six months put it plainly: it's better to cancel once you realize it won't work than to keep investing in a project you already know won't succeed.
-- Wooga's GDC Europe 2014 talk "The Art of Killing Games" made killing games a deliberate studio process for deciding whether a game is good enough to launch. Treat kills as normal portfolio management, not failure.
+- A Game Developer blog post-mortem on a project cancelled after about six months argues it's better to cancel once you see it won't work than to keep investing. Wooga's GDC Europe 2014 talk "The Art of Killing Games" treated killing as a deliberate studio process. Kills are portfolio management, not failure.
 - When killing: write the postmortem, extract reusable modules into a shared library (or Roblox Packages), archive the place file and repo with a tag, and tell the owner exactly what transfers to the next project.
 
 ### 12.3 Lessons from real developers, in one line each
@@ -654,19 +653,16 @@ Roblox's RDC 2025 announcements describe discovery ranking that optimizes for di
 - "Ads for Creators: RDC Recap and What's Next" — https://devforum.roblox.com/t/ads-for-creators-rdc-recap-and-what%E2%80%99s-next/3929106
 - "More Ads Manager Upgrades" — https://devforum.roblox.com/t/more-ads-manager-upgrades/3659656
 - "Partially managed Rojo/Git workflow in teams" — https://devforum.roblox.com/t/partially-managed-rojo-git-workflow-in-teams/1381762 ; "What is your Rojo workflow?" — https://devforum.roblox.com/t/what-is-your-rojo-workflow/254604
-- "What is a fair price to pay game builders and scripters in Robux or USD?" — https://devforum.roblox.com/t/what-is-a-fair-price-to-pay-game-builders-and-scripters-in-robux-or-usd/3027798 ; "Commission price guide for new developers" — https://devforum.roblox.com/t/commission-price-guide-for-new-developers/1356888
+- "What is a fair price to pay game builders and scripters in Robux or USD?" — https://devforum.roblox.com/t/what-is-a-fair-price-to-pay-game-builders-and-scripters-in-robux-or-usd/3027798
 - Burnout threads: "Overcoming Burnout" — https://devforum.roblox.com/t/overcoming-burnout/413411 ; "How to stay persistent with completing a project (mental health tips)" — https://devforum.roblox.com/t/how-to-stay-persistent-with-completing-a-project-mental-health-tips/1090776
 - Molegul, "Why Some Games Work and Others Don't" (Roblox Developer, Medium) — https://medium.com/roblox-developer/why-some-games-work-and-others-dont-9cc17b7ab499
-- Roblox Developer Medium, "Player Retention: A First Look…" — https://medium.com/roblox-developer/player-retention-a-first-look-at-how-to-get-players-coming-back-to-your-game-9ae68826f466
 - Jamie Fristrom, "From the Devs: If It Wasn't For Roblox…" — https://medium.com/roblox-developer/from-the-devs-if-it-wasnt-for-roblox-i-might-have-stopped-making-games-by-jamie-fristrom-e397fa41a595
 
 **Developer interviews, retrospectives, press**
 - Jamie Fristrom, "My Roblox Years: Dungeon Life and New Product Science" (Game Developer) — https://www.gamedeveloper.com/business/my-roblox-years-dungeon-life-and-new-product-science ; open-source repo — https://github.com/JamieFristrom/dungeonlife
 - GamesBeat, "How Grow a Garden took off on Roblox | Janzen 'Jandel' Madsen interview" — https://gamesbeat.com/janzen-madsen-interview/
-- PC Gamer on Grow a Garden's "new era" shift from weekly updates — https://www.pcgamer.com/games/survival-crafting/robloxs-top-experience-grow-a-garden-is-shifting-into-a-new-era-and-promises-deeper-farming-after-a-series-of-disappointing-updates-i-hope-the-community-can-see-this-change-as-a-positive-attempt-to-keep-the-game-fresh-and-enjoyable-for-everyone/ ; Game Rant — https://gamerant.com/roblox-grow-a-garden-weekly-events-changes/
-- Roblox Tech Talks Episode 29 (with Jandel) — https://about.roblox.com/newsroom/2025/09/roblox-tech-talks-episode-29-creator
+- PC Gamer on Grow a Garden's "new era" shift from weekly updates — https://www.pcgamer.com/games/survival-crafting/robloxs-top-experience-grow-a-garden-is-shifting-into-a-new-era-and-promises-deeper-farming-after-a-series-of-disappointing-updates-i-hope-the-community-can-see-this-change-as-a-positive-attempt-to-keep-the-game-fresh-and-enjoyable-for-everyone/
 - mattqdev, "How I got 3M visits" (Brawl Stars Pet Simulator, launch to DMCA takedown) — https://mattqdev.github.io/blog/how-i-got-3m-visits
-- Bloomberg, "Roblox's Hit Game 'Steal A Brainrot' Battles Its Many Imitators" (2026-03-24) — https://www.bloomberg.com/news/articles/2026-03-24/roblox-s-hit-game-steal-a-brainrot-battles-its-many-imitators ; The Star reprint — https://www.thestar.com.my/tech/tech-news/2026/03/25/robloxs-hit-game-steal-a-brainrot-battles-its-many-imitators ; PC Gamer on the Fortnite lawsuit — https://www.pcgamer.com/games/a-brainrot-themed-roblox-game-is-taking-a-brainrot-themed-fortnite-game-to-court-for-being-a-copy/
 - HackerNoon, "Finding Success on Roblox, Launching Games with Zach Letter of Wonder Works" — https://hackernoon.com/finding-success-on-roblox-launching-games-with-zach-letter-of-wonder-works
 - Player Driven podcast, "Betting the Studio: Zach Letter on Surviving the Cut…" — https://playerdriven.io/podcast/betting-the-studio-zach-letter-on-surviving-the-cut-and-building-roblox-s-1-licensed-game
 - Forbes, "Wonder Works Studio Reveals The Creator Advantage On Roblox" (2026-08-21) — https://www.forbes.com/sites/ianshepherd/2026/08/21/wonder-works-studio-reveals-the-creator-advantage-on-roblox/
@@ -677,7 +673,6 @@ Roblox's RDC 2025 announcements describe discovery ranking that optimizes for di
 - Tom Francis, "Dealing with Scope Change in 'Heat Signature' and 'Gunpoint'" (GDC 2018) — https://gdcvault.com/play/1024932/ ; write-up — https://gamedeveloper.com/production/video-how-tom-francis-dealt-with-scope-change-while-making-i-heat-signature-i-
 - Wooga, "The Art of Killing Games" (GDC Europe 2014) — summary at https://mobilefreetoplay.com/?p=149
 - "Learning from failure: post mortem of an unborn" (Game Developer blog) — https://www.gamedeveloper.com/business/learning-from-failure-post-mortem-of-an-unborn
-- Washburn et al., "What Went Right and What Went Wrong: An Analysis of 155 Postmortems from Game Development" (ICSE 2016) — https://swag.uwaterloo.ca/publications/what-went-right-and-what-went-wrong-an-analysis-of-155-postmortems-from-game-development.html
 
 **Tools**
 - Rojo docs, "Full vs. Partial" (v0.5) — https://rojo.space/docs/v0.5/reference/full-vs-partial/ ; "Recommended Workflows" (v7) — https://rojo.space/docs/v7/workflows/

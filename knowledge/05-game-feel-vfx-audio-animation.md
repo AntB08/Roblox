@@ -1471,7 +1471,8 @@ local function playHaptic()
 		e.Parent = Workspace
 		haptic = e
 	end
-	(haptic :: HapticEffect):Play()
+	local h = haptic :: HapticEffect
+	h:Play()
 end
 
 function HitFeedback.Hit(victim: Model, attacker: Model?, strength: number?)
