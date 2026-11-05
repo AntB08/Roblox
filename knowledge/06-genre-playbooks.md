@@ -644,3 +644,459 @@ buy unit from conveyor ─► place in base slot ─► unit generates cash/sec
 **Original twists.** Steal *time* or *energy* rather than objects. Heist planning with roles (lookout, carrier). A shared vault everyone defends against an NPC raid boss. Steal-and-return bounty system (police vs. thieves). Bases that move (ships raiding ships). Cozy-steal: you "borrow" a neighbor's pet and it returns with a gift.
 
 ---
+
+### C.9 Fighting / battlegrounds
+
+**Audience.** 11–18, competitive, often anime fans. Players who like learning tech and making combo videos.
+
+**Why it works on Roblox.** Drop-in free-for-all servers with no matchmaking wait. Player guides describe the leading battlegrounds game (released August 2022) as easy to learn but hard to master. Its kit is M1 basic strings, 4 equipped skills, movement tech like dashes and ragdoll cancels, and an "awakening" ultimate. Community-discovered tech extends the skill ceiling. Characters themed on anime archetypes sell on fandom. (Do **not** use real anime IP.)
+
+**Core loop.**
+```
+find target ─► M1 string (4 hits) ─► stun ─► skill confirm ─► knockback/ragdoll ─► reset/escape
+      ▲                                                                              │
+      └────────────── fill ultimate meter from damage dealt ◄────────────────────────┘
+```
+
+**Meta loop.** Kills → unlock characters/movesets → emotes and kill effects → ranked or kill-streak leaderboards → new character releases as updates.
+
+**Key systems.**
+- *Frame data in seconds:* define every move as `{startup, active, recovery, damage, stun, knockback, hitbox={size, offset}}`. Typical M1: startup 0.10 s, active 0.10 s, recovery 0.25 s, stun 0.35–0.5 s. The 4th M1 knocks back. Stun > attacker recovery = combo window.
+- *Hit detection (hybrid, the community consensus):* the client runs the hitbox (`workspace:GetPartBoundsInBox` / `Blockcast` at the active frame) for instant feedback, then sends `{moveId, targets, attackerCFrame, t}`. The server validates: the move is off cooldown, the attacker is not stunned, each target is within `range + tolerance` (latency-based tolerance, e.g. +4–6 studs), and the angle is plausible. Then it applies damage/stun. DevForum threads warn that tight server checks (e.g., 3 studs) cause missed hits from replication delay.
+- *Blocking:* a `Blocking` state reduces damage 80–100% from the front (dot product of the attacker direction against the defender LookVector > 0.3). Block meter/guard-break after N hits. A "perfect block" window of 0.15–0.25 s stuns the attacker.
+- *Stun and states:* the server keeps `state ∈ {Idle, Attacking, Stunned, Blocking, Ragdoll, Dashing}` per character, plus timers. Inputs are rejected in an invalid state. Replicate state via attributes so all clients animate it.
+- *Knockback:* `LinearVelocity`/`ApplyImpulse` on the server-owned target, or on the client of the network owner. Network ownership of characters is the victim's client, so knockback typically sends a remote to the victim's client or sets velocity on the server (both have trade-offs, so test with latency).
+- *Animation-driven timings:* use `AnimationTrack:GetMarkerReachedSignal("Hit")` on the client to time hitboxes. The server uses its own timers from frame data, never trusting client timings.
+
+**Client-detect, server-validate (server excerpt):**
+```lua
+--!strict
+local MOVES = { M1 = { cooldown = 0.35, range = 6, maxTargets = 3, damage = 5, stun = 0.4 } }
+local TOLERANCE = 5 -- studs for latency
+local lastUse: { [Player]: { [string]: number } } = {}
+
+AttackRemote.OnServerEvent:Connect(function(player: Player, moveId: string, targets: { Model })
+	local move = MOVES[moveId]
+	local char = player.Character
+	if not move or not char or typeof(targets) ~= "table" then return end
+	if char:GetAttribute("State") == "Stunned" then return end
+
+	local now = os.clock()
+	lastUse[player] = lastUse[player] or {}
+	if now - (lastUse[player][moveId] or 0) < move.cooldown * 0.9 then return end -- small leniency
+	lastUse[player][moveId] = now
+
+	local root = char:FindFirstChild("HumanoidRootPart") :: BasePart
+	local count = 0
+	for _, target in targets do
+		if count >= move.maxTargets then break end
+		if typeof(target) ~= "Instance" or not target:IsA("Model") or target == char then continue end
+		local hum = target:FindFirstChildOfClass("Humanoid")
+		local troot = target:FindFirstChild("HumanoidRootPart") :: BasePart?
+		if not hum or not troot or hum.Health <= 0 then continue end
+		local offset = troot.Position - root.Position
+		if offset.Magnitude > move.range + TOLERANCE then continue end
+		if root.CFrame.LookVector:Dot(offset.Unit) < -0.2 then continue end -- behind attacker
+		count += 1
+		local blocking = target:GetAttribute("State") == "Blocking"
+			and troot.CFrame.LookVector:Dot(-offset.Unit) > 0.3
+		hum:TakeDamage(if blocking then move.damage * 0.1 else move.damage)
+		if not blocking then
+			target:SetAttribute("State", "Stunned")
+			target:SetAttribute("StunUntil", workspace:GetServerTimeNow() + move.stun)
+		end
+	end
+end)
+```
+(Clean `lastUse` on PlayerRemoving. A state-machine heartbeat clears the stun when `StunUntil` passes.)
+
+**Progression math.** Mostly horizontal. Character unlock via kills: `k(c) = 50 * 2^c` kills, or a currency price. Ultimate meter: fills from damage dealt `+dmg*1.0` and taken `+dmg*0.5`, needs about 100–150 damage dealt.
+
+**Monetization.** Character/moveset unlocks (Robux shortcut), cosmetic kill effects/emotes/auras, private servers (practice), VIP. Avoid selling raw damage.
+
+**Retention.** New characters every few weeks (the main lever), kill streak titles, rank seasons, community tech discovery (leave interactions emergent), training dummies.
+
+**MVP vs full.** *MVP:* 1 arena, 2 characters × (M1 + 3 skills + ultimate), block/dash/ragdoll, kill leaderboard. 3–5 weeks, heavy on animation. *Full:* 10+ characters, ranked, modes, map hazards, cosmetics.
+
+**Failure modes.** Server-only hitboxes (feel laggy), client-trusted damage (exploits), stun-lock infinites with no escape, unreadable VFX spam, animations that don't match hitboxes, mobile controls with no auto-target.
+
+**Original twists.** A fighter where the *environment* is your moveset (grab props). Elemental combos between teammates. Rhythm-timed blocks. A battleground where you fight as a pet you raised (sim × fighter). Weight-class physics sumo (simpler animation demands).
+
+---
+
+### C.10 Anime RPG / grinder
+
+**Audience.** 11–20, anime fans, long-session grinders, players who like stat optimization.
+
+**Why it works on Roblox.** Long grind loops sustain huge playtime. Gacha-style "fruit/power/race rerolls" monetize strongly. Open-world quests give sessions a direction. Official RPG rewarded-video guidance: reward *time saved*, not power ("convenience" placement), loss-aversion revives, luck potions, 2× XP. Opt-in 15%+, 3+ views/day. Rewards deterministic, and account-bound so alt farming can't break trading.
+
+**Core loop.**
+```
+take quest ─► kill mobs in zone ─► XP + money + drops ─► level ─► allocate stats
+     ▲                                                              │
+     └──── stronger: next zone / boss / sea ◄── buy/reroll power ◄──┘
+```
+
+**Meta loop.** Level cap per area → new island/world → rare power reroll (gacha) → raids/bosses for unique drops → PvP bounty → prestige/race evolution.
+
+**Key systems.**
+- *Mobs:* NPC Humanoids are expensive. Pool them, cap per zone (e.g. 8–12), simple chase AI on the server, and stream out distant zones (`StreamingEnabled`).
+- *Combat:* reuse the fighting hit-validation pattern, PvE-lenient.
+- *Stats:* `{level, xp, statPoints, melee, defense, power, sword}`. Damage = `base * (1 + stat/100)` with soft caps.
+- *Quests:* data tables `{npc, killTarget, count, reward}` and server-tracked counters.
+- *Powers/abilities:* a rarity-weighted roll (paid ⇒ disclose odds), stored by id. Ability scripts live in modules keyed by id.
+
+**Progression math.** XP to next level `xp(L) = 50 * L^1.8`. Mob XP `≈ 8 * L_mob^1.5` so about 15–30 kills/level early and 60–100 later. Zone level bands every 25–50 levels. Gear upgrade `c(u) = c0 * 1.5^u`. Max level 1,000–3,000 is common for long grinds. Use soft caps to avoid stat inflation.
+
+**Monetization.** Power/fruit rerolls (odds disclosed), 2× XP/money passes, inventory storage, fast travel, private servers (grinding), cosmetic auras.
+
+**Retention.** Bosses on timers (server announcements), raids with friends, rare spawns, updates adding a new sea/island, codes for boosts (common Roblox practice).
+
+**MVP vs full.** *MVP:* 2 islands, 3 mob types, 1 boss, 30 levels, 5 abilities, quests. 4–6 weeks. *Full:* multiple worlds, hundreds of levels, raids, PvP, factions. The content treadmill is very heavy.
+
+**Failure modes.** Content drought (players hit the cap in a week). Copying anime IP (takedown risk). Laggy mob combat. Stat inflation. Dead starter zone with nobody to group with.
+
+**Original twists.** An original mythos (folklore, not anime). Abilities crafted from combinable runes instead of gacha. Class swaps tied to time of day. A cooperative world boss that persists across servers via MemoryStore health.
+
+---
+
+### C.11 Roleplay / social hangout (Brookhaven style)
+
+**Audience.** The broadest audience on the platform: kids, families of friends, teens. Players who make their own fun.
+
+**Why it works on Roblox.** Roblox is a social network. RoWatcher reports Brookhaven RP (released April 2020) passed about 80B visits, making it the most-visited experience. Analyses credit its simplicity: houses, vehicles and a city to explore, with no grind currency, and game passes for premium houses, vehicles and property (it was acquired by Voldex in February 2025). Roblox's own docs show Brookhaven's rewarded-video placement as a timed VIP trial ("try before you buy").
+
+**Core loop.**
+```
+spawn ─► pick house/job/outfit ─► act out scenarios with friends (school, family, cops)
+   ▲                                                       │
+   └────── unlock more props/vehicles/houses ◄─────────────┘
+```
+
+**Meta loop.** Basically social: new map areas, seasonal events, premium houses. No grind is a feature.
+
+**Key systems.**
+- *Houses:* claimable plots with a lock, customization (colors, furniture), and per-player persistence if you go deeper.
+- *Props/tools:* a catalog of tools given via a menu. Server-validated spawns with per-player limits.
+- *Vehicles:* a spawn menu with a cap per player and despawn on leave. Simple chassis (see Racing).
+- *Roles/teams:* jobs as cosmetic teams with uniforms and tools. Name tags and bios with TextService filtering (**always filter user text**).
+- *Avatar editing:* `HumanoidDescription` application for outfits (server-side `ApplyDescription`).
+
+**Progression math.** None, or cosmetic. If you add currency, keep it soft (pay for furniture). Prices flat by tier.
+
+**Monetization.** Premium houses, vehicles and pets as passes, VIP chat color and areas, music/radio pass, private servers (huge for roleplay groups), timed VIP trials via rewarded video.
+
+**Retention.** Friends (network effects), frequent small updates (new buildings), holiday decorations, houses that remember customization.
+
+**MVP vs full.** *MVP:* small town of 8 buildings, 10 houses, 5 vehicles, 10 props, jobs, house lock. 3–4 weeks (mostly building/art). *Full:* a large city, interiors, hundreds of props, custom houses, events.
+
+**Failure modes.** An empty-feeling world with low player counts (roleplay needs people). Moderation and safety issues (filter text, no private-messaging bypasses). Clutter and prop spam lag. Copying a famous map layout.
+
+**Original twists.** Roleplay with light systemic hooks (a town economy, elections that change laws, weather). A non-city setting (space station, medieval village, underwater). Roleplay with a "story director" that triggers scenarios (fires, alien landing). Pets or creatures as roleplay companions.
+
+---
+
+### C.12 Fashion / dress-up voting
+
+**Audience.** Mostly 9–16, creative and social. TikTok-driven.
+
+**Why it works on Roblox.** Dress to Impress launched November 2023 and is described as one of the fastest experiences to 1B visits. The loop: a theme, a short timer to dress up, then a runway where every player rates every other outfit. It spread through short-form video. Guides stress reading the theme over owning rare items. The persistent complaint is spite-voting (giving every competitor the minimum).
+
+**Core loop.**
+```
+theme announced ─► dress-up timer (catalog, colors, makeup) ─► runway walk ─► everyone votes
+       ▲                                                                        │
+       └─────── currency/xp from placement ─► unlock items/levels ◄─────────────┘
+```
+
+**Meta loop.** Level up → unlock catalog items → VIP items → seasonal themes → titles/rank.
+
+**Key systems.**
+- *Outfit system:* layered clothing/accessories applied on a custom rig or via `HumanoidDescription`. Color/pattern pickers. The item catalog is data-driven `{id, slot, assetId, unlockLevel, vip}`.
+- *Round manager:* server state machine Lobby → Theme → Dressing (timer) → Runway (sequence each player) → Voting → Results.
+- *Voting fairness:* drop the top and bottom vote per outfit, weight voters by agreement with consensus (penalize consistent outlier voters), and do not let players vote on themselves. Show anonymized results.
+- *Text:* any custom theme or name text goes through TextService filtering.
+
+**Progression math.** Placement reward `r(p) = base * (N - p + 1)/N`. Level curve `xp(L) = 100 * L^1.5`. Unlock about 3–5 items per level early.
+
+**Monetization.** VIP pass (exclusive items), item bundles, makeup/pose packs, private servers (friends' runway shows), extra customization slots (saved outfits).
+
+**Retention.** Daily themes, events with exclusive items, saved outfit slots, social sharing moments.
+
+**MVP vs full.** *MVP:* 1 stage, 60–100 items, 20 themes, voting, levels. Art is the bottleneck. *Full:* hundreds of items, patterns, makeup, poses, events.
+
+**Failure modes.** A thin catalog (the genre lives on items). Toxic voting. Long dead time between rounds. A UI that is unusable on phones.
+
+**Original twists.** Design-the-garment (pattern/shape editor). Team styling (pairs). Judge NPC with a taste profile instead of peer votes for part of the score. Fashion × tycoon (run a boutique, players buy your designs). Non-human dress-up (dress creatures, robots, houses).
+
+---
+
+### C.13 Racing / driving
+
+**Audience.** 8–18, car lovers, players who like driving with friends without a strict goal.
+
+**Why it works on Roblox.** Cars are aspirational collectibles, driving with friends is social, and open-world driving doubles as a hangout. Competitive racing is smaller than "car ownership" games.
+
+**Core loop.**
+```
+drive ─► race / deliver / explore ─► earn cash ─► buy/upgrade cars ─► drive faster
+```
+
+**Meta loop.** Car collection, tuning trees, liveries, leaderboards per track, seasonal cars.
+
+**Key systems.**
+- *Chassis:* three families per DevForum discussions: the simple VehicleSeat ("tank") chassis that is easy and stable, constraint chassis (HingeConstraints with motors on wheels, SpringConstraints for suspension) with better steering but sometimes unstable, and open-source community chassis (A-Chassis is widely used). Raycast suspension (custom, using `VectorForce`/`LinearVelocity` per wheel from raycasts) gives arcade feel and is stable at speed. That makes it a strong choice for a bot that can tune numbers.
+- *Network ownership:* set the vehicle's network owner to the driver (`SetNetworkOwner(player)`) for responsive control. The server sanity-checks speed.
+- *Checkpoints for races:* ordered gates, lap counts, position = laps*N + lastGate + progress to the next gate.
+- *Upgrades:* data `{carId, engine, tires, nitro, livery}` mapped to chassis parameters (torque, max speed, grip).
+
+**Progression math.** Car price tiers ×2–3 per class. Upgrade levels `c(l) = c0 * 1.4^l`, +4–6% speed per level. Race payouts scale with class: `pay = base * classMult * (1 + 0.5*(placement==1))`.
+
+**Monetization.** Premium cars (passes), cash packs, liveries, garage slots, private servers.
+
+**Retention.** Daily races, time-trial ghosts, car meets, new cars in updates.
+
+**MVP vs full.** *MVP:* 1 map, 4 cars, 1 race track + free roam, upgrades. 3–4 weeks (handling tuning). *Full:* open world, 50+ cars, tuning, police chases, jobs.
+
+**Failure modes.** Floaty, flippy cars, physics jank at high speed, mobile steering that is unplayable, server lag with many cars.
+
+**Original twists.** Driving non-cars (shopping carts, snails, hovercraft). Delivery games where the cargo is physics-fragile. Racing on procedurally built tracks players vote on. Co-op vehicle with a driver plus a gunner/navigator.
+
+---
+
+### C.14 FPS / shooters
+
+**Audience.** 12–20+, competitive, the older Roblox cohort. The official shooter playbook frames players as driven by competition, mastery and weapon upgrades.
+
+**Why it works on Roblox.** RIVALS, a round-based 1v1 to 5v5 duel shooter, reportedly peaked at about 964K CCU (RoWatcher). Analyses credit mobile-first, cross-input design, clear hit feedback (tracers, hit markers), ranked seasons and cosmetic skins as the revenue driver.
+
+**Core loop.**
+```
+queue ─► round (spawn, fight, die/kill) ─► round end ─► match result
+  ▲                                                       │
+  └── XP/keys ─► unlock weapons/skins/cases ◄─────────────┘
+```
+
+**Meta loop.** Weapon unlocks, skin collection (cases with disclosed odds), ranked ELO seasons, battle pass.
+
+**Key systems.**
+- *Hit detection:* Roblox's official laser-tag sample is the reference. The **client** computes rays from the camera (instant feel) and sends results. The **server validates** the data types, the angle against the expected direction (tolerance), shooter-to-origin distance, target-near-destination distance, and line of sight (re-raycast for obstruction). Then it applies `Humanoid:TakeDamage` (respects ForceFields).
+- *Projectile weapons:* the community module **FastCast** simulates bullets with velocity and drop using segment raycasts per frame. The client renders cosmetic bullets, and the server or a validator decides hits.
+- *Recoil:* camera recoil applied on the client: per shot add `pitch += r_v * pattern[i]`, `yaw += r_h * random(-1,1)`, recover with a spring (`x += (0 - x) * (1 - exp(-k*dt))`). Spread grows with shots fired, `spread = s0 + s1 * heat` and decays over time.
+- *Lag compensation:* basic server rewind (store character positions for the last ~1 s, validate the hit against the position at `shotTime - latency`) is advanced. Many Roblox shooters use generous tolerances instead.
+- *Matchmaking:* lobby place → `TeleportService` to reserved servers for matches, with per-input pools if aim assist exists.
+
+**Progression math.** Account XP `xp(L) = 200 * L^1.4`. Weapon unlock per level band. ELO `R' = R + K*(S - E)`, `E = 1/(1+10^((Rb-Ra)/400))`, K = 24–40.
+
+**Monetization.** Skins/wraps, cases (odds disclosed), battle pass, emotes and finishers. Never sell stats. Rewarded video (official shooter playbook): pre-match XP boost, armory currency, **weapon trial for one match** (example: RIVALS), post-match payout double. Only at natural breaks. 10%+ opt-in, 3+ views/day.
+
+**Retention.** Ranked seasons, daily challenges, new weapons/maps per update, friends parties.
+
+**MVP vs full.** *MVP:* 1 small map, 1v1/2v2 rounds, 3 weapons, validation, simple skins. 4–6 weeks. *Full:* 20+ weapons, ranked, modes, cosmetics economy, anti-cheat.
+
+**Failure modes.** Client-trusted damage (aimbots and teleport kills), no mobile aim assist, poor hit feedback, too many modes splitting a small player base.
+
+**Original twists.** Paint/territory shooter (non-violent, younger audience). Shooter where ammo is your currency. Gravity-shifting maps. Asymmetric 1-vs-many boss shooter. Shooter × tower defense hybrid.
+
+---
+
+### C.15 Fishing (minigame)
+
+**Audience.** Broad, chill and collector-minded. Idle-friendly.
+
+**Why it works on Roblox.** A relaxing core with gacha-like rarity at every cast. Fisch's developer said in Roblox's Creator Spotlight that he took inspiration from a beloved farming sim's fishing that none of the roughly 20 Roblox fishing games he tried had. He designed it to be open-ended with more than one end goal, and argued retention depends on being able to play in multiple ways. Per that spotlight, CCU peaked around 470K after a Halloween event, and the Roblox wiki says it passed 1M CCU on 2025-10-04.
+
+**Core loop.**
+```
+cast ─► wait for bite ─► reel minigame (keep bar on fish) ─► catch ─► sell / log in bestiary
+  ▲                                                                     │
+  └──── buy better rod/bait, travel to new waters ◄─────────────────────┘
+```
+
+**Meta loop.** Bestiary completion, location-gated rare fish, weather/time-of-day spawns, rods with unique abilities, events and mythic hunts.
+
+**Key systems.**
+- *Server picks the fish at bite time:* `pickFish(zone, timeOfDay, weather, luck)` from weighted tables. The client only plays the minigame.
+- *Reel minigame (client):* a fish marker moves (noise/random walk) at a speed set by a per-fish "resilience" stat. The player holds/releases to keep the catch bar overlapping. Progress fills while overlapping and drains otherwise. Rod stats widen the bar or slow the fish (one rod freezes the fish bar).
+- *Validation:* the server expects the result no sooner than a minimum plausible duration `t_min = progressNeeded / maxFillRate`, and rejects a claimed catch faster than that. Cap catches per minute.
+- *Data:* `bestiary = {[fishId]={count, maxWeight, mutations}}`, rods owned, bait.
+
+**Progression math.** Rarity weights (e.g., 55/28/12/4/0.9/0.1%) with luck `w' = w * luck^tier` on rare tiers. Weight per catch is log-normal, and sell value `= base * (weight/avgWeight)^1.2 * mutationMult`. Rod price `c(r) = 200 * 3^r`, luck +15–25% per tier.
+
+**Monetization.** Rods/bait (soft currency plus Robux shortcuts), luck boosts (Fisch's luck boost is cited officially as a rewarded-video "velocity reward"), boats, extra storage, private servers.
+
+**Retention.** Bestiary, rotating weather, events with limited fish, multiple paths (fishing, treasure, exploration, quests).
+
+**MVP vs full.** *MVP:* 2 zones, 25 fish, 4 rods, minigame, bestiary, selling. 2 weeks. *Full:* 10+ zones, 300+ fish, boats, events, quests.
+
+**Failure modes.** A minigame that is too hard on mobile, too easy (no skill), or identical for every fish. A single linear goal. Fish art fatigue (vary silhouettes).
+
+**Original twists.** Fishing in odd media (clouds, lava, dreams, data streams). Co-op net fishing. Fish that you then raise in an aquarium tycoon. Fishing where the catch is a creature you can battle.
+
+---
+
+### C.16 Party / minigame collection
+
+**Audience.** 7–15, friend groups, short-session players.
+
+**Why it works on Roblox.** Varied 1–3 minute rounds keep groups together. Easy to understand, with no long commitment.
+
+**Core loop.** `lobby → random minigame → play 60–180 s → points/elimination → next minigame → winner gets coins`.
+
+**Meta loop.** Coins → cosmetics/effects → level/titles → map votes.
+
+**Key systems.** A round manager loads minigame modules from a registry (`{name, minPlayers, setup(), run(), cleanup()}`). Map models are cloned from ServerStorage and destroyed after. Each minigame is self-contained: score API, teams, timers. Always clean up connections (use a "trove"/maid pattern).
+
+**Progression math.** Flat coin payouts by placement. Level `xp(L) = 100 * L^1.3`.
+
+**Monetization.** Cosmetics, double-coins pass, extra votes, VIP lobby, private servers. Rewarded video: post-round coin double, rematch.
+
+**Retention.** New minigame weekly, daily challenges, rare "chaos" rounds.
+
+**MVP vs full.** *MVP:* 5 minigames, lobby, coins, a shop of 10 cosmetics. 2–3 weeks. *Full:* 30+ minigames, modes, events.
+
+**Failure modes.** A few great minigames buried among bad ones, long load/dead time, games that need 6+ players on empty servers.
+
+**Original twists.** Minigames that change based on the previous winner. A board-game meta layer that connects rounds. A shared theme/story where minigames are chapters.
+
+---
+
+### C.17 Story / adventure
+
+**Audience.** 8–16, players who like narrative, friend groups (chaptered "escape" stories).
+
+**Why it works on Roblox.** Chaptered stories with NPC dialog, simple puzzles and a chase finale are memorable and streamable. Roblox "story games" are usually 15–30 minute linear runs with choices.
+
+**Core loop.** `chapter scene → dialog → task/puzzle → threat/chase → choice → next chapter`.
+
+**Meta loop.** Endings collection, badges, alternate paths, new chapters as updates.
+
+**Key systems.** A server-driven cutscene/dialog sequencer (data tables of `{speaker, line, camera, wait}`), group voting on choices, triggers and set-pieces, checkpoints per chapter. Use `TeleportService` between chapter places if they are large.
+
+**Progression math.** Minimal. Story currency for cosmetics or revives.
+
+**Monetization.** Revives/skips, perks (extra life), cosmetic roles, private servers. Low lifetime value because content is consumed once.
+
+**Retention.** Weak. Rely on new chapters and multiple endings.
+
+**MVP vs full.** *MVP:* 1 chapter (15 min), 3 set-pieces, 2 endings. 3 weeks. *Full:* 5+ chapters, voiced lines (official text-to-speech tutorial exists), cinematic camera.
+
+**Failure modes.** Unskippable dialog, a broken sequence when a player leaves, content gone in a day.
+
+**Original twists.** A story whose cast is generated from the players. A procedural "campfire tale" (AI-free, template-driven). A story layered on another genre (a tycoon with a narrative campaign).
+
+---
+
+### C.18 Puzzle
+
+**Audience.** Niche on Roblox, 10+ and older players. Escape-room fans with friends.
+
+**Why it works on Roblox.** Co-op escape rooms and physics puzzles thrive with friends talking. Solo logic puzzles are weaker on the platform.
+
+**Core loop.** `observe → hypothesize → manipulate (levers, codes, objects) → solve → unlock next room`.
+
+**Meta loop.** Room/level packs, speed rankings, star ratings.
+
+**Key systems.** A server-authoritative puzzle state (`{puzzleId, stateTable}`), ProximityPrompts and ClickDetectors, a hint system with timers, procedural variants (randomize codes per server so walkthroughs don't spoil).
+
+**Progression math.** Difficulty by step count and red herrings. Hints cost soft currency.
+
+**Monetization.** Hint packs, room packs, cosmetics. Low.
+
+**Retention.** Weekly rooms, randomized solutions, leaderboards.
+
+**MVP vs full.** *MVP:* 3 rooms, 9 puzzles, hints. 1–2 weeks. *Full:* 30 rooms, co-op-only puzzles.
+
+**Failure modes.** Pixel hunting, solutions spoiled online, no co-op role split.
+
+**Original twists.** Asymmetric co-op (only one player sees the code). Puzzle as a layer inside other genres (puzzle doors in a horror run, merge puzzles in an incremental).
+
+---
+
+### C.19 Sports
+
+**Audience.** 9–18, sports fans, competitive teams. Official examples are football and soccer games.
+
+**Why it works on Roblox.** Team play and anime-sports stylization (special moves) make sports flashy. The official sports playbook says players are driven by competition, progression and the desire to win.
+
+**Core loop.** `queue → team match (3–6 min) → score → result → XP/coins → abilities/styles`.
+
+**Meta loop.** Style/ability gacha (anime-sports pattern), ranked, cosmetics, clubs.
+
+**Key systems.** Ball physics: network ownership hands off to the nearest controlling player for responsiveness, with the server arbitrating possession (a `possessor` attribute) and capping kick velocity. Abilities as moves with cooldowns. Positions/teams. Goal detection on the server.
+
+**Progression math.** Ability rarity weights, upgrade costs `c0 * 1.5^l`, and ELO for ranked.
+
+**Monetization.** Abilities/styles (odds disclosed if random), cosmetics, passes. Rewarded video (official): post-match earnings boost, store currency reward, rematch rescue, pre-game edge lasting one match. 15%+ opt-in, 3+ views/day.
+
+**Retention.** Ranked seasons, new abilities, clubs, tournaments.
+
+**MVP vs full.** *MVP:* 1 field, 3v3, ball logic, 4 abilities. 4 weeks. *Full:* modes, ranked, many abilities.
+
+**Failure modes.** Ball desync/teleporting, stacked teams, empty queues.
+
+**Original twists.** Invented sports (zero-gravity ball, mount-back polo). Sports × pets (your pet is the player).
+
+---
+
+### C.20 Incremental / merge
+
+**Audience.** Idle players, players who love optimizing, all ages.
+
+**Why it works on Roblox.** Pure number growth, playable AFK. RNG "aura/roll" incrementals (Sol's RNG is officially cited for its rewarded-video quick-roll trial) are a big Roblox sub-genre.
+
+**Core loop (merge).**
+```
+buy tier-1 item ─► place on grid ─► merge 2 equal ─► tier+1 ─► produces more income
+     ▲                                                              │
+     └────────────────────── income ◄───────────────────────────────┘
+```
+**Core loop (roll):** `roll (luck-weighted) → keep best aura → luck upgrades → roll faster`.
+
+**Meta loop.** Prestige layers (2–3 nested resets, each with its own currency and upgrade tree), achievements, offline earnings.
+
+**Key systems.** Pure server math on a grid of item ids, offline calc from timestamps, large-number handling (doubles go to about 1.8e308; past that, use a mantissa/exponent "BigNum" or log values). Number formatting (K, M, B, T, aa…).
+
+**Progression math.** Merge value: tier k worth `2^k` (or `2.2^k` to reward merging). Buy cost of tier 1 rises per purchase `c(n) = c0 * 1.07^n`. Auto-merge unlock. Prestige currency `P = floor((lifetimeEarnings / 1e6)^0.5)`, multiplier `1 + 0.02*P` (classic idle square-root scaling). Rolls: chance of a 1-in-N aura with luck L is `L/N`, so expected rolls ≈ N/L.
+
+**Monetization.** Auto-merge/auto-roll pass, offline cap extension, 2× income, luck potions (disclosed), skins. Rewarded video: doubled welcome-back, timed automation.
+
+**Retention.** Offline earnings, prestige milestones, rare roll announcements across the server (social brag), events.
+
+**MVP vs full.** *MVP:* 1 grid, 15 tiers, 1 prestige layer, offline earnings. 1 week. *Full:* 3 prestige layers, collections, events.
+
+**Failure modes.** Dead periods where nothing is affordable, number overflow, no visible world for others to see (add a world representation).
+
+**Original twists.** Merge in 3D space where merged objects physically combine. Incremental where *other players* are a resource (co-op merges). Rolls that produce usable items in another loop.
+
+---
+
+### C.21 Pet collection / trading
+
+**Audience.** 8–15 collectors and traders. Players who value rarity and status.
+
+**Why it works on Roblox.** Pets are visible status. Trading creates a player economy (values tracked by fan sites) and a reason to return long after the core content runs out. Long-running pet roleplay/raising games and pet simulators show trading can keep a game alive for years.
+
+**Core loop.** `earn currency (care tasks/minigames) → hatch/buy pets → raise/age/level → trade up → show off`.
+
+**Meta loop.** Limited/retired pets (scarcity), "neon/mega" fusion tiers (combine 4 → 1 better), seasonal eggs, value lists.
+
+**Key systems.**
+- *Pet identity:* each pet is a uuid with immutable origin data (`{uuid, species, hatchedAt, edition, traits}`).
+- *Trading:* a two-sided server trade session, both confirm, a short countdown, then **atomic transfer**. Use a single DataStore `UpdateAsync` per player plus a trade journal, or a session-locked ProfileStore and transfer only when both profiles are loaded on the same server. Log every trade. Add anti-scam UI (show values, a change-reset countdown).
+- *Dupe prevention:* never grant before saving, uuids are unique, and a server lock during trade. Re-validate both inventories at commit.
+- *Pet follow:* rendered client-side for performance.
+
+**Progression math.** Egg tiers ×3–5 price. Fusion: 4 of tier t → 1 of t+1, so the value implied is ≥4×. Retirement removes the supply of limited pets.
+
+**Monetization.** Premium eggs (odds disclosed), potions (ride, fly), pet storage, cosmetic accessories, trading license (unlock trading after X minutes or a small purchase to deter alt farms; careful with fairness).
+
+**Retention.** Limited-time eggs, retirements, trading community, pet care tasks (light daily needs).
+
+**MVP vs full.** *MVP:* 2 eggs, 12 pets, leveling, fusion, secure trading. 3 weeks (trading safety is the hard part). *Full:* 100s of pets, events, homes, minigames.
+
+**Failure modes.** Dupe bugs (they destroy the economy instantly), scams, inflation from free pets, unclear value.
+
+**Original twists.** Pets with genetics and breeding (traits inherit). Pets that age into jobs. A "lend" system (temporary trades). Trading via an auction house with sinks (listing fees).
+
+---
