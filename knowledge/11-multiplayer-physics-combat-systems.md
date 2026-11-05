@@ -8,28 +8,28 @@
 
 ## TL;DR rules for the bot
 
-1. **The server is the only source of truth for damage, health, currency, inventory, cooldowns, and round state.** Clients send *intent* ("I pressed attack, aiming here"). They never send results ("I hit X for 50").
-2. **Pick a netcode model first.** For most games, use the **classic model** (`Workspace.AuthorityMode = Automatic`): the client owns its character physics, and the server validates combat. For competitive FPS, racing or sports, consider **Server Authority** (`AuthorityMode = Server`, opt-in, fully released in 2026). It gives prediction and rollback through `RunService:BindToSimulation()`. Read §2 before you mix the two.
-3. **Hit detection: use spatial queries, not `Touched`.** Use `workspace:Raycast` for hitscan, `Blockcast`/`Spherecast`/`Shapecast` for swept melee and thick projectiles, and `GetPartBoundsInBox`/`GetPartBoundsInRadius`/`GetPartsInPart` with `OverlapParams` for instant hitboxes. Use `Touched` only for slow triggers such as pickups, lava and zones.
-4. **Every combat remote handler must:** type-check every argument (`typeof`), reject NaN and infinity, rate-limit per player, check that the player is alive and not stunned, check the cooldown with a *server* clock, and check distance and line of sight against *server* positions plus a ping-based tolerance.
-5. **Damage goes through ONE function** (`DamageService.Apply`). It handles i-frames, block, parry, armor, attribution (who hit whom, for kill credit and assists), and the death event. Never write `humanoid.Health -= x` anywhere else.
-6. **Combat state lives in attributes** on the character (`Stunned`, `Blocking`, `IFrameUntil`, …). Attributes replicate to the client for UI, and they work as synced state under Server Authority. Only the server writes them in the classic model.
-7. **Knockback on a player character must run where the physics runs.** The client owns its character, so a server-side `ApplyImpulse` on a client-owned assembly is overridden. Either fire the victim's client to apply it, or briefly `SetNetworkOwner(nil)`. NPCs are server-owned, so apply knockback on the server.
-8. **Use the modern mover constraints:** `LinearVelocity`, `AngularVelocity`, `AlignPosition`, `AlignOrientation`, `VectorForce`, and `BasePart:ApplyImpulse`. Never use the deprecated `BodyVelocity`, `BodyGyro`, `BodyPosition` or `BodyForce` in new code.
-9. **Projectiles: the server simulates or verifies.** The client renders the projectile right away. The server checks origin, rate and ammo, then simulates the same ballistic path with raycasts per step and decides hits. Other clients only get a cosmetic replication event (`UnreliableRemoteEvent` is fine for this).
-10. **For lag compensation, keep about 1 s of server-side position history** per character. Rewind targets by roughly `ping/2 + interpolation delay` (cap it at about 250 ms) when you validate a hitscan shot.
-11. **NPCs:** call `SetNetworkOwner(nil)` on their root part, tick the AI at 4–10 Hz rather than every frame, cap concurrent NPCs, pool or `Destroy` corpses, and route NPC attacks through the same `DamageService`.
-12. **Vehicles:** give network ownership to the driver (`seat:SetNetworkOwner(player)` when `Occupant` changes, `SetNetworkOwnershipAuto()` when they leave). Drive wheels with `HingeConstraint` motors and `SpringConstraint`/`CylindricalConstraint` suspension.
-13. **Reserved servers: `TeleportService:ReserveServer`/`ReserveServerAsync` and `TeleportOptions.ShouldReserveServer`/`ReservedServerAccessCode` are DEPRECATED.** Set `TeleportOptions.ReservedServerId = HttpService:GenerateGUID(false)` and call `TeleportService:TeleportAsync`. Wrap every teleport in `pcall` with retries, and handle `TeleportInitFailed`.
-14. **Matchmaking across lobby servers:** put entries in a `MemoryStoreQueue` (party = one entry), let one reader pop a match, announce it with `MessagingService`, then teleport with a shared `ReservedServerId`. Do not call `RemoveAsync` on entries you didn't use; they become visible again after the invisibility timeout.
-15. **Trades are server-side state machines:** offer, lock (both "ready"), countdown, both confirm, then re-verify ownership, swap items in one non-yielding block, and journal it. Any change to the offer resets both confirmations. Items carry unique IDs so dupes are detectable.
-16. **Global leaderboards: `OrderedDataStore`** with integer values. Write on a throttled interval and on leave. Read with `GetSortedAsync(false, ≤100)` every 60 s or more and cache the result. Don't read per player.
-17. **MessagingService:** 1 kB per message, and best-effort delivery, so it is *not* guaranteed. Use it for announcements and match notifications only, never as the single record of anything valuable.
-18. **Input:** the **Input Action System** (`InputContext` → `InputAction` → `InputBinding`) is the modern cross-device path and is *required* under Server Authority. Give every action a keyboard/mouse, gamepad, and touch (`InputBinding.UIButton`) binding. `ContextActionService` and `UserInputService` still work. Use `UserInputService.PreferredInput` to adapt the UI.
-19. **Prefer `Player:LoadCharacterAsync()`** (`LoadCharacter` is deprecated). Use `Humanoid:ApplyDescriptionAsync` (`ApplyDescription` is deprecated).
-20. **Under Server Authority, `Tool`s are not fully supported.** Build equippables as welded models plus an attribute. In the classic model, `Tool` is fine for simple weapons, but run all logic on the server.
-21. **Anti-exploit is server math,** not client detection. Compare server-observed position deltas to the maximum legal speed, check the floor raycast for fly, rate-limit every remote, and log anomalies before you kick (false positives from lag are common).
-22. **Use `workspace:GetServerTimeNow()` for a shared clock** in UI countdowns and cooldown displays. Use `os.clock()` for server-only elapsed-time checks. Under Server Authority, use `time()` inside bound simulation functions.
+1. **The server owns damage, health, currency, inventory, cooldowns and round state.** Clients send *intent* ("attack, aiming here"), never results ("I hit X for 50").
+2. **Pick the netcode model first.** Default: **classic** (`Workspace.AuthorityMode = Automatic`). The client owns its character, and the server validates combat. For competitive FPS, fighting, racing or sports, consider **Server Authority** (`AuthorityMode = Server`, opt-in, fully released in 2026), which gives prediction and rollback via `RunService:BindToSimulation()` (§2).
+3. **Hit detection: use spatial queries, not `Touched`.** `Raycast` for hitscan, `Blockcast`/`Spherecast`/`Shapecast` for sweeps, and `GetPartBoundsInBox`/`GetPartBoundsInRadius`/`GetPartsInPart` with `OverlapParams` for instant hitboxes. `Touched` is only for slow triggers (pickups, zones).
+4. **Every combat remote handler:** `typeof`-check every argument, reject NaN and infinity, rate-limit per player, check alive and not stunned, check the cooldown on a *server* clock, and check range and line of sight against *server* positions plus a ping tolerance.
+5. **All damage goes through one function** (`DamageService.Apply`): i-frames, block, parry, armor, kill and assist attribution, death event. Nothing else writes `Humanoid.Health`.
+6. **Combat state lives in server-written attributes** on the character (`StunnedUntil`, `Blocking`, `IFrameUntil`). They replicate for UI, and they act as synced state under Server Authority.
+7. **Knockback runs where the physics runs.** A player character is client-owned, so fire their client (or briefly `SetNetworkOwner(nil)`). NPCs are server-owned, so `ApplyImpulse` on the server.
+8. **Use modern movers:** `LinearVelocity`, `AngularVelocity`, `AlignPosition`, `AlignOrientation`, `VectorForce`, `ApplyImpulse`. Never use the deprecated `BodyVelocity`/`BodyGyro`/`BodyPosition`/`BodyForce`.
+9. **Projectiles:** the client renders instantly. The server validates origin, rate and ammo, simulates the same raycast-stepped ballistic path, and decides hits. Other clients get cosmetic copies (an `UnreliableRemoteEvent` is fine).
+10. **Lag compensation:** keep about 1 s of server position history and rewind targets by about `ping/2 + interp`, **capped at about 250 ms**.
+11. **NPCs:** `SetNetworkOwner(nil)`, one shared AI loop at 4–10 Hz, a cap on the number alive, collision groups, `Debris` for corpses.
+12. **Vehicles:** the driver gets network ownership on `Occupant` change, and `SetNetworkOwnershipAuto()` on exit. Use `HingeConstraint` motor and servo plus spring suspension.
+13. **`TeleportService:ReserveServer(Async)`, `TeleportOptions.ShouldReserveServer` and `ReservedServerAccessCode` are DEPRECATED.** Set `TeleportOptions.ReservedServerId = HttpService:GenerateGUID(false)` and call `TeleportAsync`. Wrap it in `pcall` with retries, and handle `TeleportInitFailed`.
+14. **Cross-server matchmaking:** a `MemoryStoreQueue` (one entry per party), a reader packs a match, `MessagingService` announces it, and every lobby server teleports its players with the same `ReservedServerId`.
+15. **Trades:** a server-side state machine with offer, both ready, countdown, both confirm, re-verify, swap in one non-yielding block, journal. Any offer change resets both. Items have unique ids.
+16. **Global leaderboards:** `OrderedDataStore` with integer values. Write on a throttle and on leave. Read with `GetSortedAsync(false, ≤100)` every 60 s or more, and cache it.
+17. **MessagingService** is limited to 1 kB and is best-effort. Use it for announcements and match notices, never as the only record of anything valuable.
+18. **Input:** the **Input Action System** (`InputContext`/`InputAction`/`InputBinding`) is released and required under Server Authority. Give every action keyboard/mouse, gamepad and touch (`UIButton`) bindings. Use `UserInputService.PreferredInput` for adaptive UI.
+19. Use `Player:LoadCharacterAsync()` (`LoadCharacter` is deprecated) and `Humanoid:ApplyDescriptionAsync()` (`ApplyDescription` is deprecated).
+20. Under Server Authority, **`Tool`s are not fully supported**, so use welded models plus an attribute.
+21. **Anti-exploit is server math:** position-delta speed checks, floor raycasts for fly, rate limits, damage validation. Log first, kick only on extreme repeated violations.
+22. **Clocks:** `workspace:GetServerTimeNow()` for shared UI timers, `os.clock()` for server-only checks, `time()` inside `BindToSimulation`.
 
 ---
 
@@ -37,33 +37,25 @@
 
 ### 1.1 What replicates and who simulates
 
-| Thing | Authority (classic model) | Replicates? |
-|---|---|---|
-| Instances/properties changed by the server | Server | Server → all clients (subject to streaming) |
-| Instances/properties changed by a client | That client | **No** (FilteringEnabled). Exceptions: physics of parts the client *owns*, and some character/Humanoid/Animator state. |
-| Physics of the player's own character | Client (network owner) | Client → server → other clients. **The client can lie** (speed, fly, teleport). |
-| Unanchored parts near a player | Auto-assigned owner (often that client) | Owner → others |
-| Anchored parts | Always server | — |
-| Attributes set on the server | Server | Yes |
-| `RemoteEvent` | Explicit | Reliable, ordered *per remote* |
-| `UnreliableRemoteEvent` | Explicit | Unordered, may drop, payload ~1000 bytes. Good for cosmetic, high-frequency data. |
+- Server changes replicate to clients (subject to streaming). Client changes **don't** replicate, except the physics of parts the client **owns** (its own character, nearby unanchored parts), plus some Humanoid and Animator state. **An owning client can lie** about position, which is how speed, fly and teleport hacks work.
+- Anchored parts are always server-owned. Server-set attributes replicate.
+- `RemoteEvent`: reliable, ordered per remote. `UnreliableRemoteEvent`: unordered, may drop, about 1000-byte payload. Good for cosmetic, high-frequency data.
+- Remote rate limit: about **500 requests per second per client, shared across all remotes of the same type**. Your per-feature limits should be far stricter.
 
-Remote rate limit is roughly **500 requests per second per client, shared across all remotes of the same type**. Your own per-feature limits should be much stricter.
+### 1.2 Latency facts
 
-### 1.2 The latency facts you design around
+- `Player:GetNetworkPing()` returns **round-trip** seconds (typically 0.05–0.2). One-way delay is about ping/2.
+- Other players are rendered **in the past**: one-way latency plus an interpolation buffer (community estimates are 50–100 ms; undocumented, so make it a constant).
+- A shot that hits on A's screen lands about `pingA/2 + interp + pingB/2` behind B's server position. Without lag compensation, fair shots miss. Uncapped, players get hit behind walls. **Cap the rewind at 200–300 ms.**
 
-- **Ping** (`Player:GetNetworkPing()`, round-trip, in seconds) is typically 50–200 ms, and higher on mobile or in other regions. One-way delay is about ping/2.
-- **Other players are rendered in the past.** Roblox buffers replicated physics and interpolates between snapshots. Community measurements put the extra buffer at roughly 50–100 ms on top of one-way latency. It isn't documented precisely, so treat it as a tunable constant.
-- So when player A shoots at B on A's screen, B was actually about `ping_A/2 + interp + ping_B/2` further along on the server. Without lag compensation, fair shots miss. With unbounded compensation, players get hit "behind walls". **Cap compensation** at 200–300 ms.
+### 1.3 Techniques
 
-### 1.3 The four techniques
-
-| Technique | What it does | How on Roblox |
-|---|---|---|
-| **Client prediction** | Show the local result of input immediately | Classic: play the animation/VFX locally on input and move the character locally (it's client-owned anyway). Server Authority: built in, via `BindToSimulation`. |
-| **Server reconciliation** | Server corrects a wrong client guess | Classic: the server rejects the action and fires a "denied" event; the client rolls back UI/VFX (refund ammo display, cancel the animation). Server Authority: automatic rollback and resimulation. |
-| **Lag compensation** | Server judges hits against where targets *were* on the shooter's screen | Position history buffer plus rewind (§1.5). |
-| **Interpolation / smoothing** | Hide jitter for remote objects | Engine-interpolated for physics. For custom state, lerp in `RenderStepped`, or use `TweenService:SmoothDamp` (used in the official server-authority smoothing sample). |
+| Technique | On Roblox |
+|---|---|
+| **Client prediction** (show the result of input now) | Classic: play the anim/VFX locally on input. The character moves locally anyway. Server Authority: built in. |
+| **Server reconciliation** (server corrects a wrong guess) | Classic: the server rejects the action, and the client undoes the UI/VFX on a "denied" reply. Server Authority: automatic rollback and resimulation. |
+| **Lag compensation** (judge hits where targets *were*) | Position history plus rewind (§1.5) |
+| **Interpolation/smoothing** | The engine interpolates physics. For custom state, lerp in `RenderStepped` or use `TweenService:SmoothDamp`. |
 
 ### 1.4 Shared clock
 
@@ -154,8 +146,7 @@ return PositionHistory
 | State sync | Attributes and remotes, server-written | Attributes on predicted instances. A mismatch triggers rollback. Write them **only inside bound functions**. |
 | Time | `os.clock()` server side | `time()` (fixed-step, synced, rewinds). **Not** `tick`/`os.clock`/`os.time` inside the simulation. |
 | Tools | Supported | Not fully supported. Use welded models plus an attribute. |
-| Destroying instances | Anywhere | Not inside bound functions. Flag with an attribute, destroy in `RunService.PostSimulation` on the server. |
-| Cost | Normal | Higher server utilization |
+| Instance removal / cost | Anywhere / normal | Not inside bound functions (flag it, then destroy in `RunService.PostSimulation`) / higher server utilization |
 | Best for | Simulators, tycoons, obbies, RPGs, casual PvE/PvP | Competitive FPS, fighting games, racing, sports |
 
 Setting `Workspace.AuthorityMode = Server` in Studio automatically sets `NextGenerationReplication`, `PlayerScriptsUseInputActionSystem`, `SignalBehavior = Deferred`, `UseFixedSimulation`, and `StreamingEnabled`. Prediction controls: `RunService:SetPredictionMode(instance, Enum.PredictionMode.Automatic|On|Off)` and `RunService:GetPredictionStatus(instance)` (client). Debug with Studio's server authority visualizer (Ctrl+Shift+F6).
@@ -221,53 +212,7 @@ Effects (sounds, particles) go in `RenderStepped`. Read the synced attributes th
 
 Parts with `CanQuery = false` are invisible to all queries. Set this on VFX, hitbox visualizers and accessories to save cost and avoid false hits.
 
-### 3.2 Turning parts into unique characters
-
-```lua
--- Collect unique Humanoids from a list of parts (one hit per character per swing)
-local function humanoidsFromParts(parts: { Instance }, ignore: Model?): { Humanoid }
-	local seen: { [Humanoid]: boolean } = {}
-	local out = {}
-	for _, part in parts do
-		local model = part:FindFirstAncestorOfClass("Model")
-		while model and not model:FindFirstChildOfClass("Humanoid") do
-			model = model:FindFirstAncestorOfClass("Model") -- accessories/tools nest deeper
-		end
-		if model and model ~= ignore then
-			local hum = model:FindFirstChildOfClass("Humanoid")
-			if hum and hum.Health > 0 and not seen[hum] then
-				seen[hum] = true
-				table.insert(out, hum)
-			end
-		end
-	end
-	return out
-end
-```
-
-### 3.3 Why not `Touched`
-
-- It fires only on **physics contact**, and is unreliable for fast or thin parts (tunnelling), anchored-vs-anchored parts, and `CanTouch = false` parts.
-- It fires on the **network owner's** simulation. For client-owned characters, touches against your server hitbox are reported late or spoofable.
-- It fires many times per contact (each limb) and needs debouncing. `TouchEnded` is flaky.
-- Welding a hitbox part to a swinging sword animates it only on the client that plays the animation. The server's copy of `Motor6D` transforms isn't the client's.
-
-**Use `Touched` for:** pickups, kill bricks, zone entry on slow-moving players (debounced per character). For zones, prefer periodic `GetPartBoundsInBox` checks or the ZonePlus pattern.
-
-### 3.4 Visualizing hitboxes in Studio
-
-```lua
-local DEBUG_HITBOX = game:GetService("RunService"):IsStudio()
-local function debugBox(cf: CFrame, size: Vector3, color: Color3)
-	if not DEBUG_HITBOX then return end
-	local p = Instance.new("Part")
-	p.Anchored, p.CanCollide, p.CanQuery, p.CanTouch = true, false, false, false
-	p.Transparency, p.Color, p.Material = 0.7, color, Enum.Material.ForceField
-	p.CFrame, p.Size = cf, size
-	p.Parent = workspace
-	game:GetService("Debris"):AddItem(p, 0.25)
-end
-```
+**`Touched` pitfalls:** it only fires on physics contact, so fast or thin parts tunnel through. It's reported by the **network owner's** simulation, so for client-owned characters it's late or spoofable. It fires once per limb and needs a debounce. A hitbox welded to an animated sword only moves on the client playing the animation. Use `Touched` only for pickups, kill bricks and zones on slow movers. For damage, use queries. To map query results to characters, walk up with `FindFirstAncestorOfClass("Model")` until you find a model with a `Humanoid`, and keep a `hit[model]` set so each target is hit once per swing. To debug, spawn an anchored, `CanQuery=false` `ForceField` box at the query CFrame and `Debris:AddItem` it after 0.25 s (Studio only).
 
 ---
 
@@ -282,7 +227,7 @@ local Players = game:GetService("Players")
 
 export type DamageInfo = {
 	Amount: number,
-	Source: Player? | Model?, -- attacker player, or NPC model
+	Source: (Player | Model)?, -- attacker player, or NPC model
 	Kind: string?,            -- "Melee" | "Projectile" | "Ability" | "Hazard" ...
 	WeaponId: string?,
 	Knockback: Vector3?,      -- world-space velocity change
@@ -442,8 +387,6 @@ Notes:
 
 ## 5. Status effects and buffs
 
-Data-driven effects with stacking rules. They modify *derived* stats, never base stats, so removing an effect always restores the right value.
-
 ```lua
 --!strict
 -- ServerScriptService/Combat/StatusEffects.luau
@@ -451,62 +394,42 @@ local RunService = game:GetService("RunService")
 local DamageService = require(script.Parent.DamageService)
 
 type EffectDef = {
-	Duration: number,
-	Stacking: "Refresh" | "Stack" | "Ignore",
-	MaxStacks: number?,
-	TickInterval: number?,
-	OnTick: ((char: Model, stacks: number, source: any) -> ())?,
-	Modifiers: { WalkSpeedMult: number?, DamageTakenMult: number?, DamageDealtMult: number? }?,
-	Tag: string?, -- written as a boolean attribute while active (e.g. "Stunned", "Burning")
+	Duration: number, Stacking: "Refresh" | "Stack" | "Ignore", MaxStacks: number?,
+	TickInterval: number?, OnTick: ((char: Model, stacks: number, source: any) -> ())?,
+	WalkSpeedMult: number?, DamageTakenMult: number?, DamageDealtMult: number?,
 }
-
 local DEFS: { [string]: EffectDef } = {
-	Burn = {
-		Duration = 4, Stacking = "Stack", MaxStacks = 5, TickInterval = 0.5, Tag = "Burning",
+	Burn = { Duration = 4, Stacking = "Stack", MaxStacks = 5, TickInterval = 0.5,
 		OnTick = function(char, stacks, source)
 			DamageService.Apply(char, { Amount = 2 * stacks, Source = source, Kind = "DoT", Unblockable = true, Parryable = false })
-		end,
-	},
-	Slow = { Duration = 3, Stacking = "Refresh", Modifiers = { WalkSpeedMult = 0.6 } },
-	Haste = { Duration = 5, Stacking = "Refresh", Modifiers = { WalkSpeedMult = 1.35 } },
-	Fortify = { Duration = 6, Stacking = "Ignore", Modifiers = { DamageTakenMult = 0.7 } },
-	Root = { Duration = 1.5, Stacking = "Refresh", Modifiers = { WalkSpeedMult = 0 }, Tag = "Rooted" },
+		end },
+	Slow = { Duration = 3, Stacking = "Refresh", WalkSpeedMult = 0.6 },
+	Haste = { Duration = 5, Stacking = "Refresh", WalkSpeedMult = 1.35 },
+	Fortify = { Duration = 6, Stacking = "Ignore", DamageTakenMult = 0.7 },
 }
+local BASE_WALKSPEED = 16
 
 type Active = { def: EffectDef, expires: number, stacks: number, nextTick: number, source: any }
 local active: { [Model]: { [string]: Active } } = {}
-
-local BASE_WALKSPEED = 16
-
 local StatusEffects = {}
 
 local function recompute(char: Model)
-	local effects = active[char] or {}
 	local ws, taken, dealt = 1, 1, 1
-	local tags: { [string]: boolean } = {}
-	for _, a in effects do
-		local m = a.def.Modifiers
-		if m then
-			ws *= m.WalkSpeedMult or 1
-			taken *= m.DamageTakenMult or 1
-			dealt *= m.DamageDealtMult or 1
-		end
-		if a.def.Tag then tags[a.def.Tag] = true end
+	for id, a in active[char] or {} do
+		ws *= a.def.WalkSpeedMult or 1
+		taken *= a.def.DamageTakenMult or 1
+		dealt *= a.def.DamageDealtMult or 1
+		char:SetAttribute("Effect_" .. id, true) -- UI icon flag
 	end
 	local hum = char:FindFirstChildOfClass("Humanoid")
 	local stunned = (char:GetAttribute("StunnedUntil") or 0) > os.clock()
-	if hum then
-		hum.WalkSpeed = if stunned then 0 else BASE_WALKSPEED * ws
-	end
+	if hum then hum.WalkSpeed = if stunned then 0 else BASE_WALKSPEED * ws end
 	char:SetAttribute("DamageTakenMult", taken)
 	char:SetAttribute("DamageDealtMult", dealt)
-	for name, def in DEFS do
-		if def.Tag then char:SetAttribute(def.Tag, tags[def.Tag] == true) end
-	end
 end
 
-function StatusEffects.Apply(char: Model, effectId: string, source: any?, durationOverride: number?)
-	local def = DEFS[effectId]
+function StatusEffects.Apply(char: Model, id: string, source: any?)
+	local def = DEFS[id]
 	if not def then return end
 	local list = active[char]
 	if not list then
@@ -514,42 +437,26 @@ function StatusEffects.Apply(char: Model, effectId: string, source: any?, durati
 		active[char] = list
 		char.Destroying:Connect(function() active[char] = nil end)
 	end
-	local t = os.clock()
-	local dur = durationOverride or def.Duration
-	local a = list[effectId]
+	local t, a = os.clock(), list[id]
 	if a then
 		if def.Stacking == "Ignore" then return end
 		if def.Stacking == "Stack" then a.stacks = math.min(a.stacks + 1, def.MaxStacks or 99) end
-		a.expires = t + dur
-		a.source = source
+		a.expires, a.source = t + def.Duration, source
 	else
-		list[effectId] = { def = def, expires = t + dur, stacks = 1, nextTick = t + (def.TickInterval or math.huge), source = source }
+		list[id] = { def = def, expires = t + def.Duration, stacks = 1,
+			nextTick = t + (def.TickInterval or math.huge), source = source }
 	end
 	recompute(char)
 end
 
-function StatusEffects.Remove(char: Model, effectId: string)
-	local list = active[char]
-	if list and list[effectId] then
-		list[effectId] = nil
-		recompute(char)
-	end
-end
-
-function StatusEffects.Cleanse(char: Model)
-	active[char] = {}
-	recompute(char)
-end
-
--- One loop for all effects (cheaper than a thread per effect)
+-- One 10 Hz loop for every effect (not a thread per effect)
 local accum = 0
 RunService.Heartbeat:Connect(function(dt)
 	accum += dt
-	if accum < 0.1 then return end -- 10 Hz is plenty
+	if accum < 0.1 then return end
 	accum = 0
 	local t = os.clock()
 	for char, list in active do
-		local changed = false
 		for id, a in list do
 			if a.def.OnTick and t >= a.nextTick then
 				a.nextTick += a.def.TickInterval :: number
@@ -557,18 +464,17 @@ RunService.Heartbeat:Connect(function(dt)
 			end
 			if t >= a.expires then
 				list[id] = nil
-				changed = true
+				char:SetAttribute("Effect_" .. id, nil)
 			end
 		end
-		-- also re-evaluate when stun expires
-		if changed or char:GetAttribute("StunnedUntil") then recompute(char) end
+		recompute(char) -- also restores WalkSpeed when a stun ends
 	end
 end)
 
 return StatusEffects
 ```
 
-Effects that also need to show on the client, such as icons, use the boolean tag attributes. For timers, write `effect_<id>_end = workspace:GetServerTimeNow() + dur` as an attribute.
+Effects modify *derived* stats, so removal always restores the right value. For client timers, also write `Effect_<id>_End = workspace:GetServerTimeNow() + duration`.
 
 ---
 
@@ -576,33 +482,19 @@ Effects that also need to show on the client, such as icons, use the boolean tag
 
 ### 6.1 Design
 
-- **Definitions are data** (a ModuleScript in `ReplicatedStorage` so the client can read names, icons and cooldowns for UI). The **server-only executor** maps `Id → function`.
-- The server stores the authoritative cooldown (`os.clock()`) and mirrors it to a `workspace:GetServerTimeNow()` attribute for UI.
-- **Charges** (for example, two dashes) and **global cooldown** (GCD) are built in.
-- Each request is validated for type, ownership (the player has the ability equipped or unlocked), alive and not stunned, cooldown, rate, and argument sanity.
+Definitions are data, in `ReplicatedStorage` so the UI can read them. A **server-only** executor table maps `Id → function`. The server keeps authoritative charges, cooldowns and GCD on `os.clock()`, and mirrors them to `GetServerTimeNow()`-based attributes for UI. Every request is checked for type, ownership, alive and not stunned, cooldown, rate, and argument sanity.
 
 ```lua
 --!strict
--- ReplicatedStorage/Shared/AbilityDefs.luau  (readable by client for UI)
-export type AbilityDef = {
-	Id: string,
-	DisplayName: string,
-	Cooldown: number,       -- seconds per charge
-	Charges: number?,       -- default 1
-	CastTime: number?,      -- wind-up before effect (server waits)
-	GCD: number?,           -- global cooldown triggered
-	Range: number?,
-	Icon: string?,
-	RequiresAim: boolean?,
-}
+-- ReplicatedStorage/Shared/AbilityDefs.luau
+export type AbilityDef = { Id: string, DisplayName: string, Cooldown: number, Charges: number?,
+	CastTime: number?, GCD: number?, Range: number?, Icon: string?, RequiresAim: boolean? }
 
 local Defs: { [string]: AbilityDef } = {
 	Dash = { Id = "Dash", DisplayName = "Dash", Cooldown = 3, Charges = 2, GCD = 0.2 },
 	Fireball = { Id = "Fireball", DisplayName = "Fireball", Cooldown = 6, CastTime = 0.35, GCD = 0.5, Range = 120, RequiresAim = true },
 	Shockwave = { Id = "Shockwave", DisplayName = "Shockwave", Cooldown = 10, CastTime = 0.5, GCD = 0.5, Range = 14 },
-	Heal = { Id = "Heal", DisplayName = "Mend", Cooldown = 15, CastTime = 1.0, GCD = 1.0 },
 }
-
 return Defs
 ```
 
@@ -619,34 +511,19 @@ local Projectiles = require(script.Parent.ProjectileService) -- §8
 
 local Remotes = ReplicatedStorage:WaitForChild("Remotes")
 local UseAbility = Remotes:WaitForChild("UseAbility") :: RemoteEvent
-local AbilityFeedback = Remotes:WaitForChild("AbilityFeedback") :: RemoteEvent -- server -> client: accepted/denied
+local AbilityFeedback = Remotes:WaitForChild("AbilityFeedback") :: RemoteEvent -- (id, accepted, reason?)
 local Knockback = Remotes:WaitForChild("Knockback") :: RemoteEvent
 DamageService.SetKnockbackRemote(Knockback)
 
-type PlayerState = {
-	charges: { [string]: number },
-	nextChargeAt: { [string]: number },
-	gcdUntil: number,
-	casting: boolean,
-	requestTimes: { number },
-}
+type PlayerState = { charges: { [string]: number }, nextChargeAt: { [string]: number },
+	gcdUntil: number, casting: boolean, requestTimes: { number } }
 local states: { [Player]: PlayerState } = {}
+Players.PlayerRemoving:Connect(function(p) states[p] = nil end)
 
 local MAX_REQUESTS_PER_SEC = 8
 
-local function getState(p: Player): PlayerState
-	local s = states[p]
-	if not s then
-		s = { charges = {}, nextChargeAt = {}, gcdUntil = 0, casting = false, requestTimes = {} }
-		states[p] = s
-	end
-	return s
-end
-Players.PlayerRemoving:Connect(function(p) states[p] = nil end)
-
 local function rateLimited(s: PlayerState): boolean
-	local t = os.clock()
-	local times = s.requestTimes
+	local t, times = os.clock(), s.requestTimes
 	while #times > 0 and t - times[1] > 1 do table.remove(times, 1) end
 	if #times >= MAX_REQUESTS_PER_SEC then return true end
 	table.insert(times, t)
@@ -654,172 +531,133 @@ local function rateLimited(s: PlayerState): boolean
 end
 
 local function ownsAbility(p: Player, id: string): boolean
-	-- Replace with your loadout/profile check. Example: attribute list "Dash,Fireball"
+	-- Replace with your profile/loadout check. Example: attribute "Dash,Fireball" set by the server.
 	local loadout = p:GetAttribute("Loadout")
-	if type(loadout) ~= "string" then return false end
-	for item in string.gmatch(loadout, "[^,]+") do
-		if item == id then return true end
-	end
-	return false
+	return type(loadout) == "string" and table.find(string.split(loadout, ","), id) ~= nil
 end
 
 local function canAct(char: Model?): boolean
-	if not char then return false end
-	local hum = char:FindFirstChildOfClass("Humanoid")
-	if not hum or hum.Health <= 0 then return false end
-	if (char:GetAttribute("StunnedUntil") or 0) > os.clock() then return false end
-	return true
+	local hum = char and char:FindFirstChildOfClass("Humanoid")
+	return hum ~= nil and hum.Health > 0 and ((char :: Model):GetAttribute("StunnedUntil") or 0) <= os.clock()
 end
 
--- Refill charges lazily based on time
+-- Lazily refill charges: each charge regenerates Cooldown seconds after the previous one
 local function refreshCharges(s: PlayerState, def: AbilityDefs.AbilityDef)
-	local max = def.Charges or 1
-	local c = s.charges[def.Id]
-	if c == nil then
-		s.charges[def.Id] = max
-		return
-	end
-	local t = os.clock()
-	while c < max and s.nextChargeAt[def.Id] and t >= s.nextChargeAt[def.Id] do
-		c += 1
-		s.nextChargeAt[def.Id] = if c < max then s.nextChargeAt[def.Id] + def.Cooldown else nil :: any
-	end
-	s.charges[def.Id] = c
-end
-
-local function publishCooldown(p: Player, s: PlayerState, def: AbilityDefs.AbilityDef)
-	-- UI mirror on the shared clock
-	local offset = workspace:GetServerTimeNow() - os.clock()
+	local max, t = def.Charges or 1, os.clock()
+	local c = s.charges[def.Id] or max
 	local nextAt = s.nextChargeAt[def.Id]
-	p:SetAttribute("Cd_" .. def.Id, if nextAt then nextAt + offset else 0)
-	p:SetAttribute("Ch_" .. def.Id, s.charges[def.Id])
+	while c < max and nextAt and t >= nextAt do
+		c += 1
+		nextAt = if c < max then nextAt + def.Cooldown else nil
+	end
+	s.charges[def.Id], s.nextChargeAt[def.Id] = c, nextAt :: any
 end
 
--- Executors: server-only effects. aim is a validated unit Vector3 or nil.
 local Executors: { [string]: (p: Player, char: Model, def: AbilityDefs.AbilityDef, aim: Vector3?) -> () } = {
-	Dash = function(p, char, def, aim)
+	Dash = function(p, char)
 		local root = char:FindFirstChild("HumanoidRootPart") :: BasePart
-		local dir = root.CFrame.LookVector * Vector3.new(1, 0, 1)
-		-- Client-owned character: ask the owner to apply velocity (validated magnitude)
-		Knockback:FireClient(p, dir.Unit * 70)
-		char:SetAttribute("IFrameUntil", os.clock() + 0.25) -- dash i-frames
+		Knockback:FireClient(p, (root.CFrame.LookVector * Vector3.new(1, 0, 1)).Unit * 70) -- owner applies
+		char:SetAttribute("IFrameUntil", os.clock() + 0.25)
+		char:SetAttribute("DashingUntil", os.clock() + 0.4) -- whitelists the movement anti-cheat (§22)
 	end,
 	Fireball = function(p, char, def, aim)
-		local head = char:FindFirstChild("Head") :: BasePart
 		Projectiles.FireServerProjectile({
-			Shooter = p, Origin = head.Position, Direction = aim :: Vector3,
+			Shooter = p, Origin = (char:FindFirstChild("Head") :: BasePart).Position, Direction = aim :: Vector3,
 			Speed = 90, Gravity = 0, MaxDistance = def.Range or 120, Damage = 30,
-			OnHit = function(hitChar: Model)
-				StatusEffects.Apply(hitChar, "Burn", p)
-			end,
+			OnHit = function(hitChar: Model) StatusEffects.Apply(hitChar, "Burn", p) end,
 		})
 	end,
-	Shockwave = function(p, char, def, aim)
+	Shockwave = function(p, char, def)
 		local root = char:FindFirstChild("HumanoidRootPart") :: BasePart
 		local params = OverlapParams.new()
 		params.FilterType = Enum.RaycastFilterType.Exclude
 		params.FilterDescendantsInstances = { char }
-		local parts = workspace:GetPartBoundsInRadius(root.Position, def.Range or 14, params)
 		local hit: { [Model]: boolean } = {}
-		for _, part in parts do
+		for _, part in workspace:GetPartBoundsInRadius(root.Position, def.Range or 14, params) do
 			local m = part:FindFirstAncestorOfClass("Model")
-			if m and not hit[m] and m:FindFirstChildOfClass("Humanoid") then
+			local mRoot = m and m:FindFirstChild("HumanoidRootPart") :: BasePart?
+			if m and mRoot and not hit[m] and m:FindFirstChildOfClass("Humanoid") then
 				hit[m] = true
-				local mRoot = m:FindFirstChild("HumanoidRootPart") :: BasePart?
-				if mRoot then
-					local away = (mRoot.Position - root.Position) * Vector3.new(1, 0, 1)
-					local kb = (if away.Magnitude > 0 then away.Unit else root.CFrame.LookVector) * 50 + Vector3.new(0, 30, 0)
-					DamageService.Apply(m, { Amount = 20, Source = p, Kind = "Ability", WeaponId = "Shockwave",
-						Knockback = kb, StunTime = 0.6, Origin = root.Position })
-				end
+				local away = (mRoot.Position - root.Position) * Vector3.new(1, 0, 1)
+				local dir = if away.Magnitude > 0 then away.Unit else root.CFrame.LookVector
+				DamageService.Apply(m, { Amount = 20, Source = p, Kind = "Ability", WeaponId = "Shockwave",
+					Knockback = dir * 50 + Vector3.new(0, 30, 0), StunTime = 0.6, Origin = root.Position })
 			end
 		end
-	end,
-	Heal = function(p, char)
-		local hum = char:FindFirstChildOfClass("Humanoid") :: Humanoid
-		hum.Health = math.min(hum.MaxHealth, hum.Health + 40)
 	end,
 }
 
 UseAbility.OnServerEvent:Connect(function(player: Player, abilityId: unknown, aim: unknown)
-	-- 1. Type checks (never trust argument types)
-	if type(abilityId) ~= "string" or #abilityId > 32 then return end
+	-- 1. Types and existence
+	if type(abilityId) ~= "string" then return end
 	local def = AbilityDefs[abilityId]
-	if not def then return end
-	local s = getState(player)
+	if not def or not Executors[def.Id] then return end
+	local s = states[player]
+	if not s then
+		s = { charges = {}, nextChargeAt = {}, gcdUntil = 0, casting = false, requestTimes = {} }
+		states[player] = s
+	end
 	if rateLimited(s) then return end
 
 	local aimVec: Vector3? = nil
 	if def.RequiresAim then
 		if typeof(aim) ~= "Vector3" then return end
 		local v = aim :: Vector3
-		if v.X ~= v.X or v.Y ~= v.Y or v.Z ~= v.Z then return end -- NaN
-		if v.Magnitude < 0.5 or v.Magnitude > 1.5 then return end -- must be ~unit
+		if v ~= v or v.Magnitude < 0.5 or v.Magnitude > 1.5 then return end -- NaN / not ~unit
 		aimVec = v.Unit
 	end
 
-	-- 2. Ownership, state
-	if not ownsAbility(player, def.Id) then return end
+	-- 2. Ownership and state
 	local char = player.Character
-	if not canAct(char) or s.casting then
+	if not ownsAbility(player, def.Id) or not canAct(char) or s.casting then
 		AbilityFeedback:FireClient(player, def.Id, false, "busy")
 		return
 	end
 	local t = os.clock()
-	if t < s.gcdUntil then
-		AbilityFeedback:FireClient(player, def.Id, false, "gcd")
-		return
-	end
-
-	-- 3. Cooldown / charges
 	refreshCharges(s, def)
-	if (s.charges[def.Id] or 0) <= 0 then
+	if t < s.gcdUntil or s.charges[def.Id] <= 0 then
 		AbilityFeedback:FireClient(player, def.Id, false, "cooldown")
 		return
 	end
 
-	-- 4. Commit cost BEFORE yielding (prevents double-cast during cast time)
+	-- 3. Commit the cost BEFORE yielding (prevents double casts during cast time)
 	s.charges[def.Id] -= 1
-	if not s.nextChargeAt[def.Id] then s.nextChargeAt[def.Id] = t + def.Cooldown end
+	s.nextChargeAt[def.Id] = s.nextChargeAt[def.Id] or t + def.Cooldown
 	s.gcdUntil = t + (def.GCD or 0)
-	publishCooldown(player, s, def)
+	local offset = workspace:GetServerTimeNow() - t -- mirror on the shared clock for UI
+	player:SetAttribute("Cd_" .. def.Id, (s.nextChargeAt[def.Id] or t) + offset)
+	player:SetAttribute("Ch_" .. def.Id, s.charges[def.Id])
 	AbilityFeedback:FireClient(player, def.Id, true)
 
-	-- 5. Cast time (interruptible by stun/death)
+	-- 4. Interruptible cast time
 	if def.CastTime and def.CastTime > 0 then
 		s.casting = true
 		char:SetAttribute("Casting", def.Id)
 		task.wait(def.CastTime)
 		s.casting = false
-		if char.Parent then char:SetAttribute("Casting", nil) end
-		if not canAct(char) or player.Character ~= char then return end -- interrupted: cooldown still spent
+		char:SetAttribute("Casting", nil)
+		if not canAct(char) or player.Character ~= char then return end -- interrupted; cost stays spent
 	end
-
 	Executors[def.Id](player, char :: Model, def, aimVec)
 end)
 ```
 
-Client side, for responsiveness: play the cast animation and VFX immediately on input, gray the button using `Cd_<Id>` minus `workspace:GetServerTimeNow()`, and cancel the VFX if `AbilityFeedback` returns `false`.
+Client side, for responsiveness: play the cast animation and VFX immediately on input, gray out the button using `Cd_<Id> - workspace:GetServerTimeNow()`, and cancel the VFX if `AbilityFeedback` says `false`.
 
-Client knockback receiver. Validate even here, since a server bug shouldn't be able to fling a player into orbit:
+Client knockback receiver. The victim's client applies velocity to its own character, and clamps it, because even server bugs shouldn't fling players into orbit:
 
 ```lua
 -- StarterPlayerScripts/KnockbackClient.client.luau
 local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Knockback = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Knockback")
+local Knockback = game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Knockback")
 
 Knockback.OnClientEvent:Connect(function(velocity: Vector3)
 	local char = Players.LocalPlayer.Character
-	local root = char and char:FindFirstChild("HumanoidRootPart")
+	local root = char and char:FindFirstChild("HumanoidRootPart") :: BasePart?
 	if not root or velocity.Magnitude > 300 then return end
-	-- Set velocity directly for a crisp, mass-independent hit
-	root.AssemblyLinearVelocity = velocity
-	-- Optional: briefly stop the Humanoid from fighting the velocity
+	root.AssemblyLinearVelocity = velocity -- crisp and mass-independent
 	local hum = char:FindFirstChildOfClass("Humanoid")
-	if hum and velocity.Y > 20 then
-		hum:ChangeState(Enum.HumanoidStateType.Freefall)
-	end
+	if hum and velocity.Y > 20 then hum:ChangeState(Enum.HumanoidStateType.Freefall) end
 end)
 ```
 
@@ -829,23 +667,9 @@ end)
 
 ### 7.1 Architecture
 
-```
-Client                                   Server
-------                                   ------
-Input (IAS/CAS) ──► local anim + swing   
-  sends Attack(comboHint) ───────────►  validate: alive, not stunned, not blocking,
-                                         rate, per-step cooldown, combo window
-                                         compute comboIndex (server-owned)
-                                         wait windup (from weapon data)
-                                         hitbox from SERVER root CFrame (+lag padding)
-                                         GetPartBoundsInBox / Blockcast
-                                         per-target: range & facing checks
-                                         DamageService.Apply (block/parry/iframes)
-                                         stun, knockback, hit-stop event
-  ◄────────── HitConfirm (VFX, sound, damage numbers) to attacker & nearby
-```
+The client sends `Attack()` (no arguments) and plays the swing locally. The server validates alive, not stunned, not blocking, not casting, and not mid-step. It advances the **server-owned** combo index, waits the wind-up, sweeps `GetPartBoundsInBox` from the attacker's **server** root CFrame (padded for lag) over the active window, checks LOS, calls `DamageService.Apply` (block, parry, i-frames, stun, knockback), and broadcasts a cosmetic `HitConfirm`.
 
-**Why server-side hitboxes and not client-reported hits?** Client hit lists are easy to forge, for example "I hit everyone within 200 studs". A server box from the attacker's *server* position, padded by a few studs for lag, is fair enough for melee ranges of 5–8 studs. If your game needs pixel-perfect melee, accept client-reported targets but validate each one against `PositionHistory` (rewound distance ≤ range + tolerance, facing, one hit per swing).
+Client-reported hit lists are trivial to forge ("I hit everyone within 200 studs"). A padded server box is fair at melee ranges of 5–8 studs. If you need pixel-perfect melee, accept client-reported targets, but validate each one against `PositionHistory` (rewound distance ≤ range + tolerance, facing, one hit per swing).
 
 ### 7.2 Weapon data
 
@@ -866,26 +690,23 @@ export type ComboStep = {
 }
 export type MeleeDef = { Id: string, ComboResetTime: number, Steps: { ComboStep } }
 
+local function step(dmg, windup, active, recovery, depth, stun, kb, launch): ComboStep
+	return { Damage = dmg, Windup = windup, Active = active, Recovery = recovery,
+		HitboxSize = Vector3.new(4.5, 5, depth), HitboxOffset = CFrame.new(0, 0, -depth / 2 - 1),
+		Stun = stun, Knockback = kb, Launch = launch, Anim = "rbxassetid://0" } -- use your own anims
+end
+
 local Defs: { [string]: MeleeDef } = {
-	Fists = {
-		Id = "Fists",
-		ComboResetTime = 0.9,
-		Steps = {
-			{ Damage = 6, Windup = 0.12, Active = 0.10, Recovery = 0.18, HitboxSize = Vector3.new(4, 5, 4.5),
-			  HitboxOffset = CFrame.new(0, 0, -3), Stun = 0.35, Knockback = 4, Anim = "rbxassetid://0" },
-			{ Damage = 6, Windup = 0.12, Active = 0.10, Recovery = 0.18, HitboxSize = Vector3.new(4, 5, 4.5),
-			  HitboxOffset = CFrame.new(0, 0, -3), Stun = 0.35, Knockback = 4, Anim = "rbxassetid://0" },
-			{ Damage = 8, Windup = 0.15, Active = 0.12, Recovery = 0.22, HitboxSize = Vector3.new(4.5, 5, 5),
-			  HitboxOffset = CFrame.new(0, 0, -3.2), Stun = 0.45, Knockback = 6, Anim = "rbxassetid://0" },
-			{ Damage = 12, Windup = 0.25, Active = 0.15, Recovery = 0.5, HitboxSize = Vector3.new(5, 6, 6),
-			  HitboxOffset = CFrame.new(0, 0, -3.5), Stun = 0.8, Knockback = 45, Launch = 25, Anim = "rbxassetid://0" },
-		},
-	},
+	Fists = { Id = "Fists", ComboResetTime = 0.9, Steps = {
+		step(6, 0.12, 0.10, 0.18, 4.5, 0.35, 4),
+		step(6, 0.12, 0.10, 0.18, 4.5, 0.35, 4),
+		step(8, 0.15, 0.12, 0.22, 5, 0.45, 6),
+		step(12, 0.25, 0.15, 0.50, 6, 0.8, 45, 25), -- finisher: launches, long recovery = counterplay
+	} },
 }
 return Defs
 ```
 
-Replace `rbxassetid://0` with your own uploaded animations.
 
 ### 7.3 Complete server-validated melee (server)
 
@@ -894,7 +715,6 @@ Replace `rbxassetid://0` with your own uploaded animations.
 -- ServerScriptService/Combat/MeleeService.server.luau
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
 local MeleeDefs = require(ReplicatedStorage.Shared.MeleeDefs)
 local DamageService = require(script.Parent.DamageService)
 
@@ -903,79 +723,61 @@ local AttackRemote = Remotes:WaitForChild("MeleeAttack") :: RemoteEvent
 local BlockRemote = Remotes:WaitForChild("MeleeBlock") :: RemoteEvent
 local HitConfirm = Remotes:WaitForChild("MeleeHitConfirm") :: UnreliableRemoteEvent -- cosmetic
 
-local LAG_PAD = 1.5          -- studs added to hitbox depth/width for latency
-local ACTIVE_SAMPLES = 3     -- hitbox checks during the active window
+local LAG_PAD = 1.5        -- studs of hitbox padding for latency
+local ACTIVE_SAMPLES = 3   -- hitbox checks across the active window
 local PARRY_WINDOW = 0.18
-local BLOCK_WALKSPEED = 8
 
-type Swing = { busyUntil: number, comboIndex: number, lastStepEnd: number, swingId: number }
+type Swing = { busyUntil: number, combo: number, lastStepEnd: number, id: number }
 local swings: { [Player]: Swing } = {}
-Players.PlayerRemoving:Connect(function(p) swings[p] = nil end)
+local lastBlockStart: { [Player]: number } = {}
+Players.PlayerRemoving:Connect(function(p) swings[p] = nil lastBlockStart[p] = nil end)
 
 local function now() return os.clock() end
+local function stunned(char: Model) return (char:GetAttribute("StunnedUntil") or 0) > now() end
 
 local function getWeapon(player: Player): MeleeDefs.MeleeDef
-	local id = player:GetAttribute("EquippedMelee")
-	return MeleeDefs[if type(id) == "string" then id else "Fists"] or MeleeDefs.Fists
+	local id = player:GetAttribute("EquippedMelee") -- set by the server's equip logic only
+	return (type(id) == "string" and MeleeDefs[id]) or MeleeDefs.Fists
 end
 
-local function alive(char: Model?): (Humanoid?, BasePart?)
-	if not char then return nil, nil end
-	local hum = char:FindFirstChildOfClass("Humanoid")
-	local root = char:FindFirstChild("HumanoidRootPart") :: BasePart?
-	if hum and root and hum.Health > 0 then return hum, root end
-	return nil, nil
-end
-
-local function playStepAnim(hum: Humanoid, animId: string)
-	-- Server-played animations replicate to all clients via the Animator
+local function playAnim(hum: Humanoid, animId: string)
 	local animator = hum:FindFirstChildOfClass("Animator")
 	if not animator or animId == "rbxassetid://0" then return end
 	local anim = Instance.new("Animation")
 	anim.AnimationId = animId
-	local track = animator:LoadAnimation(anim)
+	local track = animator:LoadAnimation(anim) -- cache per animId in production
 	track.Priority = Enum.AnimationPriority.Action
 	track:Play(0.05)
 end
 
-local function doHitbox(player: Player, char: Model, root: BasePart, step: MeleeDefs.ComboStep,
-	alreadyHit: { [Model]: boolean })
-	local size = step.HitboxSize + Vector3.new(LAG_PAD, 0, LAG_PAD)
+local function sweep(player: Player, char: Model, root: BasePart, step: MeleeDefs.ComboStep, hit: { [Model]: boolean })
+	-- Hitbox from the SERVER's view of the attacker, padded for lag
 	local cf = root.CFrame * step.HitboxOffset * CFrame.new(0, 0, -LAG_PAD / 2)
-
 	local params = OverlapParams.new()
 	params.FilterType = Enum.RaycastFilterType.Exclude
 	params.FilterDescendantsInstances = { char }
 	params.MaxParts = 64
+	local los = RaycastParams.new()
+	los.FilterType = Enum.RaycastFilterType.Exclude
 
-	for _, part in workspace:GetPartBoundsInBox(cf, size, params) do
+	for _, part in workspace:GetPartBoundsInBox(cf, step.HitboxSize + Vector3.new(LAG_PAD, 0, LAG_PAD), params) do
 		local model = part:FindFirstAncestorOfClass("Model")
-		if model and not alreadyHit[model] then
-			local hum = model:FindFirstChildOfClass("Humanoid")
-			local tRoot = model:FindFirstChild("HumanoidRootPart") :: BasePart?
-			if hum and tRoot and hum.Health > 0 then
-				alreadyHit[model] = true
-				-- Line-of-sight: don't hit through walls
-				local rp = RaycastParams.new()
-				rp.FilterType = Enum.RaycastFilterType.Exclude
-				rp.FilterDescendantsInstances = { char, model }
-				local blocked = workspace:Raycast(root.Position, tRoot.Position - root.Position, rp)
-				if not blocked then
-					local horiz = (tRoot.Position - root.Position) * Vector3.new(1, 0, 1)
-					local dir = if horiz.Magnitude > 0.01 then horiz.Unit else root.CFrame.LookVector
-					local dealtMult = char:GetAttribute("DamageDealtMult") or 1
-					local result = DamageService.Apply(model, {
-						Amount = step.Damage * dealtMult,
-						Source = player,
-						Kind = "Melee",
-						WeaponId = getWeapon(player).Id,
-						Knockback = dir * step.Knockback + Vector3.new(0, step.Launch or 0, 0),
-						StunTime = step.Stun,
-						Origin = root.Position,
-					})
-					if result ~= "Invalid" and result ~= "Immune" then
-						HitConfirm:FireAllClients(model, result, tRoot.Position)
-					end
+		local hum = model and model:FindFirstChildOfClass("Humanoid")
+		local tRoot = model and model:FindFirstChild("HumanoidRootPart") :: BasePart?
+		if model and hum and tRoot and hum.Health > 0 and not hit[model] then
+			hit[model] = true -- one hit per target per swing
+			los.FilterDescendantsInstances = { char, model }
+			if not workspace:Raycast(root.Position, tRoot.Position - root.Position, los) then -- no hits through walls
+				local flat = (tRoot.Position - root.Position) * Vector3.new(1, 0, 1)
+				local dir = if flat.Magnitude > 0.01 then flat.Unit else root.CFrame.LookVector
+				local result = DamageService.Apply(model, {
+					Amount = step.Damage * (char:GetAttribute("DamageDealtMult") or 1),
+					Source = player, Kind = "Melee", WeaponId = getWeapon(player).Id,
+					Knockback = dir * step.Knockback + Vector3.new(0, step.Launch or 0, 0),
+					StunTime = step.Stun, Origin = root.Position,
+				})
+				if result ~= "Invalid" and result ~= "Immune" then
+					HitConfirm:FireAllClients(model, result, tRoot.Position)
 				end
 			end
 		end
@@ -984,159 +786,70 @@ end
 
 AttackRemote.OnServerEvent:Connect(function(player: Player)
 	local char = player.Character
-	local hum, root = alive(char)
-	if not hum or not root or not char then return end
-	if (char:GetAttribute("StunnedUntil") or 0) > now() then return end
-	if char:GetAttribute("Blocking") == true then return end
-	if char:GetAttribute("Casting") then return end
+	local hum = char and char:FindFirstChildOfClass("Humanoid")
+	local root = char and char:FindFirstChild("HumanoidRootPart") :: BasePart?
+	if not char or not hum or not root or hum.Health <= 0 then return end
+	if stunned(char) or char:GetAttribute("Blocking") or char:GetAttribute("Casting") then return end
 
-	local s = swings[player]
-	if not s then
-		s = { busyUntil = 0, comboIndex = 0, lastStepEnd = 0, swingId = 0 }
-		swings[player] = s
-	end
+	local s = swings[player] or { busyUntil = 0, combo = 0, lastStepEnd = 0, id = 0 }
+	swings[player] = s
 	local t = now()
-	if t < s.busyUntil then return end -- still in previous step: drop (client may buffer)
+	if t < s.busyUntil then return end -- mid-step: drop (the client buffers)
 
+	-- The server owns the combo counter: clients can't skip to the finisher
 	local weapon = getWeapon(player)
-	-- Server owns the combo counter; the client cannot skip to the finisher
-	if t - s.lastStepEnd > weapon.ComboResetTime or s.comboIndex >= #weapon.Steps then
-		s.comboIndex = 0
-	end
-	s.comboIndex += 1
-	local step = weapon.Steps[s.comboIndex]
+	if t - s.lastStepEnd > weapon.ComboResetTime or s.combo >= #weapon.Steps then s.combo = 0 end
+	s.combo += 1
+	local step = weapon.Steps[s.combo]
 	s.busyUntil = t + step.Windup + step.Active + step.Recovery
-	s.swingId += 1
-	local mySwing = s.swingId
+	s.id += 1
+	local myId = s.id
 	char:SetAttribute("Attacking", true)
-	char:SetAttribute("ComboIndex", s.comboIndex)
-
-	playStepAnim(hum, step.Anim)
+	playAnim(hum, step.Anim)
 
 	task.wait(step.Windup)
-	-- Interrupted? (stunned during windup = trade lost)
-	if (char:GetAttribute("StunnedUntil") or 0) > now() or hum.Health <= 0 or s.swingId ~= mySwing then
-		char:SetAttribute("Attacking", false)
-		return
+	if not stunned(char) and hum.Health > 0 and s.id == myId then -- stunned during windup = trade lost
+		local hit: { [Model]: boolean } = {}
+		for i = 1, ACTIVE_SAMPLES do
+			sweep(player, char, root, step, hit)
+			if i < ACTIVE_SAMPLES then task.wait(step.Active / (ACTIVE_SAMPLES - 1)) end
+		end
+		s.lastStepEnd = now()
+		task.wait(step.Recovery)
 	end
-
-	local alreadyHit: { [Model]: boolean } = {}
-	for i = 1, ACTIVE_SAMPLES do
-		if hum.Health <= 0 then break end
-		doHitbox(player, char, root, step, alreadyHit)
-		if i < ACTIVE_SAMPLES then task.wait(step.Active / (ACTIVE_SAMPLES - 1)) end
-	end
-
-	s.lastStepEnd = now()
-	task.wait(step.Recovery)
-	if s.swingId == mySwing and char.Parent then char:SetAttribute("Attacking", false) end
+	if s.id == myId and char.Parent then char:SetAttribute("Attacking", false) end
 end)
 
--- Block / parry: hold to block; the first PARRY_WINDOW seconds of a block are a parry.
-local lastBlockStart: { [Player]: number } = {}
+-- Hold to block; the first PARRY_WINDOW seconds of a block are a parry (no parry-mashing).
 BlockRemote.OnServerEvent:Connect(function(player: Player, holding: unknown)
-	if type(holding) ~= "boolean" then return end
 	local char = player.Character
-	local hum = alive(char)
-	if not hum or not char then return end
+	local hum = char and char:FindFirstChildOfClass("Humanoid")
+	if type(holding) ~= "boolean" or not char or not hum or hum.Health <= 0 then return end
 	if holding then
-		if (char:GetAttribute("StunnedUntil") or 0) > now() or char:GetAttribute("Attacking") then return end
-		-- Anti-spam: parry only if the last block started > 0.6s ago (no parry-mashing)
-		local last = lastBlockStart[player] or 0
-		if now() - last > 0.6 then
-			char:SetAttribute("ParryUntil", now() + PARRY_WINDOW)
-		end
+		if stunned(char) or char:GetAttribute("Attacking") then return end
+		if now() - (lastBlockStart[player] or 0) > 0.6 then char:SetAttribute("ParryUntil", now() + PARRY_WINDOW) end
 		lastBlockStart[player] = now()
 		char:SetAttribute("Blocking", true)
-		hum.WalkSpeed = BLOCK_WALKSPEED
+		hum.WalkSpeed = 8
 	else
 		char:SetAttribute("Blocking", false)
 		char:SetAttribute("ParryUntil", 0)
 		hum.WalkSpeed = 16 -- or let StatusEffects recompute
 	end
 end)
-
--- Guard regen
-task.spawn(function()
-	while true do
-		task.wait(0.5)
-		for _, p in Players:GetPlayers() do
-			local c = p.Character
-			if c and c:GetAttribute("Blocking") ~= true then
-				c:SetAttribute("Guard", math.min(100, (c:GetAttribute("Guard") or 100) + 5))
-			end
-		end
-	end
-end)
+-- Guard regen: a 0.5 s loop adding +5 "Guard" while not blocking (omitted).
 ```
 
-### 7.4 Melee client (input buffering, local feel)
+### 7.4 Melee client
 
-```lua
--- StarterPlayerScripts/MeleeClient.client.luau
-local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local ContextActionService = game:GetService("ContextActionService")
-
-local Remotes = ReplicatedStorage:WaitForChild("Remotes")
-local AttackRemote = Remotes:WaitForChild("MeleeAttack")
-local BlockRemote = Remotes:WaitForChild("MeleeBlock")
-local HitConfirm = Remotes:WaitForChild("MeleeHitConfirm")
-
-local player = Players.LocalPlayer
-local BUFFER_WINDOW = 0.25
-local bufferedAt = 0
-local nextAllowed = 0
-
-local function tryAttack()
-	local char = player.Character
-	if not char or char:GetAttribute("StunnedUntil") then
-		-- StunnedUntil is a server os.clock; only presence is meaningful client-side.
-	end
-	local t = os.clock()
-	if t < nextAllowed then
-		bufferedAt = t -- remember the press; fire when the current step ends
-		return
-	end
-	nextAllowed = t + 0.3 -- rough local gate; the server has the real one
-	AttackRemote:FireServer()
-end
-
-ContextActionService:BindAction("Attack", function(_, state)
-	if state == Enum.UserInputState.Begin then tryAttack() end
-	return Enum.ContextActionResult.Pass
-end, true, Enum.UserInputType.MouseButton1, Enum.KeyCode.ButtonR2)
-
-ContextActionService:BindAction("Block", function(_, state)
-	if state == Enum.UserInputState.Begin then BlockRemote:FireServer(true)
-	elseif state == Enum.UserInputState.End or state == Enum.UserInputState.Cancel then BlockRemote:FireServer(false) end
-	return Enum.ContextActionResult.Sink
-end, true, Enum.KeyCode.F, Enum.KeyCode.ButtonL2)
-ContextActionService:SetTitle("Attack", "Hit")
-ContextActionService:SetTitle("Block", "Block")
-
--- Drain the buffer
-game:GetService("RunService").Heartbeat:Connect(function()
-	if bufferedAt > 0 and os.clock() >= nextAllowed then
-		if os.clock() - bufferedAt <= BUFFER_WINDOW + 0.3 then tryAttack() end
-		bufferedAt = 0
-	end
-end)
-
--- Hit feedback (VFX/sound/camera shake) - purely cosmetic
-HitConfirm.OnClientEvent:Connect(function(model: Model, result: string, pos: Vector3)
-	-- spawn a hit spark at pos, play sound, show damage number, small hitstop on own attacks
-end)
-```
+On input, play the swing animation and whoosh locally for instant feel, then `MeleeAttack:FireServer()` with no arguments (the server owns the combo). Keep a local pacing gate (about 0.3 s), and **buffer** presses that arrive up to 0.25 s early, firing them when the gate opens. Send `MeleeBlock:FireServer(true/false)` on press/release (`UserInputState.End` *or* `Cancel`). Use `MeleeHitConfirm` only for sparks, sounds, damage numbers and a 60 ms hit-stop.
 
 ### 7.5 Melee design checklist
 
-- **Combos:** the server owns the step index. Reset after `ComboResetTime`. The finisher has more recovery, which gives counterplay.
-- **Stun:** `StunnedUntil` blocks attack, block and abilities, and sets WalkSpeed to 0 through StatusEffects. Add **stun decay or immunity** after N consecutive hits (`ComboImmuneUntil`) to stop infinite combos.
-- **I-frames:** set `IFrameUntil` on dash, on rising from knockdown, and on respawn (2–3 s).
-- **Hit-stop:** pause the attacker's and victim's animation tracks for 50–80 ms *on clients* (`track:AdjustSpeed(0)` then restore). Never do this on the server.
-- **Knockback:** the victim's client sets `AssemblyLinearVelocity`. For NPCs, the server calls `ApplyImpulse(mass * deltaV)`. For long, controlled launches, use a `LinearVelocity` with `MaxForce` for 0.2 s, then destroy it (§11).
-- **Facing for block/parry:** use a dot product against the victim's `LookVector`. Back attacks ignore block.
+- **Stun:** `StunnedUntil` blocks actions and zeroes WalkSpeed (via StatusEffects). Add stun immunity after N consecutive hits to stop infinite combos.
+- **I-frames** on dash, on getting up, and on spawn (2–3 s). **Hit-stop:** `track:AdjustSpeed(0)` for 50–80 ms on clients only.
+- **Knockback:** the victim's client sets `AssemblyLinearVelocity`. NPCs get server `ApplyImpulse(mass * Δv)`. Long launches use a timed `LinearVelocity` (§11).
+- **Block/parry facing:** dot product against the victim's `LookVector`. Back attacks ignore block.
 
 ---
 
@@ -1144,14 +857,7 @@ end)
 
 ### 8.1 Concept
 
-A "FastCast-style" projectile isn't a physics part. It's a **math path stepped with raycasts**: each frame, compute `p(t) = origin + v0·t + ½·g·t²` and raycast from the last position to the new one. That makes it immune to tunnelling, cheap, and deterministic, so client and server agree. FastCast (community module) and SecureCast (community, server-authoritative with lag compensation) implement this. Below is a self-contained version.
-
-**Flow:**
-1. The client presses fire. It immediately simulates a **cosmetic** projectile locally (no damage) and sends `Fire(origin, direction, clientTime)`.
-2. The server validates: rate (fire-rate gate), ammo, origin within N studs of the server head position, direction is a unit vector, the weapon is equipped.
-3. The server simulates the **authoritative** projectile, optionally *fast-forwarded* by the shooter's one-way latency so it lines up with what the shooter saw.
-4. The server broadcasts `Replicate(shooter, origin, direction, speed)` to the other clients, who render cosmetic copies (skip the shooter).
-5. On a server hit, call `DamageService.Apply`, then broadcast the impact.
+A FastCast-style projectile is a **math path stepped with raycasts**, not a physics part. Each frame, compute `p(t) = origin + v0·t + ½·g·t²` and raycast from the previous point to the new one. It can't tunnel, it's cheap, and it's deterministic, so client and server agree. FastCast and SecureCast (community modules) do this. The version below is self-contained. **Flow:** the client renders a cosmetic projectile immediately and sends `(weaponId, origin, direction)`. The server validates equip, fire rate, ammo, origin near the server head, and a unit direction. It then simulates the authoritative projectile, fast-forwarded by about ping/2, replicates cosmetic copies to everyone else, and applies damage on a server hit.
 
 ### 8.2 Shared ballistic stepper
 
@@ -1209,7 +915,6 @@ Bullet drop is just `gravity > 0` (`workspace.Gravity` is 196.2 studs/s² by def
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
-
 local Ballistics = require(ReplicatedStorage.Shared.Ballistics)
 local DamageService = require(script.Parent.DamageService)
 
@@ -1217,65 +922,45 @@ local Remotes = ReplicatedStorage:WaitForChild("Remotes")
 local ReplicateRemote = Remotes:WaitForChild("ProjectileReplicate") :: UnreliableRemoteEvent
 local ImpactRemote = Remotes:WaitForChild("ProjectileImpact") :: UnreliableRemoteEvent
 
-export type FireArgs = {
-	Shooter: Player, Origin: Vector3, Direction: Vector3,
-	Speed: number, Gravity: number, MaxDistance: number, Damage: number,
-	FastForward: number?, -- seconds to pre-simulate (lag compensation)
-	OnHit: ((Model) -> ())?,
-}
-
+export type FireArgs = { Shooter: Player, Origin: Vector3, Direction: Vector3, Speed: number, Gravity: number,
+	MaxDistance: number, Damage: number, FastForward: number?, OnHit: ((Model) -> ())? }
 type Live = { state: Ballistics.CastState, args: FireArgs }
 local live: { Live } = {}
-
 local ProjectileService = {}
 
-local function findCharacter(inst: Instance): Model?
-	local m = inst:FindFirstAncestorOfClass("Model")
-	while m do
-		if m:FindFirstChildOfClass("Humanoid") then return m end
-		m = m:FindFirstAncestorOfClass("Model")
-	end
-	return nil
-end
-
 local function onHit(p: Live, result: RaycastResult)
-	local char = findCharacter(result.Instance)
-	if char then
-		local shooterChar = p.args.Shooter.Character
-		local dealtMult = shooterChar and shooterChar:GetAttribute("DamageDealtMult") or 1
-		local isHead = result.Instance.Name == "Head"
-		local r = DamageService.Apply(char, {
-			Amount = p.args.Damage * dealtMult * (if isHead then 1.5 else 1),
-			Source = p.args.Shooter, Kind = "Projectile", Origin = p.state.origin,
-			Knockback = p.state.velocity.Unit * 5,
-		})
-		if r ~= "Invalid" and p.args.OnHit then p.args.OnHit(char) end
+	local m = result.Instance:FindFirstAncestorOfClass("Model")
+	while m and not m:FindFirstChildOfClass("Humanoid") do m = m:FindFirstAncestorOfClass("Model") end
+	if m then
+		local sc = p.args.Shooter.Character
+		local mult = (sc and sc:GetAttribute("DamageDealtMult") or 1) * (if result.Instance.Name == "Head" then 1.5 else 1)
+		local r = DamageService.Apply(m, { Amount = p.args.Damage * mult, Source = p.args.Shooter,
+			Kind = "Projectile", Origin = p.state.origin, Knockback = p.state.velocity.Unit * 5 })
+		if r ~= "Invalid" and p.args.OnHit then p.args.OnHit(m) end
 	end
-	ImpactRemote:FireAllClients(result.Position, result.Normal, result.Material)
+	ImpactRemote:FireAllClients(result.Position, result.Normal)
 end
 
 function ProjectileService.FireServerProjectile(args: FireArgs)
 	local params = RaycastParams.new()
 	params.FilterType = Enum.RaycastFilterType.Exclude
-	local exclude: { Instance } = { workspace:FindFirstChild("Projectiles") or workspace.Terrain:FindFirstChild("__none") or nil :: any }
-	if args.Shooter.Character then table.insert(exclude, args.Shooter.Character) end
-	params.FilterDescendantsInstances = exclude
+	local ignore: { Instance } = {}
+	if args.Shooter.Character then table.insert(ignore, args.Shooter.Character) end
+	local fx = workspace:FindFirstChild("Effects") -- cosmetic folder
+	if fx then table.insert(ignore, fx) end
+	params.FilterDescendantsInstances = ignore
+	local p: Live = { state = Ballistics.New(args.Origin, args.Direction, args.Speed, args.Gravity, args.MaxDistance, params), args = args }
 
-	local state = Ballistics.New(args.Origin, args.Direction, args.Speed, args.Gravity, args.MaxDistance, params)
-	local p: Live = { state = state, args = args }
-
-	-- Others render cosmetic copies
-	for _, other in Players:GetPlayers() do
+	for _, other in Players:GetPlayers() do -- cosmetic copies for everyone else
 		if other ~= args.Shooter then
 			ReplicateRemote:FireClient(other, args.Origin, args.Direction, args.Speed, args.Gravity, args.MaxDistance)
 		end
 	end
-
-	-- Lag compensation: pre-simulate the time the shot spent in transit
+	-- Lag compensation: pre-simulate the time the shot spent in transit (capped)
 	local ff = math.clamp(args.FastForward or 0, 0, 0.2)
 	if ff > 0 then
-		local hit, done = Ballistics.Step(state, ff)
-		if hit then onHit(p, hit) return end
+		local hit, done = Ballistics.Step(p.state, ff)
+		if hit then return onHit(p, hit) end
 		if done then return end
 	end
 	table.insert(live, p)
@@ -1286,90 +971,64 @@ RunService.Heartbeat:Connect(function(dt)
 		local p = live[i]
 		local hit, done = Ballistics.Step(p.state, dt)
 		if hit then onHit(p, hit) end
-		if hit or done then
-			live[i] = live[#live]
-			live[#live] = nil
-		end
+		if hit or done then live[i] = live[#live]; live[#live] = nil end -- swap-remove
 	end
 end)
 
 return ProjectileService
 ```
 
-> The `exclude` line keeps a "Projectiles" cosmetic folder out of hits if one exists. Simplify it for your project, for example `{ workspace.Effects, char }`.
-
 ### 8.4 Fire remote with full validation
 
 ```lua
 --!strict
--- ServerScriptService/Combat/GunService.server.luau  (projectile weapons)
+-- ServerScriptService/Combat/GunService.server.luau
 local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ProjectileService = require(script.Parent.ProjectileService)
-
-local FireRemote = ReplicatedStorage.Remotes:WaitForChild("ProjectileFire") :: RemoteEvent
+local FireRemote = game:GetService("ReplicatedStorage").Remotes:WaitForChild("ProjectileFire") :: RemoteEvent
 
 local WEAPONS = {
 	Crossbow = { RPM = 90, Speed = 220, Gravity = 40, Range = 600, Damage = 45, Mag = 1, Reload = 1.2 },
 	Rifle = { RPM = 600, Speed = 900, Gravity = 10, Range = 1000, Damage = 18, Mag = 30, Reload = 2.0 },
 }
-
-local MAX_ORIGIN_OFFSET = 6 -- studs from server head (covers lag + muzzle offset)
+local MAX_ORIGIN_OFFSET = 6 -- studs from the server head (lag + muzzle offset)
 
 type Ammo = { mag: number, reloadingUntil: number, nextShot: number }
 local ammo: { [Player]: { [string]: Ammo } } = {}
 Players.PlayerRemoving:Connect(function(p) ammo[p] = nil end)
 
-local function isUnitVector(v: any): boolean
-	if typeof(v) ~= "Vector3" then return false end
-	if v.X ~= v.X or v.Y ~= v.Y or v.Z ~= v.Z then return false end
-	return math.abs(v.Magnitude - 1) < 0.01
-end
-
 FireRemote.OnServerEvent:Connect(function(player: Player, weaponId: unknown, origin: unknown, direction: unknown)
-	if type(weaponId) ~= "string" then return end
-	local w = WEAPONS[weaponId]
-	if not w then return end
-	if player:GetAttribute("EquippedGun") ~= weaponId then return end
-	if typeof(origin) ~= "Vector3" or not isUnitVector(direction) then return end
+	local w = type(weaponId) == "string" and WEAPONS[weaponId]
+	if not w or player:GetAttribute("EquippedGun") ~= weaponId then return end
+	if typeof(origin) ~= "Vector3" or typeof(direction) ~= "Vector3" then return end
+	local o, d = origin :: Vector3, direction :: Vector3
+	if o ~= o or d ~= d or math.abs(d.Magnitude - 1) > 0.01 then return end -- NaN / not unit
 
 	local char = player.Character
 	local hum = char and char:FindFirstChildOfClass("Humanoid")
 	local head = char and char:FindFirstChild("Head") :: BasePart?
-	if not hum or hum.Health <= 0 or not head then return end
-	if ((origin :: Vector3) - head.Position).Magnitude > MAX_ORIGIN_OFFSET then return end
-	-- Don't allow firing from inside walls: ray from head to claimed origin
+	if not hum or hum.Health <= 0 or not head or (o - head.Position).Magnitude > MAX_ORIGIN_OFFSET then return end
 	local rp = RaycastParams.new()
 	rp.FilterType = Enum.RaycastFilterType.Exclude
 	rp.FilterDescendantsInstances = { char :: Model }
-	if workspace:Raycast(head.Position, (origin :: Vector3) - head.Position, rp) then return end
+	if workspace:Raycast(head.Position, o - head.Position, rp) then return end -- origin behind a wall
 
 	local per = ammo[player] or {}
 	ammo[player] = per
-	local a = per[weaponId] or { mag = w.Mag, reloadingUntil = 0, nextShot = 0 }
-	per[weaponId] = a
+	local a = per[weaponId :: string] or { mag = w.Mag, reloadingUntil = 0, nextShot = 0 }
+	per[weaponId :: string] = a
 	local t = os.clock()
-	if t < a.reloadingUntil then return end
-	-- Fire-rate gate with a small tolerance for network jitter bunching
-	if t < a.nextShot - 0.02 then return end
-	if a.mag <= 0 then
-		a.reloadingUntil = t + w.Reload
-		a.mag = w.Mag
-		return
-	end
+	if t < a.reloadingUntil or t < a.nextShot - 0.02 then return end
+	if a.mag <= 0 then a.reloadingUntil, a.mag = t + w.Reload, w.Mag return end
 	a.mag -= 1
+	-- "token bucket lite": tolerates jitter-bunched packets but can't exceed RPM over time
 	a.nextShot = math.max(a.nextShot, t - 0.05) + 60 / w.RPM
-	player:SetAttribute("Ammo_" .. weaponId, a.mag)
+	player:SetAttribute("Ammo_" .. (weaponId :: string), a.mag)
 
-	ProjectileService.FireServerProjectile({
-		Shooter = player, Origin = origin :: Vector3, Direction = direction :: Vector3,
-		Speed = w.Speed, Gravity = w.Gravity, MaxDistance = w.Range, Damage = w.Damage,
-		FastForward = player:GetNetworkPing() / 2,
-	})
+	ProjectileService.FireServerProjectile({ Shooter = player, Origin = o, Direction = d, Speed = w.Speed,
+		Gravity = w.Gravity, MaxDistance = w.Range, Damage = w.Damage, FastForward = player:GetNetworkPing() / 2 })
 end)
 ```
-
-`a.nextShot = max(nextShot, t - 0.05) + interval` is a "token bucket lite". It tolerates packets arriving bunched by jitter, but over time it can't exceed the RPM.
 
 ---
 
@@ -1433,97 +1092,22 @@ For headshots under rewind, store per-limb CFrames, or approximate the head as `
 ### 9.2 Client: recoil, spread, ADS
 
 ```lua
--- StarterPlayerScripts/GunClient.client.luau (excerpt)
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local FireRemote = ReplicatedStorage.Remotes:WaitForChild("ProjectileFire")
-
-local camera = workspace.CurrentCamera
-local player = Players.LocalPlayer
-
-local GUN = {
-	Id = "Rifle", RPM = 600,
-	HipSpread = math.rad(3.0), AdsSpread = math.rad(0.6), MoveSpreadAdd = math.rad(2.0),
-	RecoilPitch = math.rad(1.2), RecoilYawJitter = math.rad(0.4), RecoilRecover = 8, -- per second
-	HipFov = 70, AdsFov = 50, AdsTime = 0.15,
-}
-
-local aiming = false
-local recoilPitch = 0 -- accumulated camera kick to recover
-local fovAlpha = 0
-local nextShot = 0
+-- Uniform random direction inside a cone of half-angle `angle` (spread)
 local rng = Random.new()
-
--- Random direction inside a cone (uniform on the cap)
 local function spreadDirection(dir: Vector3, angle: number): Vector3
-	local cf = CFrame.lookAt(Vector3.zero, dir)
 	local z = 1 - rng:NextNumber() * (1 - math.cos(angle))
 	local theta = rng:NextNumber() * 2 * math.pi
 	local r = math.sqrt(1 - z * z)
-	return cf:VectorToWorldSpace(Vector3.new(r * math.cos(theta), r * math.sin(theta), -z)).Unit
+	return CFrame.lookAt(Vector3.zero, dir):VectorToWorldSpace(Vector3.new(r * math.cos(theta), r * math.sin(theta), -z))
 end
-
-local function currentSpread(): number
-	local char = player.Character
-	local hum = char and char:FindFirstChildOfClass("Humanoid")
-	local moving = hum and hum.MoveDirection.Magnitude > 0.1
-	local base = if aiming then GUN.AdsSpread else GUN.HipSpread
-	return base + (if moving then GUN.MoveSpreadAdd else 0)
-end
-
-local function fire()
-	local t = os.clock()
-	if t < nextShot then return end
-	nextShot = t + 60 / GUN.RPM
-	local head = player.Character and player.Character:FindFirstChild("Head")
-	if not head then return end
-
-	local dir = spreadDirection(camera.CFrame.LookVector, currentSpread())
-	local origin = head.Position
-	FireRemote:FireServer(GUN.Id, origin, dir) -- server re-validates everything
-	-- local cosmetic tracer/muzzle flash here
-
-	-- Recoil: kick camera up, random yaw
-	local kick = GUN.RecoilPitch * (if aiming then 0.6 else 1)
-	recoilPitch += kick
-	camera.CFrame *= CFrame.Angles(kick, rng:NextNumber(-1, 1) * GUN.RecoilYawJitter, 0)
-end
-
-UserInputService.InputBegan:Connect(function(input, processed)
-	if processed then return end
-	if input.UserInputType == Enum.UserInputType.MouseButton2 or input.KeyCode == Enum.KeyCode.ButtonL2 then
-		aiming = true
-	end
-end)
-UserInputService.InputEnded:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton2 or input.KeyCode == Enum.KeyCode.ButtonL2 then
-		aiming = false
-	end
-end)
-
-RunService.RenderStepped:Connect(function(dt)
-	-- Full-auto while held
-	if UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) then fire() end
-	-- Recoil recovery (pull camera back down partially)
-	if recoilPitch > 0 then
-		local back = math.min(recoilPitch, GUN.RecoilRecover * dt * recoilPitch + 0.0005)
-		recoilPitch -= back
-		camera.CFrame *= CFrame.Angles(-back * 0.7, 0, 0)
-	end
-	-- ADS FOV lerp
-	local target = if aiming then 1 else 0
-	fovAlpha += (target - fovAlpha) * math.clamp(dt / GUN.AdsTime, 0, 1)
-	camera.FieldOfView = GUN.HipFov + (GUN.AdsFov - GUN.HipFov) * fovAlpha
-	UserInputService.MouseDeltaSensitivity = 1 - 0.4 * fovAlpha -- slower look when aiming
-end)
+-- per shot:  dir = spreadDirection(camera.CFrame.LookVector, (aiming and ADS or HIP) + (moving and MOVE_ADD or 0))
+--            recoil += kick; camera.CFrame *= CFrame.Angles(kick, rng:NextNumber(-1, 1) * yawJitter, 0)
+-- RenderStepped: back = recoil * math.min(1, RECOVER * dt); recoil -= back; camera.CFrame *= CFrame.Angles(-back * 0.7, 0, 0)
+-- ADS: lerp camera.FieldOfView 70 -> 50 over ~0.15 s; UserInputService.MouseDeltaSensitivity = 1 - 0.4 * adsAlpha
 ```
 
-Notes:
-- Spread is **client-side** for feel. A cheater can send zero spread, so if spread matters competitively, have the server choose the spread: send the aim direction plus a shot index, and let the server apply deterministic spread from a seeded `Random.new(seed + shotIndex)` known to both sides.
-- For first person, set `player.CameraMode = Enum.CameraMode.LockFirstPerson` and render a viewmodel parented to the camera, client-only.
-- Gamepad: bind fire to `ButtonR2` and ADS to `ButtonL2`. Use aim assist (light rotational slowdown near targets) for gamepad and touch.
+- Spread is client-side for feel, and cheaters can send zero spread. For competitive games, use **deterministic spread**: the client sends aim plus a shot index, and both sides use `Random.new(seed + shotIndex)`.
+- First person: `player.CameraMode = Enum.CameraMode.LockFirstPerson` plus a client-only viewmodel under the camera. Gamepad: R2 fires, L2 aims, add aim assist. Touch: auto-fire or a fire button, plus aim assist.
 
 ---
 
@@ -1540,7 +1124,7 @@ Notes:
 
 ### 10.2 Complete wave spawner
 
-Folder setup: `ServerStorage/Enemies/<Name>` (a Model with Humanoid, HumanoidRootPart, PrimaryPart set), `workspace/EnemySpawns` with spawn parts.
+Setup: `ServerStorage/Enemies/<Name>` (a Model with Humanoid and HumanoidRootPart), and `workspace/EnemySpawns` holding spawn parts.
 
 ```lua
 --!strict
@@ -1550,168 +1134,122 @@ local ServerStorage = game:GetService("ServerStorage")
 local PhysicsService = game:GetService("PhysicsService")
 local Debris = game:GetService("Debris")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
 local DamageService = require(game.ServerScriptService.Combat.DamageService)
 
-local EnemyTemplates = ServerStorage:WaitForChild("Enemies")
+local Templates = ServerStorage:WaitForChild("Enemies")
 local SpawnPoints = workspace:WaitForChild("EnemySpawns")
 local EnemyFolder = Instance.new("Folder")
 EnemyFolder.Name = "Enemies"
 EnemyFolder.Parent = workspace
+pcall(PhysicsService.RegisterCollisionGroup, PhysicsService, "NPC")
+PhysicsService:CollisionGroupSetCollidable("NPC", "NPC", false) -- crowds don't jam
 
-pcall(function() PhysicsService:RegisterCollisionGroup("NPC") end)
-PhysicsService:CollisionGroupSetCollidable("NPC", "NPC", false)
-
-type EnemyStats = { Health: number, Speed: number, Damage: number, AttackRange: number, AttackCooldown: number, Reward: number }
-local ENEMY_STATS: { [string]: EnemyStats } = {
-	Grunt = { Health = 60, Speed = 12, Damage = 8, AttackRange = 4.5, AttackCooldown = 1.0, Reward = 5 },
-	Runner = { Health = 30, Speed = 20, Damage = 5, AttackRange = 4, AttackCooldown = 0.7, Reward = 4 },
-	Brute = { Health = 400, Speed = 8, Damage = 25, AttackRange = 6, AttackCooldown = 2.0, Reward = 40 },
+type Stats = { Health: number, Speed: number, Damage: number, Range: number, Cooldown: number, Reward: number }
+local STATS: { [string]: Stats } = {
+	Grunt = { Health = 60, Speed = 12, Damage = 8, Range = 4.5, Cooldown = 1.0, Reward = 5 },
+	Runner = { Health = 30, Speed = 20, Damage = 5, Range = 4, Cooldown = 0.7, Reward = 4 },
+	Brute = { Health = 400, Speed = 8, Damage = 25, Range = 6, Cooldown = 2.0, Reward = 40 },
 }
-
-type WaveDef = { Groups: { { Enemy: string, Count: number, Interval: number } }, TimeLimit: number }
-local WAVES: { WaveDef } = {
+type Group = { Enemy: string, Count: number, Interval: number }
+local WAVES: { { Groups: { Group }, TimeLimit: number } } = {
 	{ Groups = { { Enemy = "Grunt", Count = 6, Interval = 0.8 } }, TimeLimit = 90 },
-	{ Groups = { { Enemy = "Grunt", Count = 8, Interval = 0.6 }, { Enemy = "Runner", Count = 4, Interval = 1.0 } }, TimeLimit = 120 },
+	{ Groups = { { Enemy = "Grunt", Count = 8, Interval = 0.6 }, { Enemy = "Runner", Count = 4, Interval = 1 } }, TimeLimit = 120 },
 	{ Groups = { { Enemy = "Runner", Count = 10, Interval = 0.4 }, { Enemy = "Brute", Count = 1, Interval = 0 } }, TimeLimit = 150 },
 }
-local MAX_ALIVE = 40
-local AI_HZ = 6
+local MAX_ALIVE, AI_HZ = 40, 6
 
-type Npc = { model: Model, hum: Humanoid, root: BasePart, stats: EnemyStats, nextAttack: number }
+type Npc = { hum: Humanoid, root: BasePart, stats: Stats, nextAttack: number }
 local alive: { [Model]: Npc } = {}
+local aliveCount = 0
 
-local WaveState = ReplicatedStorage:FindFirstChild("WaveState") or Instance.new("Configuration")
+local WaveState = Instance.new("Configuration") -- clients read attributes for UI
 WaveState.Name = "WaveState"
 WaveState.Parent = ReplicatedStorage
 
-local WaveService = {}
-local onEnemyKilled: ((killer: Player?, reward: number) -> ())? = nil
-function WaveService.SetRewardHandler(fn) onEnemyKilled = fn end
+local WaveService = { OnReward = nil :: ((killer: Player?, reward: number) -> ())? }
 
--- Difficulty scaling by player count
-local function scaledHealth(base: number): number
-	local n = math.max(1, #Players:GetPlayers())
-	return math.floor(base * (1 + 0.35 * (n - 1)))
-end
-
-local function pickSpawn(): BasePart
-	local spawns = SpawnPoints:GetChildren()
-	return spawns[math.random(1, #spawns)] :: BasePart
-end
-
-local function spawnEnemy(name: string): Npc?
-	local template = EnemyTemplates:FindFirstChild(name) :: Model?
-	local stats = ENEMY_STATS[name]
-	if not template or not stats then
-		warn("Unknown enemy", name)
-		return nil
-	end
+local function spawnEnemy(name: string)
+	local template, stats = Templates:FindFirstChild(name) :: Model?, STATS[name]
+	if not template or not stats then return warn("Unknown enemy", name) end
 	local model = template:Clone()
 	local hum = model:FindFirstChildOfClass("Humanoid") :: Humanoid
 	local root = model:FindFirstChild("HumanoidRootPart") :: BasePart
-	hum.MaxHealth = scaledHealth(stats.Health)
+	hum.MaxHealth = math.floor(stats.Health * (1 + 0.35 * (#Players:GetPlayers() - 1))) -- scale by players
 	hum.Health = hum.MaxHealth
 	hum.WalkSpeed = stats.Speed
-	hum.BreakJointsOnDeath = false
-	for _, s in { Enum.HumanoidStateType.Climbing, Enum.HumanoidStateType.Swimming, Enum.HumanoidStateType.Seated } do
-		hum:SetStateEnabled(s, false)
+	for _, st in { Enum.HumanoidStateType.Climbing, Enum.HumanoidStateType.Swimming, Enum.HumanoidStateType.Seated } do
+		hum:SetStateEnabled(st, false)
 	end
 	for _, d in model:GetDescendants() do
 		if d:IsA("BasePart") then d.CollisionGroup = "NPC" end
 	end
 	model:SetAttribute("Enemy", true)
-	model:PivotTo(pickSpawn().CFrame * CFrame.new(0, 3, 0))
+	local spawns = SpawnPoints:GetChildren()
+	model:PivotTo((spawns[math.random(#spawns)] :: BasePart).CFrame + Vector3.new(0, 3, 0))
 	model.Parent = EnemyFolder
 	root:SetNetworkOwner(nil) -- server simulates; clients can't hijack
-
-	local npc: Npc = { model = model, hum = hum, root = root, stats = stats, nextAttack = 0 }
-	alive[model] = npc
-	hum.Died:Connect(function()
-		alive[model] = nil
+	alive[model] = { hum = hum, root = root, stats = stats, nextAttack = 0 }
+	aliveCount += 1
+	hum.Died:Once(function()
+		if alive[model] then alive[model] = nil aliveCount -= 1 end
 		Debris:AddItem(model, 3)
 	end)
-	return npc
 end
 
--- Kill credit: DamageService tells us who killed what
-DamageService.OnKilled(function(victim, killer)
-	if victim:GetAttribute("Enemy") ~= true then return end
-	local name = victim.Name
-	local reward = ENEMY_STATS[name] and ENEMY_STATS[name].Reward or 0
-	if onEnemyKilled then
-		onEnemyKilled(if typeof(killer) == "Instance" and killer:IsA("Player") then killer else nil, reward)
+DamageService.OnKilled(function(victim, killer) -- kill credit
+	local stats = victim:GetAttribute("Enemy") and STATS[victim.Name]
+	if stats and WaveService.OnReward then
+		WaveService.OnReward(if typeof(killer) == "Instance" and killer:IsA("Player") then killer else nil, stats.Reward)
 	end
 end)
 
-local function nearestPlayerRoot(pos: Vector3): (Model?, BasePart?, number)
-	local bestChar, bestRoot, bestDist = nil, nil, math.huge
+local function nearestTarget(pos: Vector3): (Model?, BasePart?, number)
+	local bestC, bestR, bestD = nil, nil, math.huge
 	for _, p in Players:GetPlayers() do
 		local c = p.Character
 		local h = c and c:FindFirstChildOfClass("Humanoid")
 		local r = c and c:FindFirstChild("HumanoidRootPart") :: BasePart?
-		if c and h and r and h.Health > 0 then
-			local d = (r.Position - pos).Magnitude
-			if d < bestDist then bestChar, bestRoot, bestDist = c, r, d end
+		if h and r and h.Health > 0 and (r.Position - pos).Magnitude < bestD then
+			bestC, bestR, bestD = c, r, (r.Position - pos).Magnitude
 		end
 	end
-	return bestChar, bestRoot, bestDist
+	return bestC, bestR, bestD
 end
 
--- One brain loop for all NPCs
-task.spawn(function()
+task.spawn(function() -- ONE brain loop for all NPCs
 	while true do
 		task.wait(1 / AI_HZ)
 		local t = os.clock()
 		for model, npc in alive do
-			if npc.hum.Health <= 0 or not model.Parent then
-				alive[model] = nil
-				continue
-			end
-			if (model:GetAttribute("StunnedUntil") or 0) > t then
-				npc.hum:MoveTo(npc.root.Position)
-				continue
-			end
-			local targetChar, targetRoot, dist = nearestPlayerRoot(npc.root.Position)
-			if targetChar and targetRoot then
-				if dist > npc.stats.AttackRange then
-					npc.hum:MoveTo(targetRoot.Position)
-				elseif t >= npc.nextAttack then
-					npc.nextAttack = t + npc.stats.AttackCooldown
-					npc.hum:MoveTo(npc.root.Position)
-					DamageService.Apply(targetChar, {
-						Amount = npc.stats.Damage, Source = model, Kind = "Melee",
-						Origin = npc.root.Position, StunTime = 0.2,
-					})
-				end
+			if (model:GetAttribute("StunnedUntil") or 0) > t then npc.hum:MoveTo(npc.root.Position) continue end
+			local char, root, dist = nearestTarget(npc.root.Position)
+			if not char or not root then continue end
+			if dist > npc.stats.Range then
+				npc.hum:MoveTo(root.Position) -- swap for PathfindingService in mazes (recompute ≤ 1/s)
+			elseif t >= npc.nextAttack then
+				npc.nextAttack = t + npc.stats.Cooldown
+				DamageService.Apply(char, { Amount = npc.stats.Damage, Source = model, Kind = "Melee",
+					Origin = npc.root.Position, StunTime = 0.2 })
 			end
 		end
 	end
 end)
 
-local function aliveCount(): number
-	local n = 0
-	for _ in alive do n += 1 end
-	return n
-end
-
--- Runs one wave; returns true if cleared, false on timeout/all players dead
+-- Runs one wave. Returns true if cleared, false on timeout or party wipe.
 function WaveService.RunWave(index: number): boolean
 	local def = WAVES[math.min(index, #WAVES)]
-	local extraScale = math.max(0, index - #WAVES) -- endless mode: keep scaling counts
-	WaveState:SetAttribute("Wave", index)
+	local extra = math.max(0, index - #WAVES) * 2 -- endless scaling past the last authored wave
 	local deadline = os.clock() + def.TimeLimit
+	WaveState:SetAttribute("Wave", index)
 	WaveState:SetAttribute("WaveEndsAt", workspace:GetServerTimeNow() + def.TimeLimit)
 
-	local spawning = 0
-	for _, group in def.Groups do
-		spawning += 1
+	local spawning = #def.Groups
+	for _, g in def.Groups do
 		task.spawn(function()
-			local count = group.Count + extraScale * 2
-			for _ = 1, count do
-				while aliveCount() >= MAX_ALIVE do task.wait(0.5) end
-				spawnEnemy(group.Enemy)
-				if group.Interval > 0 then task.wait(group.Interval) end
+			for _ = 1, g.Count + extra do
+				while aliveCount >= MAX_ALIVE do task.wait(0.5) end
+				spawnEnemy(g.Enemy)
+				task.wait(g.Interval)
 			end
 			spawning -= 1
 		end)
@@ -1719,8 +1257,8 @@ function WaveService.RunWave(index: number): boolean
 
 	while os.clock() < deadline do
 		task.wait(0.5)
-		WaveState:SetAttribute("EnemiesLeft", aliveCount())
-		if spawning == 0 and aliveCount() == 0 then return true end
+		WaveState:SetAttribute("EnemiesLeft", aliveCount)
+		if spawning == 0 and aliveCount == 0 then return true end
 		local anyAlive = false
 		for _, p in Players:GetPlayers() do
 			local h = p.Character and p.Character:FindFirstChildOfClass("Humanoid")
@@ -1734,12 +1272,13 @@ end
 function WaveService.ClearAll()
 	for model in alive do model:Destroy() end
 	table.clear(alive)
+	aliveCount = 0
 end
 
 return WaveService
 ```
 
-Usage, inside a round (§16): `for wave = 1, math.huge do if not WaveService.RunWave(wave) then break end task.wait(8) end`.
+Usage inside a round (§16): `local wave = 1 while WaveService.RunWave(wave) do wave += 1 task.wait(8) end WaveService.ClearAll()`.
 
 ---
 
@@ -1803,7 +1342,7 @@ Use **Plane mode** for a horizontal dash that keeps gravity working: set `Veloci
   - **Gameplay-critical physics (balls in sports games, NPCs, moving platforms carrying many players): `SetNetworkOwner(nil)`.** This costs responsiveness for players touching them. Under Server Authority, prediction removes that cost.
   - **Things a single player controls (their vehicle, their thrown object): give them ownership** for responsiveness, and validate outcomes on the server (speed caps, position sanity).
   - Projectiles that are real parts and that a client owns can be teleported onto targets. Never trust their `Touched`.
-- Visualize ownership: Studio Settings → Physics → "Are Owners Shown". The outline colors show ownership.
+- Visualize ownership: viewport **Visualization Options** → **Network owners** (green = you own it, white/grey = server or another client).
 
 ```lua
 -- Server-owned ball (sports game) with throw/kick validated on the server
@@ -1828,55 +1367,27 @@ ball:SetNetworkOwner(nil)
 - `CustomPhysicalProperties` on the wheels for friction. Keep the chassis density high and the wheels light, for stability.
 
 ```lua
---!strict
--- Script inside the car model (server). Driver gets ownership; driver's client could also run this logic.
+-- Car script (server). Wheels: HingeConstraint Motor (drive) and Servo (front steer).
 local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-
 local car = script.Parent
-local seat = car:WaitForChild("VehicleSeat") :: VehicleSeat
-local motors = { car.Wheels.RL.Motor, car.Wheels.RR.Motor, car.Wheels.FL.Motor, car.Wheels.FR.Motor } :: { HingeConstraint }
+local seat = car.VehicleSeat :: VehicleSeat
+local motors = { car.Wheels.RL.Motor, car.Wheels.RR.Motor } :: { HingeConstraint }
 local steers = { car.Wheels.FL.Steer, car.Wheels.FR.Steer } :: { HingeConstraint }
-
-local MAX_SPEED = 80     -- studs/s at wheel rim
-local WHEEL_RADIUS = 1.5
-local MAX_STEER = 30     -- degrees
-local TORQUE = 20000
-
-for _, m in motors do
-	m.ActuatorType = Enum.ActuatorType.Motor
-	m.MotorMaxTorque = TORQUE
-end
-for _, s in steers do
-	s.ActuatorType = Enum.ActuatorType.Servo
-	s.ServoMaxTorque = 50000
-	s.AngularSpeed = 6
-end
+local MAX_SPEED, WHEEL_RADIUS, MAX_STEER = 80, 1.5, 30
 
 seat:GetPropertyChangedSignal("Occupant"):Connect(function()
-	local hum = seat.Occupant
-	local player = hum and Players:GetPlayerFromCharacter(hum.Parent)
-	if player then
-		seat:SetNetworkOwner(player) -- whole mechanism follows
-	else
-		seat:SetNetworkOwnershipAuto()
-		for _, m in motors do m.AngularVelocity = 0 end
-	end
+	local player = seat.Occupant and Players:GetPlayerFromCharacter(seat.Occupant.Parent)
+	if player then seat:SetNetworkOwner(player) else seat:SetNetworkOwnershipAuto() end -- whole mechanism follows
 end)
 
-RunService.Heartbeat:Connect(function()
-	-- Hinge sign depends on your attachment orientation; flip for one side if needed
+game:GetService("RunService").Heartbeat:Connect(function()
 	local w = seat.ThrottleFloat * MAX_SPEED / WHEEL_RADIUS
-	for i, m in motors do
-		m.AngularVelocity = if i % 2 == 0 then -w else w
-	end
-	for _, s in steers do
-		s.TargetAngle = seat.SteerFloat * MAX_STEER
-	end
+	motors[1].AngularVelocity, motors[2].AngularVelocity = w, -w -- sign depends on attachment orientation
+	for _, s in steers do s.TargetAngle = seat.SteerFloat * MAX_STEER end
 end)
 ```
 
-> When the driver owns the car, the property writes the server makes (`AngularVelocity`, `TargetAngle`) replicate to them, which adds latency. For the best feel, run the drive loop in a **client** script handed to the driver (for example, cloned into `PlayerScripts` on sit, or `RunContext = Client` with a check for `seat.Occupant == local humanoid`). Keep the server validating speed: if `chassis.AssemblyLinearVelocity.Magnitude > MAX_SPEED * 1.5` repeatedly, take ownership back.
+Property writes from the server reach the owning driver with latency. For the best feel, run the drive loop on the **driver's client** (for example, a `RunContext = Client` script that checks `seat.Occupant` is the local Humanoid), and keep the server validating: if `chassis.AssemblyLinearVelocity.Magnitude > MAX_SPEED * 1.5` repeatedly, take ownership back.
 
 ### 13.2 Humanoid states
 
@@ -1936,40 +1447,7 @@ Wall-run, double-jump, glide and similar mechanics then become small state switc
 
 ### 13.4 Ragdolls
 
-```lua
---!strict
--- Server: convert Motor6Ds to BallSocketConstraints. For player characters, the CLIENT must also
--- switch its Humanoid to Physics/Ragdoll state (fire a remote), because it owns the physics.
-local function ragdoll(char: Model)
-	local hum = char:FindFirstChildOfClass("Humanoid")
-	if not hum then return end
-	hum.BreakJointsOnDeath = false
-	hum.RequiresNeck = false
-	for _, motor in char:GetDescendants() do
-		if motor:IsA("Motor6D") and motor.Part0 and motor.Part1 and motor.Name ~= "RootJoint" and motor.Name ~= "Root" then
-			local a0 = Instance.new("Attachment")
-			a0.CFrame = motor.C0
-			a0.Parent = motor.Part0
-			local a1 = Instance.new("Attachment")
-			a1.CFrame = motor.C1
-			a1.Parent = motor.Part1
-			local bs = Instance.new("BallSocketConstraint")
-			bs.Attachment0, bs.Attachment1 = a0, a1
-			bs.LimitsEnabled = true
-			bs.UpperAngle = 60
-			bs.TwistLimitsEnabled = true
-			bs.Parent = motor.Parent
-			motor.Enabled = false -- keep the Motor6D so you can un-ragdoll later
-		end
-	end
-	-- limbs need collisions while ragdolled
-	for _, p in char:GetDescendants() do
-		if p:IsA("BasePart") and p.Name ~= "HumanoidRootPart" then p.CanCollide = true end
-	end
-end
-```
-
-To recover: re-enable the motors, destroy the BallSockets, and `ChangeState(GettingUp)` on the owner. For R15 on death, set `BreakJointsOnDeath = false` *before* death, and call `ragdoll` in `Died`.
+Set `Humanoid.BreakJointsOnDeath = false` (and `RequiresNeck = false`) *before* death. To ragdoll, for each `Motor6D` except the root joint: create `Attachment`s at `motor.C0` on `Part0` and `motor.C1` on `Part1`, link them with a `BallSocketConstraint` (`LimitsEnabled = true`, `UpperAngle ≈ 60`, `TwistLimitsEnabled = true`), set `motor.Enabled = false` (keep the motor so you can recover), and make the limbs `CanCollide = true`. The **owner** must also switch the Humanoid to `Physics`/`Ragdoll` state, so for players, fire their client. To recover, re-enable the motors, destroy the sockets, and `ChangeState(GettingUp)` on the owner.
 
 ---
 
@@ -2040,15 +1518,7 @@ Under Server Authority, InputContexts must be **cloned under each Player** by a 
 
 ### 15.3 Device-adaptive UI
 
-```lua
-local UserInputService = game:GetService("UserInputService")
-local function applyLayout()
-	local pref = UserInputService.PreferredInput -- KeyboardAndMouse | Gamepad | Touch | MicroGamepad
-	-- show on-screen buttons for Touch; show button glyphs for Gamepad; hide hints for KBM
-end
-UserInputService:GetPropertyChangedSignal("PreferredInput"):Connect(applyLayout)
-applyLayout()
-```
+Read `UserInputService.PreferredInput` (`KeyboardAndMouse | Gamepad | Touch | MicroGamepad`) and listen to `GetPropertyChangedSignal("PreferredInput")`. Show touch buttons for Touch, glyphs for Gamepad, and key hints for keyboard/mouse.
 
 ### 15.4 Device rules for combat games
 
@@ -2062,216 +1532,108 @@ applyLayout()
 
 ## 16. Round systems, teams, spectating
 
-### 16.1 Round state machine (single-place or round-server)
+### 16.1 Round state machine
 
-States: `Waiting` (not enough players) → `Intermission` → `Playing` → `Ended` → back to `Intermission`. The state lives on a replicated object (`ReplicatedStorage.RoundState` attributes), so every client's UI just reads attributes.
+`Waiting` → `Intermission` → `Playing` → `Ended` → repeat. State lives in attributes on a replicated object, so client UI just reads them.
 
 ```lua
 --!strict
 -- ServerScriptService/Rounds/RoundService.server.luau
 local Players = game:GetService("Players")
 local Teams = game:GetService("Teams")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
 local DamageService = require(game.ServerScriptService.Combat.DamageService)
 
-local MIN_PLAYERS = 2
-local INTERMISSION = 15
-local ROUND_TIME = 180
-local RESULTS_TIME = 8
-local KILLS_TO_WIN = 25
+local MIN_PLAYERS, INTERMISSION, ROUND_TIME, RESULTS_TIME, KILLS_TO_WIN = 2, 15, 180, 8, 25
 
 local State = Instance.new("Configuration")
 State.Name = "RoundState"
-State.Parent = ReplicatedStorage
-
-local function setState(name: string, duration: number?)
+State.Parent = game:GetService("ReplicatedStorage")
+local function setPhase(name: string, duration: number?)
 	State:SetAttribute("Phase", name)
-	State:SetAttribute("EndsAt", if duration then workspace:GetServerTimeNow() + duration else 0)
+	State:SetAttribute("EndsAt", workspace:GetServerTimeNow() + (duration or 0)) -- clients count down
 end
 
--- Teams (Team objects replicate; Player.Team assignment drives spawn selection via SpawnLocation.TeamColor)
-local function makeTeam(name: string, color: BrickColor): Team
-	local t = Teams:FindFirstChild(name) :: Team?
-	if not t then
-		t = Instance.new("Team")
-		t.Name = name
-		t.TeamColor = color
-		t.AutoAssignable = false
-		t.Parent = Teams
-	end
-	return t :: Team
+local function team(name: string, color: string): Team
+	local t = Instance.new("Team")
+	t.Name, t.TeamColor, t.AutoAssignable = name, BrickColor.new(color), false
+	t.Parent = Teams
+	return t
 end
-local Red = makeTeam("Red", BrickColor.new("Bright red"))
-local Blue = makeTeam("Blue", BrickColor.new("Bright blue"))
-local Lobby = makeTeam("Lobby", BrickColor.new("Medium stone grey"))
+-- SpawnLocations with matching TeamColor (Neutral=false) pick spawns per team
+local Red, Blue, Lobby = team("Red", "Bright red"), team("Blue", "Bright blue"), team("Lobby", "Medium stone grey")
 
 local inRound: { [Player]: boolean } = {}
 local score = { Red = 0, Blue = 0 }
 
-local function balanceTeams(players: { Player })
-	-- shuffle, then alternate. Replace with party-aware / skill-aware balancing as needed.
-	for i = #players, 2, -1 do
-		local j = math.random(i)
-		players[i], players[j] = players[j], players[i]
-	end
-	for i, p in players do
-		p.Team = if i % 2 == 0 then Red else Blue
-		p.Neutral = false
-	end
-end
-
-local function spawnAll(players: { Player })
-	for _, p in players do
-		task.spawn(function()
-			p:LoadCharacterAsync()
-			local char = p.Character
-			if char then char:SetAttribute("IFrameUntil", os.clock() + 2) end -- spawn protection
-		end)
-	end
-end
-
-local function returnToLobby()
-	for p in inRound do
-		if p.Parent then
-			p.Team = Lobby
-			task.spawn(function() p:LoadCharacterAsync() end)
-		end
-	end
-	table.clear(inRound)
-end
-
--- Kill scoring during Playing; respawn handled per mode
 DamageService.OnKilled(function(victim, killer)
 	if State:GetAttribute("Phase") ~= "Playing" then return end
 	if typeof(killer) == "Instance" and killer:IsA("Player") and inRound[killer] and killer.Team then
-		local teamName = killer.Team.Name
-		if score[teamName] then
-			score[teamName] += 1
-			State:SetAttribute("Score" .. teamName, score[teamName])
+		local name = killer.Team.Name
+		if score[name] then
+			score[name] += 1
+			State:SetAttribute("Score" .. name, score[name])
 		end
 	end
-	local victimPlayer = Players:GetPlayerFromCharacter(victim)
-	if victimPlayer and inRound[victimPlayer] then
+	local vp = Players:GetPlayerFromCharacter(victim)
+	if vp and inRound[vp] then
 		task.delay(Players.RespawnTime, function()
-			if inRound[victimPlayer] and State:GetAttribute("Phase") == "Playing" then
-				victimPlayer:LoadCharacterAsync()
-			end
+			if inRound[vp] and State:GetAttribute("Phase") == "Playing" then vp:LoadCharacterAsync() end
 		end)
 	end
 end)
 
-Players.CharacterAutoLoads = false -- we control spawns
-Players.PlayerAdded:Connect(function(p)
-	p.Team = Lobby
-	p:LoadCharacterAsync()
-end)
+Players.CharacterAutoLoads = false -- the round controls spawning
+Players.PlayerAdded:Connect(function(p) p.Team = Lobby p:LoadCharacterAsync() end)
 Players.PlayerRemoving:Connect(function(p) inRound[p] = nil end)
 
-local function waitPhase(duration: number, earlyExit: (() -> boolean)?)
-	local deadline = os.clock() + duration
-	while os.clock() < deadline do
-		task.wait(0.25)
-		if earlyExit and earlyExit() then return end
-	end
-end
-
-local function countInRound(): number
+local function countIn(): number
 	local n = 0
 	for p in inRound do if p.Parent then n += 1 end end
 	return n
 end
 
 while true do
-	-- WAITING
-	setState("Waiting")
+	setPhase("Waiting")
 	while #Players:GetPlayers() < MIN_PLAYERS do task.wait(1) end
+	setPhase("Intermission", INTERMISSION)
+	task.wait(INTERMISSION)
+	local list = Players:GetPlayers()
+	if #list < MIN_PLAYERS then continue end
 
-	-- INTERMISSION
-	setState("Intermission", INTERMISSION)
-	waitPhase(INTERMISSION)
-	local participants = Players:GetPlayers()
-	if #participants < MIN_PLAYERS then continue end
-
-	-- PLAYING
 	score.Red, score.Blue = 0, 0
 	State:SetAttribute("ScoreRed", 0)
 	State:SetAttribute("ScoreBlue", 0)
-	for _, p in participants do inRound[p] = true end
-	balanceTeams(participants)
-	spawnAll(participants)
-	setState("Playing", ROUND_TIME)
-	waitPhase(ROUND_TIME, function()
-		return score.Red >= KILLS_TO_WIN or score.Blue >= KILLS_TO_WIN or countInRound() < MIN_PLAYERS
-	end)
+	for i = #list, 2, -1 do local j = math.random(i) list[i], list[j] = list[j], list[i] end -- shuffle
+	for i, p in list do
+		inRound[p] = true
+		p.Team = if i % 2 == 0 then Red else Blue -- swap in party/skill balancing here
+		task.spawn(function()
+			p:LoadCharacterAsync()
+			if p.Character then p.Character:SetAttribute("IFrameUntil", os.clock() + 2) end -- spawn protection
+		end)
+	end
+	setPhase("Playing", ROUND_TIME)
+	local deadline = os.clock() + ROUND_TIME
+	repeat task.wait(0.25)
+	until os.clock() > deadline or score.Red >= KILLS_TO_WIN or score.Blue >= KILLS_TO_WIN or countIn() < MIN_PLAYERS
 
-	-- ENDED
-	local winner = if score.Red > score.Blue then "Red" elseif score.Blue > score.Red then "Blue" else "Draw"
-	State:SetAttribute("Winner", winner)
-	setState("Ended", RESULTS_TIME)
-	-- award rewards here (server-side, via your data layer)
-	waitPhase(RESULTS_TIME)
-	returnToLobby()
+	State:SetAttribute("Winner", if score.Red > score.Blue then "Red" elseif score.Blue > score.Red then "Blue" else "Draw")
+	setPhase("Ended", RESULTS_TIME)
+	-- award rewards server-side via your data layer
+	task.wait(RESULTS_TIME)
+	for p in inRound do
+		if p.Parent then p.Team = Lobby task.spawn(p.LoadCharacterAsync, p) end
+	end
+	table.clear(inRound)
 end
 ```
 
-Notes:
-- `Player:LoadCharacterAsync()` is the current API. `LoadCharacter()` is deprecated.
-- Spawn by team: put `SpawnLocation`s with `TeamColor` matching the team and `Neutral = false`. Or set `player.RespawnLocation`.
-- Handle mid-round joiners by spectating, or by joining the smaller team.
-- For free-for-all, skip teams and keep `Player.Neutral = true` (DamageService's friendly-fire check skips neutral players).
+- `LoadCharacterAsync()` is current, and `LoadCharacter()` is deprecated. Mid-round joiners spectate, or join the smaller team.
+- Free-for-all: skip teams and keep `Player.Neutral = true` (DamageService's friendly-fire check ignores neutral players).
 
-### 16.2 Spectating (client)
+### 16.2 Spectating
 
-```lua
--- StarterPlayerScripts/Spectate.client.luau
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local camera = workspace.CurrentCamera
-local localPlayer = Players.LocalPlayer
-
-local targets: { Player } = {}
-local index = 1
-local spectating = false
-
-local function refreshTargets()
-	targets = {}
-	for _, p in Players:GetPlayers() do
-		local h = p.Character and p.Character:FindFirstChildOfClass("Humanoid")
-		if p ~= localPlayer and h and h.Health > 0 then table.insert(targets, p) end
-	end
-	index = math.clamp(index, 1, math.max(#targets, 1))
-end
-
-local function focus()
-	local t = targets[index]
-	local hum = t and t.Character and t.Character:FindFirstChildOfClass("Humanoid")
-	if hum then
-		camera.CameraType = Enum.CameraType.Custom
-		camera.CameraSubject = hum
-	end
-end
-
-local function setSpectating(on: boolean)
-	spectating = on
-	if on then refreshTargets() focus()
-	else
-		local myHum = localPlayer.Character and localPlayer.Character:FindFirstChildOfClass("Humanoid")
-		if myHum then camera.CameraSubject = myHum end
-	end
-end
-
-local function cycle(dir: number)
-	refreshTargets()
-	if #targets == 0 then return end
-	index = (index - 1 + dir) % #targets + 1
-	focus()
-end
--- Hook cycle(1)/cycle(-1) to UI buttons or IAS actions; setSpectating(true) when the RoundState
--- says you're not in the round, false when you respawn into it.
-```
-
-Under `StreamingEnabled`, a far-away spectate target may not be streamed in. Set `player.ReplicationFocus = targetRoot` on the **server** for spectators, and reset it to `nil` afterwards.
+On the client, keep a list of living players, and set `camera.CameraSubject = target.Character:FindFirstChildOfClass("Humanoid")` with `CameraType = Custom`. Cycle with next/prev buttons or IAS actions, and restore your own Humanoid on respawn. Turn spectating on when `RoundState` says you're not in the round. Under `StreamingEnabled`, a far-away target may not be streamed in, so the **server** sets `spectator.ReplicationFocus = targetRoot` (and resets it to `nil` afterwards).
 
 ---
 
@@ -2279,30 +1641,11 @@ Under `StreamingEnabled`, a far-away spectate target may not be streamed in. Set
 
 ### 17.1 Architecture
 
-```
-Lobby place (public servers)                      Round place (reserved servers only)
-  Queue pad / Play button
-  → party leader joins queue
-  → MemoryStoreQueue "MM_<mode>" AddAsync({party})
-  Matchmaker loop (every lobby server):
-     ReadAsync(N) → pack parties into a match
-     id = GenerateGUID → ReservedServerId
-     MessagingService "MM_Match" {userIds, rsid}
-     RemoveAsync(readId) for used entries
-  On "MM_Match": teleport local members ───────►  Player:GetJoinData().TeleportData
-     TeleportAsync(roundPlaceId, players, opts)      → mode, teams, matchId
-                                                    run round; on end:
-                                    ◄───────────── TeleportAsync(lobbyPlaceId, players)
-```
+Lobby place (public servers): a party joins the queue, which adds one entry to `MemoryStoreQueue "MM_<mode>"`. Every lobby server runs a matchmaker loop: `ReadAsync` → pack parties into a match → generate a GUID as the `ReservedServerId` → `MessagingService:PublishAsync` with `{userIds, rsid}`. Each lobby server teleports **its own** members with `TeleportAsync(roundPlaceId, players, options)`. Since all use the same `ReservedServerId`, they land in one server. The round place reads `Player:GetJoinData().TeleportData`, runs a single round, and teleports everyone back to the lobby.
 
-Why this shape:
-- **MemoryStore queues** give cross-server queueing with an invisibility timeout. If a matchmaker server crashes mid-match, unremoved entries reappear after the timeout.
-- **`ReservedServerId` is a GUID you generate.** The first teleport with that ID creates the server, and later teleports with the same ID join it. That lets several lobby servers send their players to the *same* match. (`ReserveServerAsync` and `ReservedServerAccessCode` are deprecated.)
-- **MessagingService** is best-effort. If a lobby server misses the message, its players stay queued. Handle that with a queue timeout plus re-queue on the client.
-
-Simpler alternatives:
-- Single-server party teleport, where everyone queuing is in the same lobby server: skip MemoryStore and call `TeleportAsync` with a new `ReservedServerId` for the pad's players.
-- **Built-in matchmaking customization** (Creator Hub → Matchmaking: attributes, signals, scoring) tunes which *public* server a joining player lands in, for example by skill or language. It doesn't create matches between parties. Use it for public-server quality, and the pattern below for queued matches.
+- Queue entries are protected by the invisibility timeout: if a matchmaker crashes, unremoved entries reappear.
+- If everyone queuing is in one lobby server, skip MemoryStore: just `TeleportAsync` the pad's players with a fresh `ReservedServerId`.
+- **Built-in matchmaking customization** (Creator Hub → Matchmaking: attributes, signals, scoring) only tunes which *public* server a joiner lands in, by skill, language and so on. It doesn't form party matches.
 
 ### 17.2 Complete lobby matchmaker (server, lobby place)
 
@@ -2314,106 +1657,70 @@ local MemoryStoreService = game:GetService("MemoryStoreService")
 local MessagingService = game:GetService("MessagingService")
 local TeleportService = game:GetService("TeleportService")
 local HttpService = game:GetService("HttpService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Remotes = game:GetService("ReplicatedStorage"):WaitForChild("Remotes")
 
-local ROUND_PLACE_ID = 0000000000 -- TODO: your round place id (same universe)
-local MODE = "Duos"
-local MATCH_SIZE = 4          -- players per match
-local QUEUE_ENTRY_TTL = 120   -- seconds an entry may sit in the queue
-local INVISIBILITY = 20       -- seconds an item is hidden after ReadAsync
-local MATCH_TOPIC = "MM_Match_" .. MODE
-
+local ROUND_PLACE_ID = 0 -- TODO: round place id (same universe)
+local MODE, MATCH_SIZE = "Duos", 4
+local ENTRY_TTL, INVISIBILITY = 120, 20
+local TOPIC = "MM_Match_" .. MODE
 local queue = MemoryStoreService:GetQueue("MM_" .. MODE, INVISIBILITY)
+local QueueRemote = Remotes:WaitForChild("Queue") :: RemoteEvent         -- client -> server: true/false
+local QueueStatus = Remotes:WaitForChild("QueueStatus") :: RemoteEvent   -- server -> client
 
-local Remotes = ReplicatedStorage:WaitForChild("Remotes")
-local QueueRemote = Remotes:WaitForChild("Queue") :: RemoteEvent   -- client -> server: true/false
-local QueueStatus = Remotes:WaitForChild("QueueStatus") :: RemoteEvent -- server -> client
+local queuedHere: { [number]: boolean } = {} -- userIds queued from THIS server
+local lastQueueAt: { [Player]: number } = {}
 
--- Parties: leaderUserId -> {userIds}. Replace with your party system.
-local function getPartyUserIds(player: Player): { number }
-	local raw = player:GetAttribute("PartyMembers") -- e.g. "123,456"
+local function retry(attempts: number, fn: () -> any): (boolean, any)
+	local ok, res
+	for i = 1, attempts do
+		ok, res = pcall(fn)
+		if ok then return true, res end
+		task.wait(0.5 * 2 ^ (i - 1))
+	end
+	return false, res
+end
+
+local function partyOf(player: Player): { number }
+	-- Replace with your party system. Example: server-set attribute "123,456"
 	local ids = { player.UserId }
-	if type(raw) == "string" then
-		for s in string.gmatch(raw, "%d+") do
-			local id = tonumber(s)
-			if id and id ~= player.UserId and Players:GetPlayerByUserId(id) then table.insert(ids, id) end
-		end
+	for s in string.gmatch(tostring(player:GetAttribute("PartyMembers") or ""), "%d+") do
+		local id = tonumber(s)
+		if id and id ~= player.UserId and Players:GetPlayerByUserId(id) then table.insert(ids, id) end
 	end
 	return ids
 end
 
-local queuedHere: { [number]: boolean } = {} -- userIds queued from this server
-local lastQueueAt: { [Player]: number } = {}
-
-local function retry<T...>(attempts: number, fn: () -> T...): (boolean, T...)
-	local result
-	for i = 1, attempts do
-		result = table.pack(pcall(fn))
-		if result[1] then return table.unpack(result, 1, result.n) end
-		task.wait(0.5 * 2 ^ (i - 1))
-	end
-	return table.unpack(result, 1, result.n)
-end
-
 QueueRemote.OnServerEvent:Connect(function(player: Player, join: unknown)
-	if type(join) ~= "boolean" then return end
-	local t = os.clock()
-	if t - (lastQueueAt[player] or 0) < 2 then return end -- spam guard
-	lastQueueAt[player] = t
-
-	if join then
-		if queuedHere[player.UserId] then return end
-		local ids = getPartyUserIds(player)
-		if #ids > MATCH_SIZE then return end
-		local entry = {
-			partyId = HttpService:GenerateGUID(false),
-			userIds = ids,
-			queuedAt = os.time(),
-			-- skill = averageElo, region = ..., etc.
-		}
-		local ok, err = retry(3, function()
-			return queue:AddAsync(entry, QUEUE_ENTRY_TTL, 0)
-		end)
-		if ok then
-			for _, id in ids do queuedHere[id] = true end
-			QueueStatus:FireClient(player, "Queued")
-		else
-			warn("Queue add failed:", err)
-			QueueStatus:FireClient(player, "Error")
-		end
-	else
-		-- Leaving: we can't remove a specific un-read item from a MemoryStoreQueue.
-		-- Mark locally; the match teleport will skip absent/unqueued players and the
-		-- entry expires by TTL. (Use a SortedMap-based queue if you need hard cancels.)
-		for _, id in getPartyUserIds(player) do queuedHere[id] = nil end
+	if type(join) ~= "boolean" or os.clock() - (lastQueueAt[player] or 0) < 2 then return end
+	lastQueueAt[player] = os.clock()
+	local ids = partyOf(player)
+	if not join then
+		-- A MemoryStoreQueue can't delete an unread item: forget locally; the match skips
+		-- players not in queuedHere and the entry expires via TTL.
+		for _, id in ids do queuedHere[id] = nil end
 		QueueStatus:FireClient(player, "Left")
+		return
 	end
+	if queuedHere[player.UserId] or #ids > MATCH_SIZE then return end
+	local entry = { userIds = ids, queuedAt = os.time() } -- add skill/region for better matching
+	local ok = retry(3, function() return queue:AddAsync(entry, ENTRY_TTL, 0) end)
+	if ok then for _, id in ids do queuedHere[id] = true end end
+	QueueStatus:FireClient(player, if ok then "Queued" else "Error")
 end)
+Players.PlayerRemoving:Connect(function(p) queuedHere[p.UserId] = nil lastQueueAt[p] = nil end)
 
-Players.PlayerRemoving:Connect(function(p)
-	queuedHere[p.UserId] = nil
-	lastQueueAt[p] = nil
-end)
-
--- Receive match announcements (from any lobby server, including this one)
+-- Every lobby server receives every match and teleports the members it has
 local function teleportMatch(data: { userIds: { number }, rsid: string, matchId: string })
 	local mine: { Player } = {}
 	for _, id in data.userIds do
 		local p = Players:GetPlayerByUserId(id)
-		if p and queuedHere[id] then
-			table.insert(mine, p)
-			queuedHere[id] = nil
-		end
+		if p and queuedHere[id] then table.insert(mine, p) queuedHere[id] = nil end
 	end
 	if #mine == 0 then return end
-
 	local options = Instance.new("TeleportOptions")
-	options.ReservedServerId = data.rsid -- same GUID on every lobby server => same match server
+	options.ReservedServerId = data.rsid -- same GUID everywhere => same match server
 	options:SetTeleportData({ matchId = data.matchId, mode = MODE, expected = data.userIds })
-
-	local ok, err = retry(3, function()
-		return TeleportService:TeleportAsync(ROUND_PLACE_ID, mine, options)
-	end)
+	local ok, err = retry(3, function() return TeleportService:TeleportAsync(ROUND_PLACE_ID, mine, options) end)
 	if not ok then
 		warn("Match teleport failed:", err)
 		for _, p in mine do QueueStatus:FireClient(p, "Error") end
@@ -2421,69 +1728,46 @@ local function teleportMatch(data: { userIds: { number }, rsid: string, matchId:
 end
 
 task.spawn(function()
-	local ok, err = pcall(function()
-		MessagingService:SubscribeAsync(MATCH_TOPIC, function(message)
-			local data = message.Data
-			if type(data) == "table" and type(data.rsid) == "string" and type(data.userIds) == "table" then
-				teleportMatch(data)
-			end
-		end)
+	local ok, err = pcall(MessagingService.SubscribeAsync, MessagingService, TOPIC, function(message)
+		local d = message.Data
+		if type(d) == "table" and type(d.rsid) == "string" and type(d.userIds) == "table" then teleportMatch(d) end
 	end)
 	if not ok then warn("Subscribe failed:", err) end
 end)
 
--- Matchmaker loop: every lobby server tries; invisibility timeout prevents double-processing.
-task.spawn(function()
-	while true do
-		task.wait(3)
-		local ok, items, readId = pcall(function()
-			-- Read up to 10 parties, wait up to 2s for items
-			return queue:ReadAsync(10, false, 2)
-		end)
-		if not ok or not items or #items == 0 then continue end
+-- Matchmaker loop on every lobby server; the invisibility timeout prevents double-processing
+while true do
+	task.wait(3)
+	local ok, items, readId = pcall(function() return queue:ReadAsync(10, false, 2) end)
+	if not ok or not items or #items == 0 then continue end
 
-		-- Greedy packing: oldest first, fill exactly MATCH_SIZE
-		table.sort(items, function(a, b) return (a.queuedAt or 0) < (b.queuedAt or 0) end)
-		local match: { number } = {}
-		for _, entry in items do
-			if #match + #entry.userIds <= MATCH_SIZE then
-				for _, id in entry.userIds do table.insert(match, id) end
-			end
-			if #match == MATCH_SIZE then break end
+	table.sort(items, function(a, b) return a.queuedAt < b.queuedAt end) -- oldest first
+	local match, used = {}, {}
+	for i, entry in items do
+		if #match + #entry.userIds <= MATCH_SIZE then
+			for _, id in entry.userIds do table.insert(match, id) end
+			used[i] = true
 		end
-
-		if #match == MATCH_SIZE then
-			local payload = {
-				userIds = match,
-				rsid = HttpService:GenerateGUID(false),
-				matchId = HttpService:GenerateGUID(false),
-			}
-			local pubOk = pcall(function()
-				MessagingService:PublishAsync(MATCH_TOPIC, payload)
-			end)
-			if pubOk then
-				-- ReadAsync returns ONE id for the whole batch, so RemoveAsync drops all items read.
-				-- Re-add the parties that were read but NOT used, so they keep their place.
-				local used: { [number]: boolean } = {}
-				for _, id in match do used[id] = true end
-				pcall(function() queue:RemoveAsync(readId) end)
-				for _, entry in items do
-					if not used[entry.userIds[1]] then
-						pcall(function() queue:AddAsync(entry, QUEUE_ENTRY_TTL, 0) end)
-					end
-				end
-			end
-			-- If publish failed: don't remove; items reappear after INVISIBILITY seconds.
-		end
-		-- Not enough players: don't remove; items become visible again after INVISIBILITY.
+		if #match == MATCH_SIZE then break end
 	end
-end)
+	-- Not enough players or publish fails: do nothing; items reappear after INVISIBILITY seconds.
+	if #match == MATCH_SIZE then
+		local payload = { userIds = match, rsid = HttpService:GenerateGUID(false), matchId = HttpService:GenerateGUID(false) }
+		if pcall(MessagingService.PublishAsync, MessagingService, TOPIC, payload) then
+			-- ONE readId covers the whole batch: remove it, then re-add parties we didn't use
+			pcall(function() queue:RemoveAsync(readId) end)
+			for i, entry in items do
+				if not used[i] then pcall(function() queue:AddAsync(entry, ENTRY_TTL, 0) end) end
+			end
+		end
+	end
+end
 ```
 
-Important behaviors:
-- `MemoryStoreQueue:ReadAsync(count, allOrNothing, waitTimeout)` returns `(items, id)`. **One id covers the whole batch**, and `RemoveAsync(id)` removes every item in that read. That's why the code re-adds unused parties after a successful match. (The re-added entries lose their queue position, but since priority is 0 and the sort uses `queuedAt`, the oldest still win at the next read.)
-- **MessagingService size limit is 1 kB.** Fine for about 16 userIds. For big matches, write the roster to a MemoryStore hash map keyed by `matchId` and publish only the id.
-- Keep a client-side queue timer. If nothing happens within about 90 s, re-queue (the TTL expires stale entries).
+Key behaviors:
+- `MemoryStoreQueue:ReadAsync(count, allOrNothing, waitTimeout)` returns `(items, id)`, and `RemoveAsync(id)` removes **the whole batch**. That's why unused parties are re-added. Their `queuedAt` survives, so they still sort first.
+- MessagingService messages are limited to **1 kB**, which fits about 16 userIds. For larger matches, store the roster in a `MemoryStoreHashMap` keyed by `matchId` and publish only the id.
+- Delivery is best-effort. Give the client a queue timer that re-queues after about 90 s. Stale entries expire via the TTL.
 - Skill matching: add `skill` to entries and only pack parties within a window that widens with wait time.
 
 ### 17.3 Round place: receiving the match and returning players
@@ -2494,100 +1778,68 @@ Important behaviors:
 local Players = game:GetService("Players")
 local TeleportService = game:GetService("TeleportService")
 
-local LOBBY_PLACE_ID = 0000000000 -- TODO
+local LOBBY_PLACE_ID = 0 -- TODO
 local isReserved = game.PrivateServerId ~= "" and game.PrivateServerOwnerId == 0
-
 local expected: { [number]: boolean } = {}
-local matchId: string? = nil
 
 Players.PlayerAdded:Connect(function(player)
-	local joinData = player:GetJoinData()
-	local td = joinData.TeleportData
-	-- TeleportData is client-carried: treat as UNTRUSTED hints (fine for mode/matchId, never for rewards)
-	if type(td) == "table" and type(td.matchId) == "string" then
-		matchId = matchId or td.matchId
-		if type(td.expected) == "table" then
-			for _, id in td.expected do if type(id) == "number" then expected[id] = true end end
-		end
+	-- TeleportData is client-carried: an UNTRUSTED hint (fine for mode/roster, never for rewards)
+	local td = player:GetJoinData().TeleportData
+	if type(td) == "table" and type(td.expected) == "table" then
+		for _, id in td.expected do if type(id) == "number" then expected[id] = true end end
 	end
-	if not isReserved then
-		-- Someone joined the round place directly (e.g. from the website): send them to the lobby
-		task.defer(function()
-			pcall(function() TeleportService:TeleportAsync(LOBBY_PLACE_ID, { player }) end)
-		end)
+	if not isReserved then -- joined the round place directly: bounce to lobby
+		task.defer(pcall, TeleportService.TeleportAsync, TeleportService, LOBBY_PLACE_ID, { player })
 	end
 end)
 
--- Wait for the roster (or timeout) before starting
 local function waitForRoster(timeout: number)
 	local deadline = os.clock() + timeout
-	while os.clock() < deadline do
-		local present = 0
-		local total = 0
-		for id in expected do
-			total += 1
-			if Players:GetPlayerByUserId(id) then present += 1 end
-		end
-		if total > 0 and present == total then return end
+	repeat
 		task.wait(0.5)
-	end
+		local missing = false
+		for id in expected do if not Players:GetPlayerByUserId(id) then missing = true break end end
+	until (next(expected) and not missing) or os.clock() > deadline
 end
 
-TeleportService.TeleportInitFailed:Connect(function(player, result, message)
-	warn("Teleport failed for", player.Name, result, message)
-	task.wait(2)
-	pcall(function() TeleportService:TeleportAsync(LOBBY_PLACE_ID, { player }) end)
-end)
-
-local function sendAllToLobby(results: any?)
+local function sendAllToLobby()
 	local players = Players:GetPlayers()
 	if #players == 0 then return end
-	local opts = Instance.new("TeleportOptions")
-	opts:SetTeleportData({ fromMatch = matchId })
-	local ok, err = pcall(function()
-		return TeleportService:TeleportAsync(LOBBY_PLACE_ID, players, opts)
-	end)
+	local ok, err = pcall(TeleportService.TeleportAsync, TeleportService, LOBBY_PLACE_ID, players)
 	if not ok then warn("Return teleport failed:", err) end
 end
 
--- Flow: waitForRoster(30) → run RoundService/WaveService once → save results via data layer → sendAllToLobby()
--- Also: game:BindToClose(function() sendAllToLobby() end) so a shutdown returns players.
+TeleportService.TeleportInitFailed:Connect(function(player, result, message)
+	warn("Teleport failed:", player.Name, result, message)
+	task.wait(2)
+	pcall(TeleportService.TeleportAsync, TeleportService, LOBBY_PLACE_ID, { player })
+end)
+game:BindToClose(sendAllToLobby)
+
+waitForRoster(30)
+-- run ONE round (RoundService loop body / WaveService), save results via your data layer, then:
+sendAllToLobby()
 ```
 
-- Save match results **on the round server, before teleporting** (session-locked profiles release on leave, so the lobby can load fresh data).
-- `TeleportAsync` returns a `TeleportAsyncResult`. Retry on failure with exponential backoff, and listen to `TeleportInitFailed` for per-player failures.
-- Teleports only work in published games, not Studio playtests. Guard with `RunService:IsStudio()`.
+- Save match results **on the round server before teleporting**. Session-locked profiles release on leave, so the lobby loads fresh data.
+- Teleports don't work in Studio playtests. Guard them with `RunService:IsStudio()`.
 
 ---
 
 ## 18. Inventory and equipment
 
-### 18.1 Tools vs custom
-
-| | `Tool` (Backpack) | Custom (data + welded models) |
-|---|---|---|
-| Effort | Low: built-in hotbar, equip/unequip, `Activated` | You build the UI and equip logic |
-| Control | Limited (one equipped tool, default hotbar) | Full: multiple slots, offhand, armor, cosmetics |
-| Server Authority | **Not fully supported** | Supported (weld inside the simulation, track with an attribute) |
-| Security | Tools in the Backpack are client-visible, and client `Activated` is a hint | Same rule: the server owns the data |
-
-`Tool` properties worth knowing: `RequiresHandle`, `CanBeDropped` (set **false** for weapons, or players can drop them for others), `ManualActivationOnly`, and the `Activated`/`Equipped`/`Unequipped` events. Weapon logic goes in server scripts, with the client only firing a remote.
-
-### 18.2 Data model
+**Tools vs custom.** `Tool` (Backpack) is low effort: built-in hotbar, `Activated`/`Equipped`/`Unequipped`, `RequiresHandle`, `ManualActivationOnly`, and `CanBeDropped` (set it **false** for weapons). But you only get one equipped tool, the default UI, and **no full Server Authority support**. A custom system (profile data plus welded models) gives multiple slots, offhand and armor, and works under Server Authority. In both cases the client only fires intents.
 
 ```lua
--- Profile data (persisted via your data layer, see the data chapter)
+-- Profile data: every non-stackable item has a unique id, so dupes are detectable
 Data.Inventory = {
-	-- every non-stackable item has a unique id => dupes are detectable
 	["f3a1...guid"] = { ItemId = "IronSword", Level = 3, Locked = false },
-	["9b20...guid"] = { ItemId = "HealthPotion", Count = 12 }, -- stackables may use one entry
+	["9b20...guid"] = { ItemId = "HealthPotion", Count = 12 },
 }
-Data.Equipped = { Weapon = "f3a1...guid", Armor = nil, Hotbar = { "9b20...guid" } }
+Data.Equipped = { Weapon = "f3a1...guid", Hotbar = { "9b20...guid" } }
 ```
 
-- Item *definitions* (`ItemDefs`: damage, rarity, tradable, max stack) live in ReplicatedStorage. *Ownership* lives only in the server profile.
-- Equip remote: `Equip(slot, uid)`. The server checks that the uid exists in the profile, the item fits the slot, and the player isn't in combat (optional). It then updates `Equipped`, sets `player:SetAttribute("EquippedMelee", ItemId)`, and welds the model to the character with a `WeldConstraint` or `RigidConstraint` (`CanCollide=false`, `Massless=true`, `CanQuery=false`).
-- The client UI mirrors the inventory through a replicated snapshot (a remote push on change). Never let the client edit it.
+`ItemDefs` (stats, rarity, `Tradable`) live in ReplicatedStorage. Ownership lives only in the server profile. On `Equip(slot, uid)`, the server checks that the uid is owned and fits the slot, updates `Equipped`, sets `player:SetAttribute("EquippedMelee", ItemId)`, and welds the model on (`WeldConstraint`, `Massless`, `CanCollide=false`, `CanQuery=false`). The UI mirrors a server-pushed snapshot.
 
 ---
 
@@ -2595,13 +1847,12 @@ Data.Equipped = { Weapon = "f3a1...guid", Armor = nil, Hotbar = { "9b20...guid" 
 
 ### 19.1 Rules
 
-1. Both players must be **in the same server**, with **session-locked profiles loaded** (ProfileStore/ProfileService style). Cross-server trades need far more machinery, so avoid them.
-2. A trade is a **server-side session object**. Clients only send intents: add, remove, ready, confirm, cancel.
-3. **Any change to either offer clears both `ready` and `confirmed` flags** and restarts the countdown. This defeats bait-and-switch.
-4. **Phase 1 (prepare):** both confirm, then the server re-verifies every offered uid is still owned, not locked, tradable, and not equipped. It writes a journal record (`pending`).
-5. **Phase 2 (commit):** move items between the in-memory profiles **in one block with no yields**, so it's atomic with respect to other Luau code on this server. Mark the journal `committed` and request a save for both profiles.
-6. Recovery: on profile load, any `pending` journal entry referencing this user is either rolled forward or ignored. Since items carry unique ids, the check "does exactly one of the two profiles own uid X?" resolves it.
-7. Rate-limit trade requests, cap items per offer, and block trades for brand-new accounts or during combat if you like.
+1. Both players are **in the same server** with **session-locked profiles** loaded (ProfileStore style). Avoid cross-server trades.
+2. The trade is a **server-side session**. Clients only send intents: add, remove, ready, confirm, cancel.
+3. **Any offer change clears both `ready` and `confirmed`** and invalidates the countdown. This defeats bait-and-switch.
+4. **Phase 1 (prepare):** re-verify every uid is owned, unlocked, tradable, unequipped, and not already present on the receiving side.
+5. **Phase 2 (commit):** swap in memory **with no yields in between**, which is atomic with respect to other Luau on this server. Then save both profiles and journal the trade for audit. For extra durability, write a `pending` journal entry before phase 2 and resolve it on load ("exactly one profile owns uid X").
+6. Rate-limit requests, cap items per side, and optionally block new accounts or players in combat.
 
 ### 19.2 Complete trade service
 
@@ -2613,230 +1864,161 @@ local HttpService = game:GetService("HttpService")
 local DataStoreService = game:GetService("DataStoreService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local Data = require(game.ServerScriptService.Data.DataService) -- must expose:
---   Data.GetProfileData(player): table? (live, session-locked data table; nil if not loaded)
---   Data.RequestSave(player): ()
-local ItemDefs = require(ReplicatedStorage.Shared.ItemDefs) -- [ItemId] = { Tradable: boolean, ... }
-
+-- Data.GetProfileData(player) -> live session-locked table or nil; Data.RequestSave(player)
+local Data = require(game.ServerScriptService.Data.DataService)
+local ItemDefs = require(ReplicatedStorage.Shared.ItemDefs) -- [ItemId] = { Tradable = true, ... }
 local Remotes = ReplicatedStorage:WaitForChild("Remotes")
 local TradeRequest = Remotes:WaitForChild("TradeRequest") :: RemoteEvent -- (targetPlayer)
 local TradeAction = Remotes:WaitForChild("TradeAction") :: RemoteEvent   -- (action, arg)
-local TradeUpdate = Remotes:WaitForChild("TradeUpdate") :: RemoteEvent   -- server -> clients snapshot
-
+local TradeUpdate = Remotes:WaitForChild("TradeUpdate") :: RemoteEvent   -- server -> clients
 local Journal = DataStoreService:GetDataStore("TradeJournal_v1")
 
-local MAX_ITEMS_PER_SIDE = 8
-local CONFIRM_COUNTDOWN = 5
-local REQUEST_EXPIRY = 30
+local MAX_ITEMS, COUNTDOWN, REQUEST_TTL = 8, 5, 30
 
 type Side = { player: Player, items: { [string]: boolean }, ready: boolean, confirmed: boolean }
-type Trade = { id: string, a: Side, b: Side, state: "Open" | "Countdown" | "Committing" | "Done" | "Cancelled",
-	countdownToken: number }
-
-local tradesByPlayer: { [Player]: Trade } = {}
-local pendingRequests: { [Player]: { [Player]: number } } = {} -- target -> requester -> expiry
+type Trade = { id: string, a: Side, b: Side, state: string, token: number, countdownDone: boolean }
+local trades: { [Player]: Trade } = {}
+local requests: { [Player]: { [Player]: number } } = {} -- target -> requester -> expiry
 local lastAction: { [Player]: number } = {}
 
-local function throttle(p: Player, gap: number): boolean
-	local t = os.clock()
-	if t - (lastAction[p] or 0) < gap then return true end
-	lastAction[p] = t
+local function throttled(p: Player, gap: number): boolean
+	if os.clock() - (lastAction[p] or 0) < gap then return true end
+	lastAction[p] = os.clock()
 	return false
 end
 
-local function sideOf(trade: Trade, p: Player): (Side, Side)
-	if trade.a.player == p then return trade.a, trade.b end
-	return trade.b, trade.a
-end
-
-local function snapshot(trade: Trade)
+local function push(trade: Trade)
 	local function view(s: Side)
-		local list = {}
-		local data = Data.GetProfileData(s.player)
+		local list, data = {}, Data.GetProfileData(s.player)
 		for uid in s.items do
 			local item = data and data.Inventory[uid]
-			if item then table.insert(list, { uid = uid, ItemId = item.ItemId, Level = item.Level }) end
+			if item then table.insert(list, { uid = uid, ItemId = item.ItemId }) end
 		end
 		return { userId = s.player.UserId, items = list, ready = s.ready, confirmed = s.confirmed }
 	end
-	local payload = { id = trade.id, state = trade.state, a = view(trade.a), b = view(trade.b) }
+	local payload = { id = trade.id, state = trade.state, countdownDone = trade.countdownDone, a = view(trade.a), b = view(trade.b) }
 	TradeUpdate:FireClient(trade.a.player, payload)
 	TradeUpdate:FireClient(trade.b.player, payload)
 end
 
-local function resetFlags(trade: Trade)
-	trade.a.ready, trade.b.ready = false, false
-	trade.a.confirmed, trade.b.confirmed = false, false
-	trade.countdownToken += 1 -- invalidates any running countdown
-	if trade.state == "Countdown" then trade.state = "Open" end
+local function resetFlags(trade: Trade) -- ANY change => both must re-ready and re-confirm
+	trade.a.ready, trade.b.ready, trade.a.confirmed, trade.b.confirmed = false, false, false, false
+	trade.countdownDone = false
+	trade.token += 1 -- invalidates a running countdown
 end
 
-local function endTrade(trade: Trade, state: "Done" | "Cancelled")
+local function finish(trade: Trade, state: string)
 	trade.state = state
-	trade.countdownToken += 1
-	snapshot(trade)
-	if tradesByPlayer[trade.a.player] == trade then tradesByPlayer[trade.a.player] = nil end
-	if tradesByPlayer[trade.b.player] == trade then tradesByPlayer[trade.b.player] = nil end
+	trade.token += 1
+	push(trade)
+	trades[trade.a.player], trades[trade.b.player] = nil, nil
 end
 
-local function isEquipped(data: any, uid: string): boolean
-	local eq = data.Equipped
-	if not eq then return false end
-	for _, v in eq do
-		if v == uid then return true end
-		if type(v) == "table" then for _, h in v do if h == uid then return true end end end
-	end
-	return false
-end
-
-local function itemTradable(data: any, uid: string): boolean
+local function tradable(data: any, uid: string): boolean
 	local item = data.Inventory[uid]
 	if not item or item.Locked then return false end
 	local def = ItemDefs[item.ItemId]
 	if not def or def.Tradable ~= true then return false end
-	if isEquipped(data, uid) then return false end
+	for _, v in data.Equipped or {} do
+		if v == uid or (type(v) == "table" and table.find(v, uid)) then return false end
+	end
 	return true
 end
 
--- PHASE 1 + PHASE 2
 local function commit(trade: Trade)
 	trade.state = "Committing"
 	local pa, pb = trade.a.player, trade.b.player
 	local da, db = Data.GetProfileData(pa), Data.GetProfileData(pb)
-	if not da or not db or not pa.Parent or not pb.Parent then
-		endTrade(trade, "Cancelled")
-		return
+	if not da or not db or pa.Parent ~= Players or pb.Parent ~= Players then return finish(trade, "Cancelled") end
+	-- PHASE 1 (prepare): re-verify everything. No yields from here until the swap is done.
+	for uid in trade.a.items do
+		if not tradable(da, uid) or db.Inventory[uid] then return finish(trade, "Cancelled") end -- 2nd check = dupe guard
 	end
-	-- Phase 1: verify everything still valid (no yields between here and the swap)
-	for uid in trade.a.items do if not itemTradable(da, uid) then endTrade(trade, "Cancelled") return end end
-	for uid in trade.b.items do if not itemTradable(db, uid) then endTrade(trade, "Cancelled") return end end
-	-- Guard: uid must not exist on the receiving side already (dupe detection)
-	for uid in trade.a.items do if db.Inventory[uid] then warn("DUPE?", uid) endTrade(trade, "Cancelled") return end end
-	for uid in trade.b.items do if da.Inventory[uid] then warn("DUPE?", uid) endTrade(trade, "Cancelled") return end end
-
-	-- Phase 2: atomic in-memory swap (no yields)
+	for uid in trade.b.items do
+		if not tradable(db, uid) or da.Inventory[uid] then return finish(trade, "Cancelled") end
+	end
+	-- PHASE 2 (commit): atomic in-memory swap
 	local moved = { aToB = {}, bToA = {} }
 	for uid in trade.a.items do
-		db.Inventory[uid] = da.Inventory[uid]
-		da.Inventory[uid] = nil
+		db.Inventory[uid], da.Inventory[uid] = da.Inventory[uid], nil
 		table.insert(moved.aToB, uid)
 	end
 	for uid in trade.b.items do
-		da.Inventory[uid] = db.Inventory[uid]
-		db.Inventory[uid] = nil
+		da.Inventory[uid], db.Inventory[uid] = db.Inventory[uid], nil
 		table.insert(moved.bToA, uid)
 	end
-	endTrade(trade, "Done")
-
-	-- Persist: save both profiles, then write an audit/recovery journal entry (yields are fine now)
+	finish(trade, "Done")
+	-- Durability + audit (yielding is fine now)
 	Data.RequestSave(pa)
 	Data.RequestSave(pb)
-	task.spawn(function()
-		pcall(function()
-			Journal:SetAsync(trade.id, {
-				a = pa.UserId, b = pb.UserId, moved = moved, at = os.time(), status = "committed",
-			}, { pa.UserId, pb.UserId })
-		end)
-	end)
-end
-
-local function startCountdown(trade: Trade)
-	trade.state = "Countdown"
-	trade.countdownToken += 1
-	local token = trade.countdownToken
-	snapshot(trade)
-	task.delay(CONFIRM_COUNTDOWN, function()
-		-- Only proceed if nothing changed during the countdown
-		if trade.countdownToken == token and trade.state == "Countdown" then
-			trade.state = "Open" -- now waiting for final confirms
-			snapshot(trade)
-		end
-	end)
+	task.spawn(pcall, Journal.SetAsync, Journal, trade.id,
+		{ a = pa.UserId, b = pb.UserId, moved = moved, at = os.time() }, { pa.UserId, pb.UserId })
 end
 
 TradeRequest.OnServerEvent:Connect(function(requester: Player, target: unknown)
-	if throttle(requester, 1) then return end
-	if typeof(target) ~= "Instance" or not (target :: Instance):IsA("Player") then return end
+	if throttled(requester, 1) or typeof(target) ~= "Instance" or not (target :: Instance):IsA("Player") then return end
 	local tp = target :: Player
-	if tp == requester or tp.Parent ~= Players then return end
-	if tradesByPlayer[requester] or tradesByPlayer[tp] then return end
+	if tp == requester or tp.Parent ~= Players or trades[requester] or trades[tp] then return end
 	if not Data.GetProfileData(requester) or not Data.GetProfileData(tp) then return end
-
-	-- If target already requested us: accept => open trade
-	local mine = pendingRequests[requester]
-	if mine and mine[tp] and mine[tp] > os.clock() then
-		mine[tp] = nil
-		local trade: Trade = {
-			id = HttpService:GenerateGUID(false),
+	local incoming = requests[requester]
+	if incoming and (incoming[tp] or 0) > os.clock() then -- tp asked us first: accept => open
+		incoming[tp] = nil
+		local trade: Trade = { id = HttpService:GenerateGUID(false), state = "Open", token = 0, countdownDone = false,
 			a = { player = requester, items = {}, ready = false, confirmed = false },
-			b = { player = tp, items = {}, ready = false, confirmed = false },
-			state = "Open", countdownToken = 0,
-		}
-		tradesByPlayer[requester] = trade
-		tradesByPlayer[tp] = trade
-		snapshot(trade)
-		return
+			b = { player = tp, items = {}, ready = false, confirmed = false } }
+		trades[requester], trades[tp] = trade, trade
+		return push(trade)
 	end
-	pendingRequests[tp] = pendingRequests[tp] or {}
-	pendingRequests[tp][requester] = os.clock() + REQUEST_EXPIRY
+	requests[tp] = requests[tp] or {}
+	requests[tp][requester] = os.clock() + REQUEST_TTL
 	TradeUpdate:FireClient(tp, { incomingFrom = requester.UserId })
 end)
 
 TradeAction.OnServerEvent:Connect(function(player: Player, action: unknown, arg: unknown)
-	if throttle(player, 0.15) then return end
-	if type(action) ~= "string" then return end
-	local trade = tradesByPlayer[player]
-	if not trade or trade.state == "Committing" or trade.state == "Done" or trade.state == "Cancelled" then return end
-	local me, other = sideOf(trade, player)
+	local trade = trades[player]
+	if throttled(player, 0.15) or type(action) ~= "string" or not trade or trade.state ~= "Open" then return end
+	local me = if trade.a.player == player then trade.a else trade.b
 	local data = Data.GetProfileData(player)
 	if not data then return end
 
-	if action == "Add" then
-		if type(arg) ~= "string" or #arg > 64 then return end
-		local count = 0
-		for _ in me.items do count += 1 end
-		if count >= MAX_ITEMS_PER_SIDE or me.items[arg] then return end
-		if not itemTradable(data, arg) then return end
+	if action == "Add" and type(arg) == "string" and not me.items[arg] then
+		local n = 0
+		for _ in me.items do n += 1 end
+		if n >= MAX_ITEMS or not tradable(data, arg) then return end
 		me.items[arg] = true
 		resetFlags(trade)
-	elseif action == "Remove" then
-		if type(arg) ~= "string" or not me.items[arg] then return end
+	elseif action == "Remove" and type(arg) == "string" and me.items[arg] then
 		me.items[arg] = nil
 		resetFlags(trade)
-	elseif action == "Ready" then
-		if type(arg) ~= "boolean" then return end
-		me.ready = arg
-		me.confirmed = false
-		other.confirmed = false
-		if trade.a.ready and trade.b.ready then
-			startCountdown(trade)
-			return
-		elseif trade.state == "Countdown" then
-			resetFlags(trade)
+	elseif action == "Ready" and type(arg) == "boolean" then
+		if not arg then resetFlags(trade) else me.ready = true end
+		if trade.a.ready and trade.b.ready and not trade.countdownDone then
+			trade.token += 1
+			local token = trade.token
+			task.delay(COUNTDOWN, function() -- confirm unlocks only if nothing changed meanwhile
+				if trade.token == token and trade.state == "Open" then
+					trade.countdownDone = true
+					push(trade)
+				end
+			end)
 		end
 	elseif action == "Confirm" then
-		-- Only valid after both ready AND countdown finished (state back to "Open" with ready flags)
-		if not (trade.a.ready and trade.b.ready) or trade.state ~= "Open" then return end
+		if not (trade.a.ready and trade.b.ready and trade.countdownDone) then return end
 		me.confirmed = true
-		if trade.a.confirmed and trade.b.confirmed then
-			commit(trade)
-			return
-		end
+		if trade.a.confirmed and trade.b.confirmed then return commit(trade) end
 	elseif action == "Cancel" then
-		endTrade(trade, "Cancelled")
-		return
+		return finish(trade, "Cancelled")
 	else
 		return
 	end
-	snapshot(trade)
+	push(trade)
 end)
 
 Players.PlayerRemoving:Connect(function(p)
-	local trade = tradesByPlayer[p]
-	if trade and trade.state ~= "Committing" then endTrade(trade, "Cancelled") end
-	pendingRequests[p] = nil
-	lastAction[p] = nil
-	for _, reqs in pendingRequests do reqs[p] = nil end
+	local trade = trades[p]
+	if trade and trade.state == "Open" then finish(trade, "Cancelled") end
+	requests[p], lastAction[p] = nil, nil
+	for _, r in requests do r[p] = nil end
 end)
 ```
 
@@ -2855,75 +2037,41 @@ Why it's safe:
 --!strict
 -- ServerScriptService/Leaderboards/GlobalBoard.server.luau
 local Players = game:GetService("Players")
-local DataStoreService = game:GetService("DataStoreService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local HttpService = game:GetService("HttpService")
+local board = game:GetService("DataStoreService"):GetOrderedDataStore("Wins_AllTime_v1")
 
-local board = DataStoreService:GetOrderedDataStore("Wins_AllTime_v1")
-local TOP_N = 50
-local REFRESH = 90 -- seconds; reads are budgeted, so never refresh per player
-
--- In-session leaderstats (the built-in player list leaderboard)
-Players.PlayerAdded:Connect(function(p)
-	local ls = Instance.new("Folder")
-	ls.Name = "leaderstats"
-	local wins = Instance.new("IntValue")
-	wins.Name = "Wins"
-	wins.Value = 0 -- load from your profile
-	wins.Parent = ls
-	ls.Parent = p
-end)
-
--- Write: on a throttle and on leave. Values must be integers.
-local dirty: { [number]: number } = {}
-local function markWins(player: Player, wins: number)
-	dirty[player.UserId] = math.floor(wins)
+local function winsOf(p: Player): number?
+	local ls = p:FindFirstChild("leaderstats") -- the in-session player-list board (IntValue "Wins")
+	local v = ls and ls:FindFirstChild("Wins") :: IntValue?
+	return v and v.Value
 end
-Players.PlayerRemoving:Connect(function(p)
-	local ls = p:FindFirstChild("leaderstats")
-	local w = ls and ls:FindFirstChild("Wins") :: IntValue?
-	if w then markWins(p, w.Value) end
-end)
 
-task.spawn(function()
-	while true do
-		task.wait(60)
-		for _, p in Players:GetPlayers() do
-			local w = p:FindFirstChild("leaderstats") and p.leaderstats:FindFirstChild("Wins") :: IntValue?
-			if w then markWins(p, w.Value) end
-		end
-		for userId, value in dirty do
-			pcall(function() board:SetAsync(tostring(userId), value) end)
-			dirty[userId] = nil
-			task.wait(0.2)
-		end
-	end
-end)
+local function write(p: Player) -- values must be integers
+	local w = winsOf(p)
+	if w then pcall(board.SetAsync, board, tostring(p.UserId), math.floor(w)) end
+end
+Players.PlayerRemoving:Connect(write)
 
--- Read: cache top N in a replicated value for SurfaceGui/ScreenGui clients
-local Cache = Instance.new("StringValue")
+local Cache = Instance.new("StringValue") -- clients render this JSON on a SurfaceGui
 Cache.Name = "GlobalWinsTop"
-Cache.Parent = ReplicatedStorage
+Cache.Parent = game:GetService("ReplicatedStorage")
 
-task.spawn(function()
-	while true do
-		local ok, pages = pcall(function()
-			return board:GetSortedAsync(false, TOP_N) -- descending, pagesize ≤ 100
-		end)
-		if ok and pages then
-			local rows = {}
-			for rank, entry in pages:GetCurrentPage() do
-				table.insert(rows, { rank = rank, userId = tonumber(entry.key), value = entry.value })
-			end
-			Cache.Value = game:GetService("HttpService"):JSONEncode(rows)
+while true do
+	for _, p in Players:GetPlayers() do write(p) task.wait(0.2) end -- throttled writes
+	local ok, pages = pcall(board.GetSortedAsync, board, false, 50) -- descending, pagesize ≤ 100
+	if ok and pages then
+		local rows = {}
+		for rank, e in pages:GetCurrentPage() do
+			table.insert(rows, { rank = rank, userId = tonumber(e.key), value = e.value })
 		end
-		task.wait(REFRESH)
+		Cache.Value = HttpService:JSONEncode(rows)
 	end
-end)
+	task.wait(90) -- reads are budgeted: refresh rarely, never per player
+end
 ```
 
-- For "weekly" boards, version the key name by week (`"Wins_W" .. os.date("!%Y%W")`).
-- Resolve names on the client with `Players:GetNameFromUserIdAsync` (cached, with `pcall`), or on the server once per refresh.
-- For leaderboards that update in real time across servers, mirror into a `MemoryStoreSortedMap` (`SetAsync(key, value, expiration, sortKey)` and `GetRangeAsync(Enum.SortDirection.Descending, n)`), and persist to an OrderedDataStore periodically.
+- Weekly boards: version the key per week (`"Wins_W" .. os.date("!%Y%W")`). Resolve names with `Players:GetNameFromUserIdAsync` (`pcall`, cached).
+- For real-time cross-server boards, mirror into a `MemoryStoreSortedMap` (`SetAsync(key, value, expiration, sortKey)` / `GetRangeAsync(Enum.SortDirection.Descending, n)`), and persist to the OrderedDataStore periodically.
 
 ---
 
@@ -2933,38 +2081,30 @@ Limits (subject to change): message ≤ **1 kB**. Per server, `600 + 240 × play
 
 ```lua
 --!strict
--- Global event: "Double XP for 15 minutes" triggered by an admin in any server
+-- Global event (e.g. "Double XP for 15 min"), triggered from any server
 local MessagingService = game:GetService("MessagingService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
-local TOPIC = "GlobalEvents"
-local Events = ReplicatedStorage:FindFirstChild("GlobalEvents") or Instance.new("Configuration")
+local Events = Instance.new("Configuration") -- clients read attributes
 Events.Name = "GlobalEvents"
-Events.Parent = ReplicatedStorage
+Events.Parent = game:GetService("ReplicatedStorage")
+local TOPIC = "GlobalEvents"
 
 local function applyEvent(data: any)
-	if type(data) ~= "table" or type(data.kind) ~= "string" then return end
-	if data.kind == "DoubleXP" and type(data.endsAt) == "number" then
-		Events:SetAttribute("DoubleXPEndsAt", data.endsAt) -- clients compare to GetServerTimeNow()
-	elseif data.kind == "BossSpawn" then
-		-- spawn a world boss in every server
+	if type(data) == "table" and data.kind == "DoubleXP" and type(data.endsAt) == "number" then
+		Events:SetAttribute("DoubleXPEndsAt", data.endsAt) -- compare to GetServerTimeNow()
 	end
 end
 
 task.spawn(function()
-	local ok, err = pcall(function()
-		MessagingService:SubscribeAsync(TOPIC, function(message)
-			applyEvent(message.Data) -- message.Sent is the publish timestamp
-		end)
+	local ok, err = pcall(MessagingService.SubscribeAsync, MessagingService, TOPIC, function(message)
+		applyEvent(message.Data) -- message.Sent = publish timestamp; the publishing server receives it too
 	end)
-	if not ok then warn("GlobalEvents subscribe failed:", err) end
+	if not ok then warn("Subscribe failed:", err) end
 end)
 
 local GlobalEvents = {}
 function GlobalEvents.Broadcast(kind: string, durationSec: number)
 	local data = { kind = kind, endsAt = workspace:GetServerTimeNow() + durationSec }
-	local ok = pcall(function() MessagingService:PublishAsync(TOPIC, data) end)
-	if not ok then applyEvent(data) end -- at least apply locally
+	if not pcall(MessagingService.PublishAsync, MessagingService, TOPIC, data) then applyEvent(data) end
 end
 return GlobalEvents
 ```
@@ -2983,123 +2123,85 @@ Exploiters control their client completely: they can fire any remote with any ar
 --!strict
 -- ServerScriptService/AntiCheat/MovementCheck.server.luau
 local Players = game:GetService("Players")
+local INTERVAL, TOLERANCE, FLY_LIMIT, MAX_STRIKES = 0.5, 1.4, 4, 6
 
-local CHECK_INTERVAL = 0.5
-local SPEED_TOLERANCE = 1.4   -- allow 40% over legal speed (lag bursts)
-local MAX_STRIKES = 6
-local FLY_TIME_LIMIT = 4      -- seconds airborne without a legit reason
-
-type Track = { lastPos: Vector3, lastT: number, strikes: number, airborneSince: number?, lastSafe: CFrame }
+type Track = { pos: Vector3, t: number, strikes: number, airSince: number?, safe: CFrame }
 local tracks: { [Player]: Track } = {}
+local down = RaycastParams.new()
+down.FilterType = Enum.RaycastFilterType.Exclude
 
 local function legalSpeed(char: Model, hum: Humanoid): number
-	local s = hum.WalkSpeed
-	if char:GetAttribute("DashingUntil") and (char:GetAttribute("DashingUntil") :: number) > os.clock() then s = math.max(s, 80) end
-	if hum.SeatPart then s = math.max(s, 150) end -- vehicle; validate vehicle separately
-	return s
+	if (char:GetAttribute("DashingUntil") or 0) > os.clock() or (char:GetAttribute("KnockbackUntil") or 0) > os.clock() then
+		return 90
+	end
+	return if hum.SeatPart then 150 else hum.WalkSpeed -- validate vehicles separately
 end
 
-local downParams = RaycastParams.new()
-downParams.FilterType = Enum.RaycastFilterType.Exclude
-
-task.spawn(function()
-	while true do
-		task.wait(CHECK_INTERVAL)
-		for _, p in Players:GetPlayers() do
-			local char = p.Character
-			local hum = char and char:FindFirstChildOfClass("Humanoid")
-			local root = char and char:FindFirstChild("HumanoidRootPart") :: BasePart?
-			if not (char and hum and root) or hum.Health <= 0 then tracks[p] = nil continue end
-			local t = os.clock()
-			local tr = tracks[p]
-			if not tr or char:GetAttribute("ServerTeleported") then
-				char:SetAttribute("ServerTeleported", nil) -- your own teleports set this flag
-				tracks[p] = { lastPos = root.Position, lastT = t, strikes = 0, airborneSince = nil, lastSafe = root.CFrame }
-				continue
-			end
-			local dt = t - tr.lastT
-			local horiz = (root.Position - tr.lastPos) * Vector3.new(1, 0, 1)
-			local speed = horiz.Magnitude / math.max(dt, 1e-3)
-			local suspicious = speed > legalSpeed(char, hum) * SPEED_TOLERANCE + 4
-
-			-- Fly: airborne too long with no downward progress
-			downParams.FilterDescendantsInstances = { char }
-			local ground = workspace:Raycast(root.Position, Vector3.new(0, -(hum.HipHeight + 6), 0), downParams)
-			if ground or hum.SeatPart or hum:GetState() == Enum.HumanoidStateType.Swimming then
-				tr.airborneSince = nil
-				if not suspicious then tr.lastSafe = root.CFrame end
-			else
-				tr.airborneSince = tr.airborneSince or t
-				local falling = root.AssemblyLinearVelocity.Y < -5
-				if t - tr.airborneSince > FLY_TIME_LIMIT and not falling then suspicious = true end
-			end
-
-			if suspicious then
-				tr.strikes += 1
-				-- Rubber-band rather than kick: cheap, and harmless for lagging legit players
-				root.CFrame = tr.lastSafe
-				char:SetAttribute("ServerTeleported", true)
-				if tr.strikes >= MAX_STRIKES then
-					warn(("[AC] %s movement strikes=%d speed=%.1f"):format(p.Name, tr.strikes, speed))
-					-- log to analytics/datastore; kick only on repeated, extreme violations
-				end
-			else
-				tr.strikes = math.max(0, tr.strikes - 0.25)
-			end
-			tr.lastPos, tr.lastT = root.Position, t
-		end
-	end
-end)
 Players.PlayerRemoving:Connect(function(p) tracks[p] = nil end)
+while true do
+	task.wait(INTERVAL)
+	for _, p in Players:GetPlayers() do
+		local char = p.Character
+		local hum = char and char:FindFirstChildOfClass("Humanoid")
+		local root = char and char:FindFirstChild("HumanoidRootPart") :: BasePart?
+		if not char or not hum or not root or hum.Health <= 0 then tracks[p] = nil continue end
+		local t, tr = os.clock(), tracks[p]
+		if not tr or char:GetAttribute("ServerTeleported") then -- your own teleports set this flag
+			char:SetAttribute("ServerTeleported", nil)
+			tracks[p] = { pos = root.Position, t = t, strikes = 0, airSince = nil, safe = root.CFrame }
+			continue
+		end
+		local speed = ((root.Position - tr.pos) * Vector3.new(1, 0, 1)).Magnitude / math.max(t - tr.t, 1e-3)
+		local bad = speed > legalSpeed(char, hum) * TOLERANCE + 4
+
+		down.FilterDescendantsInstances = { char }
+		if workspace:Raycast(root.Position, Vector3.new(0, -(hum.HipHeight + 6), 0), down) or hum.SeatPart
+			or hum:GetState() == Enum.HumanoidStateType.Swimming then
+			tr.airSince = nil
+			if not bad then tr.safe = root.CFrame end
+		else
+			tr.airSince = tr.airSince or t
+			if t - (tr.airSince :: number) > FLY_LIMIT and root.AssemblyLinearVelocity.Y > -5 then bad = true end
+		end
+
+		if bad then
+			tr.strikes += 1
+			root.CFrame = tr.safe -- rubber-band: harmless for laggy legit players
+			char:SetAttribute("ServerTeleported", true)
+			if tr.strikes >= MAX_STRIKES then
+				warn(("[AC] %s strikes=%d speed=%.1f"):format(p.Name, tr.strikes, speed)) -- log; kick only if extreme
+			end
+		else
+			tr.strikes = math.max(0, tr.strikes - 0.25)
+		end
+		tr.pos, tr.t = root.Position, t
+	end
+end
 ```
 
-Caveats: setting a client-owned root's `CFrame` from the server does replicate, but the client can ignore it, which is why strikes are logged. Allowlist launch pads, knockback (`KnockbackUntil` attribute), vehicles, and server teleports. Under Server Authority, movement is server-simulated and this whole class of cheat disappears.
+The server can set a client-owned root's `CFrame`, but a cheating client can ignore it, which is why strikes get logged. Allowlist launch pads, knockback (`KnockbackUntil`), vehicles and server teleports. Under Server Authority, movement is server-simulated and this whole class of cheat goes away.
 
 ### 22.2 The combat checklist
 
 | Threat | Server defense |
 |---|---|
-| Remote spam / macro | Per-player sliding-window rate limit per remote (§6). Drop excess silently. Log extreme rates. |
-| Cooldown bypass | Cooldowns only on the server (`os.clock()`). Commit the cost *before* any yield. |
-| Infinite range / kill aura | Server hitboxes from server positions. Distance ≤ range + lag pad. LOS raycast. One hit per target per swing. |
-| Damage edits | The client never sends damage. Damage comes from server weapon data plus validated modifiers. `DamageService` rejects NaN, inf, and absurd values. |
-| Fire-rate hacks | Token-bucket fire gate (§8.4). Server-side ammo and reload. |
-| Silent aim / magic bullets | Origin within N studs of the server head. No wall between head and origin. Rewound-target validation with tolerance. Track headshot ratio statistics. |
-| Teleport / speed / fly | §22.1 movement check. Server Authority for competitive games. |
-| Spoofed arguments | `typeof` every argument. Check NaN (`x ~= x`). Length-limit strings. Check Instances are the expected class *and* in an expected location (`target:IsDescendantOf(workspace.Enemies)`). |
-| Godmode via Humanoid deletion | Health lives on the server Humanoid (or an attribute). If the character is missing parts server-side, respawn it. |
-| Trade or inventory dupes | Unique item ids, session locking, the two-phase trade (§19), and audit logs. |
-| Teleport-data tampering | `TeleportData` is client-carried. Never derive rewards or permissions from it. Use MemoryStore or DataStore keyed by `matchId`. |
-| Exploiting `Touched` on client-owned parts | Don't use client-owned parts as damage sources. |
+| Remote spam / macros | Sliding-window rate limit per remote per player. Drop silently and log extremes. |
+| Cooldown bypass | Server-clock cooldowns. Commit the cost before any yield. |
+| Kill aura / reach | Server hitboxes from server positions, range + lag pad, LOS raycast, one hit per target per swing. |
+| Damage or fire-rate edits | The client never sends damage. Token-bucket fire gate, server ammo and reload. `DamageService` rejects NaN and absurd values. |
+| Silent aim | Origin near the server head, no wall between head and origin, rewound-target validation, headshot-ratio stats. |
+| Spoofed arguments | `typeof` everything, NaN checks (`x ~= x`), string length caps, Instances checked for class *and* location (`IsDescendantOf(workspace.Enemies)`). |
+| Dupes | Unique item ids, session locking, the two-phase trade, audit logs. |
+| Teleport-data tampering | `TeleportData` is client-carried. Never base rewards or permissions on it. Key server data by `matchId` in MemoryStore or DataStore. |
+| Client-owned damage parts | Never use `Touched` on client-owned parts as a damage source. |
 
-**Logging over banning:** keep per-player anomaly counters (speed strikes, rejected remotes, impossible hits) and send them to your analytics or a DataStore. Ban only on overwhelming evidence. Lag produces many false positives.
+**Log, don't ban rashly:** keep per-player anomaly counters and send them to analytics. Lag causes false positives.
 
 ---
 
-## 23. Putting it together: recommended file layout
+## 23. File layout
 
-```
-ReplicatedStorage/
-  Remotes/  (MeleeAttack, MeleeBlock, MeleeHitConfirm[U], UseAbility, AbilityFeedback, Knockback,
-             ProjectileFire, ProjectileReplicate[U], ProjectileImpact[U], Queue, QueueStatus,
-             TradeRequest, TradeAction, TradeUpdate)
-  Shared/   (AbilityDefs, MeleeDefs, ItemDefs, Ballistics)
-  Inputs/   (PlayContext, MenuContext — IAS)
-ServerScriptService/
-  Combat/   (DamageService, StatusEffects, PositionHistory, ProjectileService, AbilityService, MeleeService, GunService)
-  Waves/    (WaveService)
-  Rounds/   (RoundService)
-  Matchmaking/ (Matchmaker — lobby place only)
-  Trading/  (TradeService)
-  Leaderboards/ (GlobalBoard)
-  AntiCheat/ (MovementCheck)
-ServerStorage/
-  Enemies/  (NPC templates)
-StarterPlayerScripts/
-  MeleeClient, GunClient, KnockbackClient, Spectate, InputSetup
-```
-
-`[U]` = `UnreliableRemoteEvent`. Create remotes in Studio, or with a server bootstrap script *before* other scripts `WaitForChild` them.
+`ReplicatedStorage`: `Remotes/` (create before anything calls `WaitForChild`; mark cosmetic ones as `UnreliableRemoteEvent`), `Shared/` (AbilityDefs, MeleeDefs, ItemDefs, Ballistics), `Inputs/` (IAS contexts). `ServerScriptService`: `Combat/` (DamageService, StatusEffects, PositionHistory, ProjectileService, AbilityService, MeleeService, GunService), `Waves/`, `Rounds/`, `Matchmaking/` (lobby place only), `Trading/`, `Leaderboards/`, `AntiCheat/`. `ServerStorage/Enemies/`. `StarterPlayerScripts`: melee, gun, knockback and spectate clients.
 
 ---
 
