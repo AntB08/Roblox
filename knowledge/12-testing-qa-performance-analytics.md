@@ -250,7 +250,6 @@ describe("Wallet", function()
 		expect(function() wallet:trySpend(-5) end).toThrow("positive")
 	end)
 end)
-end)
 ```
 
 Note the dot-call syntax (`expect(x).toBe(y)`). `.never` replaces JavaScript's `.not`, because `not` is a reserved word in Luau.
