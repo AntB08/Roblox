@@ -2,7 +2,7 @@
 
 > Scope: what happens **after** a Roblox game ships. That means running updates and events, the config and feature-flag systems, codes, admin and moderation tooling, server restarts, data migration, community channels, player support, in-game social features, localization, accessibility, and designing for kids under Roblox's 2026 age-based account system. Monetization, launch marketing and analytics are covered in other chapters and are only cross-referenced here.
 >
-> Verified against the local creator-docs snapshot (`reference/creator-docs/content/en-us`) and Roblox newsroom/DevForum posts as of **2026-11-05**. Where something comes from community practice rather than official docs, this chapter says so.
+> Verified against the local creator-docs snapshot (`reference/creator-docs/content/en-us`) and Roblox newsroom/DevForum posts as of **2026-11-05**. Where something comes from community practice rather than official docs, this chapter says so. Claims that were first taken from search summaries or secondary press were re-checked against live primary sources on 2026-11-05 and are tagged **[official, verified 2026-11-05]** or **[could not verify]**; see the verification log at the end.
 
 ---
 
@@ -13,16 +13,16 @@
 3. **Use the built-in server restart for updates.** Creator Hub → Server management → **Restart Servers**, with "Restart only servers with outdated versions" and a delay of 1–60 minutes. Roblox now teleports players to updated servers on its own. Listen to `game.ServerRestartScheduled` to show a countdown and flush saves. A custom reserved-server "soft shutdown" is only a fallback.
 4. **Never trust the client** for codes, daily rewards, admin commands or event claims. Do all validation, time checks (`os.time()` on the server, in UTC) and writes on the server, with atomic `UpdateAsync`.
 5. **Version your player data** (`data.version = N`) and migrate it in one place when it loads. Take an Open Cloud **data store snapshot** before any update that changes the save format. Old versions are kept for 30 days.
-6. **Admin commands go through `TextChatCommand`.** Parsing `Player.Chatted` or `TextChatMessage.Text` stops working under platform-integrated chat, which becomes mandatory in **May 2027**. Check permissions on the server for every command, never let a moderator target someone of equal or higher rank, filter every broadcast string, and log every action.
-7. **No external links or handles inside the game.** Social links (Discord, X, YouTube…) may only appear on the game's details page, and only age-checked users aged 16+ can see them. In-game text may say "links on our game page" and nothing more specific.
+6. **Admin commands go through `TextChatCommand`.** Parsing `Player.Chatted` or `TextChatMessage.Text` stops working under platform-integrated chat: opt-in now, **all games auto-opted-in (with opt-out) in Feb 2027**, mandatory in **May 2027** [official, verified 2026-11-05: https://devforum.roblox.com/t/4948433]. Check permissions on the server for every command, never let a moderator target someone of equal or higher rank, filter every broadcast string, and log every action.
+7. **No external links or handles inside the game.** Social links (Discord, X, YouTube…) may only appear on the game's details page, and only age-checked users aged 16+ can see them (raised from 13+ on June 30, 2026) [official, verified 2026-11-05: https://about.roblox.com/community-standards ; https://devforum.roblox.com/t/4685717]. In-game text may say "links on our game page" and nothing more specific.
 8. **Codes:** normalize the input (trim, uppercase), rate-limit attempts, record redemptions atomically per user, and keep the code list server-side. Never put the list in ReplicatedStorage.
 9. **Daily rewards:** use UTC day indexes, make claims idempotent per day, show the "next reward in" timer, and be forgiving: offer a streak freeze or a one-day grace period, and use no shame or false-urgency copy.
 10. **Social prompts:** check `SocialService:CanSendGameInviteAsync()` before `PromptGameInvite()`. Send Experience Notifications only for personalized, actionable moments (13+, opt-in, at least 100 visits). Update announcements are capped at 60 characters, once every three days.
 11. **Localize from day one.** Keep `AutoLocalize` on, turn on Automatic Text Capture and "Use Translated Content", and send **keys and arguments** from server to client rather than finished English sentences. Never concatenate translated fragments; use `{param}` placeholders. Turn `AutoLocalize` off for names and player-made text.
 12. **Accessibility is a checklist, not an add-on.** Respect `GuiService.PreferredTextSize` (avoid `TextScaled` on body text), `PreferredTransparency` and `ReducedMotionEnabled`. Never rely on color or sound alone, add captions for important audio, support remapping, and keep touch targets at least 44 px.
-13. **Design for Roblox Kids (5–8) and Select (9–15) first.** Only Minimal/Mild-rated games reach Kids, and Moderate reaches Select. To reach under-16s you need a verified creator, 2FA, a completed questionnaire, a fee or Plus/Premium subscription, and 250 engaged-player plays in 60 days. Write for a second-grade reading level with icons, and add no open-ended social features for young players.
+13. **Design for Roblox Kids (5–8) and Select (9–15) first.** Only Minimal/Mild-rated games reach Kids, and Moderate reaches Select. To reach under-16s you need a verified creator, 2FA, a completed questionnaire, a fee or Plus/Premium subscription, and 250 engaged-player plays in 60 days (Roblox has announced a drop to 100 in November 2026; check Audience Reach) [official, verified 2026-11-05]. Write for a second-grade reading level with icons, and add no open-ended social features for young players.
 14. **Gate features by policy** with `PolicyService:GetPolicyInfoForPlayerAsync()`: paid random items, paid trading, content sharing, ads, endless feeds. Gate voice-dependent mechanics with `VoiceChatService:IsVoiceEnabledForUserIdAsync()`, and always provide a non-voice path.
-15. **Do not use Roblox Connect or call-invite APIs.** Connect was shut down on 2026-07-15, and `CanSendCallInviteAsync` returns false. Players use Party / Party Voice instead; read party membership with `Player.PartyId` and `SocialService:GetPartyAsync()`.
+15. **Do not use Roblox Connect or call-invite APIs.** The Connect calling APIs (`CanSendCallInviteAsync`, `PromptPhoneBook`, `PhoneBookPromptClosed`, `OnCallInviteInvoked`, `CallInviteStateChanged`) became unavailable on **2026-07-15**: call invites are marked ineligible and opening the phonebook shows an error [official, verified 2026-11-05: https://devforum.roblox.com/t/4684409]. Players use Party / Party Voice instead; read party membership with `Player.PartyId` and `SocialService:GetPartyAsync()`.
 
 ---
 
@@ -513,6 +513,7 @@ local TextService = game:GetService("TextService")
 local DataStoreService = game:GetService("DataStoreService")
 local ConfigService = game:GetService("ConfigService")
 local RunService = game:GetService("RunService")
+local GroupService = game:GetService("GroupService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local LEVEL = { Player = 0, Mod = 1, Admin = 2, Owner = 3 }
@@ -538,8 +539,13 @@ local function resolveLevel(player: Player): number
 	end
 	local lvl = SETTINGS.userOverrides[player.UserId] or LEVEL.Player
 	if SETTINGS.groupId ~= 0 then
+		-- Player:GetRankInGroupAsync is deprecated (players can hold several roles).
+		-- GroupService:GetRolesInGroupAsync returns { IsMember, Roles = { {Id, Name, Rank} } },
+		-- ordered highest role first.
 		local ok, rank = pcall(function()
-			return player:GetRankInGroupAsync(SETTINGS.groupId)
+			local info = GroupService:GetRolesInGroupAsync(player.UserId, SETTINGS.groupId)
+			local top = info.IsMember and info.Roles[1]
+			return if top then top.Rank else 0
 		end)
 		if ok then
 			for _, row in SETTINGS.rankToLevel do
@@ -882,11 +888,11 @@ Rules:
 
 | Channel | Use | Notes |
 |---|---|---|
-| **Roblox Community** (formerly "Groups"; renamed in late 2024; still "Groups" in Creator Hub and APIs) | Primary on-platform home: membership perks, group-owned game, roles that drive admin levels, **Forums** (launched for all community owners in 2025; Walls are read-only/retired) | Members can be rewarded in-game. Announcements reach members. |
+| **Roblox Community** (formerly "Groups"; renamed **Nov 21, 2024**; the creator-collaboration side is still "Groups" in Creator Hub and APIs) [official, verified 2026-11-05: https://devforum.roblox.com/t/3268307] | Primary on-platform home: membership perks, group-owned game, roles that drive admin levels, **Forums** (live for all community owners **Aug 21, 2025**; 13+ logged-in users; Walls went read-only **Dec 1, 2025** and were to be removed in early 2026, with no migration of Wall posts) [official, verified 2026-11-05: https://devforum.roblox.com/t/3892463] | Members can be rewarded in-game. Announcements reach members. |
 | **Discord server** | Core fans, bug reports, suggestions, leaks/teasers, code drops, testers | Off-platform: only linkable from the game page social links. Discord requires users to be 13+. |
 | **X / Twitter** | Codes, update teasers, like-goal codes | Traditional channel for Roblox codes. |
 | **YouTube (long + Shorts), TikTok** | Discovery via clips, trailers, devlogs | Biggest off-platform acquisition channel for Roblox games. |
-| **Roblox Moments** (announced RDC Sept 2025; beta for 13+) | In-Roblox short-form gameplay clip feed; viewers can jump into the game | Use `CaptureService` to let players record and share highlight moments. |
+| **Roblox Moments** (announced at RDC on Sept 5, 2025; beta, 13+, the Moments experience is rated Moderate; captured content is moderated before posting) [official, verified 2026-11-05: https://devforum.roblox.com/t/3919813] | In-Roblox short-form gameplay clip feed; viewers can jump into the game | Use `CaptureService` to let players record and share highlight moments. |
 
 Discord structure template:
 - **INFO:** #rules, #announcements (read-only), #update-log, #codes, #faq, #roles (self-assign ping roles: updates, events, codes)
@@ -900,7 +906,7 @@ Discord structure template:
 
 From the official docs:
 - Up to **three social links** per game, community or Creator Store asset can be added by creators who have **verified their age as 16+** (facial age estimation or government ID). Group-owned games need at least one age-verified 16+ collaborator. If all such collaborators leave, the links are deleted after 90 days.
-- **Only users who have verified as 16+ can see social links.** Most of your young audience never sees your Discord link. Plan community features that work **on Roblox**: Community membership, in-game announcements, events, update notifications.
+- **Only users who have verified as 16+ can see social links** (raised from 13+ on June 30, 2026, across profiles, game pages, Community pages and the Creator Store) [official, verified 2026-11-05: https://devforum.roblox.com/t/4685717]. Community Standards: no URLs or external links anywhere except the Social Links feature on game, group or user pages [official, verified 2026-11-05: https://about.roblox.com/community-standards]. `PolicyService`'s `AllowedExternalLinkReferences` now returns an empty list, so there is no sanctioned in-game link display [official, verified 2026-11-05: https://devforum.roblox.com/t/4079702]. Most of your young audience never sees your Discord link. Plan community features that work **on Roblox**: Community membership, in-game announcements, events, update notifications.
 - Links may appear **only on the game's details page**, never inside the game.
   - Allowed in-game: "Check out our social media links on our game's page", "Join us in our Community Server. Links on our game's page."
   - Not allowed: "Join our Discord discord.gg/abc", "Follow for merch on X.com/abc", "Send bug reports to abc@xyz.com".
@@ -983,7 +989,7 @@ end
 
 - Players can join friends from profiles and the Roblox app. When `player.FollowUserId ~= 0`, the player followed someone in. Spawn them near that friend and put them on the same team.
 - **Parties:** Roblox's Party feature, with Party Voice, lets friends travel together. `Player.PartyId`, `SocialService:GetPlayersByPartyId(partyId)` (same server) and `SocialService:GetPartyAsync(partyId)` (across servers, with PlaceId and JobId) let you **keep parties together**: put them on the same team, and use `TeleportService:TeleportPartyAsync` or `TeleportAsync` with all party members into the same reserved match. Test with Studio's **Party Simulator**.
-- **Roblox Connect** (avatar video calls) **was discontinued 2026-07-15**, including the developer call APIs (`CanSendCallInviteAsync` now returns false). Do not build on it.
+- **Roblox Connect calling APIs were sunset on 2026-07-15** (`CanSendCallInviteAsync`, `PromptPhoneBook`, `PhoneBookPromptClosed`, `OnCallInviteInvoked`, `CallInviteStateChanged`). Call invites are now marked ineligible, callbacks don't fire, and `PromptPhoneBook` shows players an error dialog. Roblox points developers to **Party Voice** instead [official, verified 2026-11-05: https://devforum.roblox.com/t/4684409]. That the consumer Connect video-calling product itself was shut down on the same date comes from secondary press **[could not verify from a primary source]**. Do not build on it either way.
 
 ### 4.3 Experience Notifications (out-of-game re-engagement)
 
@@ -1004,10 +1010,10 @@ end
 ### 4.5 TextChatService customization and safe chat
 
 - Use `TextChatService` (legacy chat is gone). You can customize the look with `ChatWindowConfiguration`, `ChatInputBarConfiguration` and `BubbleChatConfiguration`, plus channels (`TextChannel`) for team or guild chat and `TextChatCommand` for commands.
-- **Platform-integrated chat** (`TextChatService.PlatformIntegratedChat`, set in Studio only) is opt-in today and **required for all games from May 2027**. When it is enabled, Roblox renders the chat, `TextChatMessage.Text`, `Translation` and `PrefixText` return `""`, `OnIncomingMessage` callbacks are not invoked, custom chat UIs must use `TextChannelWindow` (one per channel; the Global channel can't be targeted), custom chat-wheel presets must move to **Quick Words**, and commands must use `TextChatCommand`. **Build new games to be compatible now.** Don't depend on chat tags/prefixes or on reading message text.
+- **Platform-integrated chat** (`TextChatService.PlatformIntegratedChat`, set in Studio only) is opt-in today; **all new and existing games are opted in automatically (with an opt-out) in Feb 2027**, and it is **required for all games from May 2027**. Native role badges replace prefixes in Feb 2027, and display-name colors/gradients become customizable in Nov 2026 [official, verified 2026-11-05: https://devforum.roblox.com/t/4948433]. When it is enabled, Roblox renders the chat, `TextChatMessage.Text`, `Translation` and `PrefixText` return `""`, `OnIncomingMessage` callbacks are not invoked, custom chat UIs must use `TextChannelWindow` (one per channel; the Global channel can't be targeted), custom chat-wheel presets must move to **Quick Words**, and commands must use `TextChatCommand`. **Build new games to be compatible now.** Don't depend on chat tags/prefixes or on reading message text.
 - **Quick Words:** Creator Hub → Configure → Chat → Quick Words. Up to 3 custom categories with 3–10 phrases each, each under 25 characters, written in English and automatically translated. They are reviewed against the preset guidelines and must be gameplay coordination ("Follow me", "Need healing"), not social or open-ended questions. This is the right communication tool for young and cross-age audiences.
-- **Chat is age-checked.** Since January 2026, Roblox requires an age check (facial age estimation or ID) to use chat worldwide. Users are placed in age bands (under 9, 9–12, 13–15, 16–17, 18–20, 21+) and generally chat only with the same or adjacent bands, while under-9s need parental consent. Assume **many players cannot chat with each other**. Game coordination must work through UI (pings, emotes, Quick Words, ready buttons), not chat. `TextChatService:CanUsersChatAsync(a, b)` tells you whether two users can chat.
-- **Any player-written text** you display (pet names, signs, guild names) must go through `TextService:FilterStringAsync` with the right Get… method, must not be a two-way communication channel, and needs at least a 1-minute rate limit on in-world writable surfaces.
+- **Chat is age-checked.** Since January 7, 2026 (early Dec 2025 in Australia, New Zealand and the Netherlands), Roblox requires an age check (facial age estimation or ID) to use chat worldwide [official, verified 2026-11-05: https://about.roblox.com/newsroom/2026/01/roblox-age-checks-required-to-chat ; https://about.roblox.com/newsroom/2025/11/roblox-requires-age-checks-limits-minor-and-adult-chat]. Users are placed in age bands (under 9, 9–12, 13–15, 16–17, 18–20, 21+) and by default chat only with the same or adjacent bands, while under-9s need parental consent and age-checked 13+ users can chat more widely with **Trusted Connections** [official, verified 2026-11-05, same sources]. Assume **many players cannot chat with each other**. Game coordination must work through UI (pings, emotes, Quick Words, ready buttons), not chat. `TextChatService:CanUsersChatAsync(a, b)` tells you whether two users can chat.
+- **Any player-written text** you display (pet names, signs, guild names) must go through `TextService:FilterStringAsync` with the right Get… method, must not be a two-way communication channel, and needs at least a 1-minute rate limit on in-world writable surfaces. Roblox is actively enforcing this: signs, bulletin boards, pet names, license plates, trading notes, announcement systems and admin-module messaging that let players hold a conversation outside `TextChatService` must be changed, removed, or limited to one update per minute, and continued violations can get the game suspended or removed [official, verified 2026-11-05: https://devforum.roblox.com/t/4948433]. Community Standards also list "failing to use required PolicyService and TextChatService APIs" and third-party kick/ban tools that bypass Roblox's Kick and Ban APIs as misuse of Roblox systems [official, verified 2026-11-05: https://about.roblox.com/community-standards].
 - `TextChatService.ChatTranslationEnabled` lets Roblox translate chat between languages. Leave it on.
 
 ---
@@ -1253,8 +1259,8 @@ Content labels: Minimal or Mild games reach Kids and Select. Moderate reaches Se
 2. Account verification: facial age estimation if under 18, government ID if 18+.
 3. 2-step verification.
 4. The full **Maturity & Compliance Questionnaire**, with a Minimal, Mild or Moderate result.
-5. Either an active Roblox Plus or Premium subscription for 2+ months, or a one-time refundable per-game fee. This is checked when you publish **or update** for all-ages audiences.
-6. **Evaluation:** the game first goes to age-checked 16+ users only. It needs **250 unique plays from highly engaged age-checked users within 60 days** plus a safety review, tracked on the **Audience Reach** dashboard. An optional **expedited review** costs a 50,000-Robux refundable fee per game.
+5. Either an active Roblox Plus or Premium subscription for 2+ months, or a one-time refundable 1,000-Robux per-game fee. This is checked when you publish **or update** for all-ages audiences; a lapsed subscription doesn't take a live game down. Creators who got the free 6-month Plus grant (about 100,000 of them) have it until **Nov 19, 2026**, and their publishing-fee waiver runs to **Dec 19, 2026** [official, verified 2026-11-05: https://devforum.roblox.com/t/4685717 ; https://devforum.roblox.com/t/4567894].
+6. **Evaluation:** the game first goes to age-checked 16+ users only. It needs **250 unique plays from highly engaged age-checked users within 60 days** plus a safety review, tracked on the **Audience Reach** dashboard. An optional **expedited review** costs a 50,000-Robux refundable fee per game (it launched at 100,000 on June 16, 2026 and was halved on Sept 11, 2026; reviews take about 48 hours). Threshold history: entry bar 500 → **250 on Aug 19, 2026**, with a drop to **100 announced for November 2026**; the bar to *stay* eligible is 25 highly engaged players over 60 days [official, verified 2026-11-05: live https://create.roblox.com/docs/production/publishing/kids-and-select ; https://devforum.roblox.com/t/4820164 ; https://devforum.roblox.com/t/4865780 ; https://devforum.roblox.com/t/4930524]. Since Oct 2026 you can also invite up to 10 age-checked friends of similar age as **early testers** before publishing, and a single-question path ("Content May Vary") reaches 16+ without the full questionnaire [official, verified 2026-11-05: https://devforum.roblox.com/t/4930524].
 
 Implications for the bot:
 - **Answer the questionnaire fully and honestly**, based on the most extreme content a player can encounter. Misrepresentation leads to moderation.
@@ -1335,10 +1341,35 @@ Web (accessed 2026-11-05; treated as data):
 - Roblox Newsroom, "Roblox requires age checks, limits minor and adult chat" (Nov 2025): https://about.roblox.com/newsroom/2025/11/roblox-requires-age-checks-limits-minor-and-adult-chat
 - PC Gamer coverage of age bands: https://www.pcgamer.com/gaming-industry/roblox-to-make-facial-age-checks-mandatory-to-access-any-chat-features-and-will-put-common-sense-limits-on-the-age-ranges-users-can-chat-within
 - DevForum, "Introducing Roblox Communities": https://devforum.roblox.com/t/introducing-roblox-communities/3268307
-- Community walls retired (2026): https://piunikaweb.com/2026/04/01/roblox-community-walls-retired-end-of-march/
+- Forums live for all community owners / Walls read-only Dec 1, 2025 (official): https://devforum.roblox.com/t/3892463 ; Community walls retired (secondary, 2026): https://piunikaweb.com/2026/04/01/roblox-community-walls-retired-end-of-march/
 - Roblox Moments announcement (Sept 2025): https://devforum.roblox.com/t/roblox-moments-a-new-era-of-user-generated-discovery-for-experiences-and-gameplay-is-here/3919813 ; https://about.roblox.com/newsroom/2025/09/roblox-moments-user-generated-discovery ; https://techcrunch.com/2025/09/05/roblox-announces-short-form-video-feed-for-gameplay-clips-new-ai-tools-for-creators-and-more
-- Roblox Connect shutdown (July 2026): https://www.gadgetpilipinas.net/2026/07/roblox-ends-connect-avatar/ ; https://www.prismnews.com/news/roblox-to-shut-down-avatar-video-calling-service-connect
+- Roblox Connect calling APIs sunset (official, June 15, 2026): https://devforum.roblox.com/t/4684409 ; consumer-product shutdown (secondary only): https://www.gadgetpilipinas.net/2026/07/roblox-ends-connect-avatar/ ; https://www.prismnews.com/news/roblox-to-shut-down-avatar-video-calling-service-connect
 - Real-time translation API announcement: https://devforum.roblox.com/t/introducing-the-real-time-translation-api/3550206
 - Regional DAU growth (Q3 2025): https://gamesbeat.com/roblox-had-151m-daily-active-users-in-q3-2025/
 - Language priority (community data, anecdotal): https://devforum.roblox.com/t/psa-which-languages-should-you-translate-to/1419183 ; https://devforum.roblox.com/t/what-are-the-top-languages-to-translate-my-game-to/380906
 - Rewarding likes/favorites (community guidance): https://devforum.roblox.com/t/is-rewarding-players-for-liking-favoriting-a-game-allowed/2926286
+- Added in the 2026-11-05 verification pass (all primary): Community Standards https://about.roblox.com/community-standards (saved at `.sources/policy/community-standards.html`); Important TextChatService Updates (platform-integrated chat timeline) https://devforum.roblox.com/t/4948433 ; Age Checks to Access Chat, Studio Team Create, and Links https://devforum.roblox.com/t/4079702 ; Kids and Select Global Launch (expedited review, social links 16+ from June 30) https://devforum.roblox.com/t/4685717 ; Highly Engaged Player Threshold Drops to 250 https://devforum.roblox.com/t/4820164 ; Making Publishing Easier https://devforum.roblox.com/t/4865780 ; A Simpler Path to Publish, Plus Invite Early Testers https://devforum.roblox.com/t/4930524 ; Introducing Roblox Plus (Oct 30, 2026 update on grant/fee waiver) https://devforum.roblox.com/t/4567894 ; Live Kids & Select doc https://create.roblox.com/docs/production/publishing/kids-and-select
+
+---
+
+## Verification log (2026-11-05)
+
+Second-hand claims (search summaries, secondary press) were re-checked against staff DevForum posts, create.roblox.com, the about.roblox.com newsroom, and the saved Community Standards page.
+
+**Corrected**
+- Roblox Connect: "Connect was shut down 2026-07-15 and `CanSendCallInviteAsync` returns false" → what's officially confirmed is that the **Connect calling APIs** (five SocialService members) became unavailable on 2026-07-15: invites are marked ineligible and `PromptPhoneBook` shows an error. The consumer-product shutdown is only in secondary press **[could not verify]**.
+- Platform-integrated chat: "opt-in now, mandatory May 2027" → added the intermediate step: **auto opt-in for all games, with an opt-out, in Feb 2027**, then mandatory in May 2027. Also added role badges (Feb 2027) and the active enforcement against chat-like UGC text (signs, boards, pet names and so on: one update per minute).
+- Social links: confirmed 16+, and added that it was **raised from 13+ on June 30, 2026**; `AllowedExternalLinkReferences` now returns an empty list.
+- Roblox Communities: "renamed late 2024" → **Nov 21, 2024**. Forums: "2025" → **Aug 21, 2025**. Walls: read-only **Dec 1, 2025**, removal planned for early 2026.
+- Kids/Select: added the threshold history (500 → 250 on Aug 19, 2026; 100 announced for Nov 2026; stay bar 25), the expedited-review history (100k → 50k on Sept 11, 2026), the free-Plus grant end (Nov 19, 2026) and fee waiver (Dec 19, 2026), early testers, and the single-question 16+ path.
+
+**Confirmed ([official, verified 2026-11-05])**
+- Chat age check: global from Jan 7, 2026 (AU/NZ/NL from early Dec 2025); age bands Under 9 / 9–12 / 13–15 / 16–17 / 18–20 / 21+; adjacent-band default; under-9 parental consent.
+- Roblox Moments: announced at RDC Sept 5, 2025; beta; 13+.
+- Kids/Select requirements: verified creator (FAE under 18, ID 18+), 2SV, 1,000 R$ fee or 2+ months of Plus/Premium, 250 plays in 60 days, 50,000 R$ expedited review (live docs).
+- Community Standards: off-platform links only via Social Links (16+ age-checked); required use of PolicyService, TextChatService and the Ban API.
+
+**Still unverified**
+- The consumer Roblox Connect product shutdown date (only the developer-API sunset is official).
+- The exact date Community Walls were fully removed (secondary source says end of March 2026).
+

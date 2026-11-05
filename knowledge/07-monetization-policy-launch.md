@@ -4,7 +4,10 @@
 > (`reference/creator-docs`, last commit 2026-11-05) and were checked against 2025–2026
 > newsroom and DevForum coverage. Roblox changes numbers often (rates, fees, thresholds). Before
 > you quote a number to the user as current, run `scripts/kb_search.sh "<topic>" docs`.
-> Items marked **[UNCERTAIN]** could not be confirmed from a primary source.
+> Items marked **[UNCERTAIN]** or **[could not verify]** could not be confirmed from a primary source.
+> Items marked **[official, verified 2026-11-05]** were re-checked on that date against live primary
+> sources (Roblox-staff DevForum announcements, create.roblox.com, about.roblox.com newsroom, the saved
+> Community Standards page). See the verification log at the end of this chapter.
 
 ---
 
@@ -34,7 +37,7 @@
 
 | Method | What it is | Creator gets | Key constraints |
 |---|---|---|---|
-| **Passes** (game passes) | One-time purchase of a permanent perk | 70% of price (Robux) | Must belong to the current game. **Cross-game pass/product sales were disabled ~May 29–30, 2026.** Listed passes can be sold outside the game (Home, search, post-Robux-purchase page). |
+| **Passes** (game passes) | One-time purchase of a permanent perk | 70% of price (Robux) | Must belong to the current game. **Cross-game pass/product sales were disabled on May 29, 2026** (you can't sell Game A's passes/products inside Game B, even under the same owner; affiliate sales for them also ended; selling them on your own experience details page and selling avatar items across games are unaffected) [official, verified 2026-11-05: https://devforum.roblox.com/t/4618396]. Listed passes can be sold outside the game (Home, search, post-Robux-purchase page). |
 | **Developer products** | Repeatable purchases (currency, boosts, revives) | 70% | Needs a correct receipt handler. Listed products can sell outside the game **only if** your ProcessReceipt passes Roblox's ongoing checks. |
 | **Subscriptions** (in-game) | Auto-renewing monthly perk | **Robux-priced:** 70% every month (min 49 R$). **Local currency** ($2.99/4.99/7.99/9.99/14.99): 70% the first month, **100% from month 2** (paid in Robux at $0.01 = 1 R$) | Robux price can change only once every 60 days, and increases need 30 days' notice. Local-currency prices can't be changed. Check `IsEligibleToPurchaseSubscription`. |
 | **Private servers** (paid) | Monthly Robux fee for a private server | 70% | Changing the price **cancels all active subscriptions**. Can't be combined with paid access. Roblox Plus subscribers get paid private servers free, and you earn up to 100 R$/subscriber/month (needs 60+ min there). |
@@ -43,13 +46,13 @@
 | **Avatar creation tokens** | Players create and buy avatar items in your game (`AvatarCreationService`) | Marketplace commissions as both creator and game owner | Requires a Creation Advance and fee, plus Marketplace creator requirements (ID-verified with Plus/Premium). |
 | **Immersive ads** | Billboard (image/video) and portal ad units | Per impression/teleport. Paid on the 25th of the following month | Publisher must be 13+ and ID-verified with 2FA. Questionnaire must be approved. Check `AreAdsAllowed`. |
 | **Rewarded video ads** | Opt-in full-screen video (6–30 s) for an in-game reward | EPM × impressions | Reward must be a **developer product**, not random, not Robux. Requires a public game with 2k+ unique visitors/month and ID verification. Shown only to users 13+. |
-| **Creator Rewards** | Engagement and audience-expansion payouts from Roblox | 5 R$/day per Active Spender (see §2), plus a 35% share of new/returning users' first $100 | Replaced Premium/Engagement-Based Payouts on **July 24, 2025**. 60-day hold. |
-| **Roblox Plus incentives** | Earnings from Roblox's subscription (launched Apr 30, 2026) | 250 R$/month for 3 months (≤750 R$) per Plus signup through `PromptRobloxSubscriptionPurchase`. 10% of in-game Robux transfers. Paid-private-server time | 60-day hold on signup earnings. |
-| **Robux transfers** | Plus subscribers send 10–500 R$ to another user inside your game | Game earns **10%** (DevEx-eligible) | `PromptRobuxTransferAsync` plus receipts of type `RobuxTransferSender/Receiver`. Replaced "donation pass" games. |
+| **Creator Rewards** | Engagement and audience-expansion payouts from Roblox | 5 R$/day per Active Spender (see §2), plus a 35% share of new/returning users' first $100 | Replaced Premium/Engagement-Based Payouts on **July 24, 2025** [official, verified 2026-11-05: https://devforum.roblox.com/t/3838257]. 60-day hold. |
+| **Roblox Plus incentives** | Earnings from Roblox's subscription (launched Apr 30, 2026) | 250 R$/month for 3 months (≤750 R$) per Plus signup through `PromptRobloxSubscriptionPurchase` (a free-trial signup starts paying only once the user pays, the month after the trial). 10% of in-game Robux transfers. Paid-private-server time | 60-day hold on Plus earnings. $4.99/mo globally [official, verified 2026-11-05: https://devforum.roblox.com/t/4567894 ; https://about.roblox.com/newsroom/2026/04/introducing-roblox-plus-subscription]. Premium is no longer sold to new subscribers; Premium's 10% Robux-purchase bonus ended May 30, 2026. |
+| **Robux transfers** | Plus subscribers send 10–500 R$ per transaction to another user inside your game | Game earns **10%** (DevEx-eligible); recipient gets 90% (not DevEx-eligible); Roblox takes no fee | `PromptRobuxTransferAsync` plus receipts of type `RobuxTransferSender/Receiver`. Replaced "donation pass" games. Sender needs Plus; senders and receivers 18+ must be age-checked. Per-user caps: 500 R$/day and 1,000 R$/month, raised to 5,000/day and 10,000/month for accounts with 2-Step Verification in good standing (May 20, 2026). Since June 2, 2026, users 16+ no longer need parental approval in most regions (under-16s need a linked parent and approval for each transfer) [official, verified 2026-11-05: https://devforum.roblox.com/t/4618396 ; https://devforum.roblox.com/t/4637912]. |
 | **Commerce products** | Real-world merch via Shopify | Varies | Creator 18+, ID-verified, 2FA, business info. Buyers are US only, 13+ (18+ in Texas). Check `IsEligibleToPurchaseCommerceProduct`. Bundled digital items require 100k DAU or 1M R$/month. |
 | **Creator Store** | Sell models/plugins to other creators | — | Outside the scope of a game. |
 
-**Revenue share basics:** for passes, products, Robux subscriptions, and private servers, the creator receives **70%** of the Robux price after Roblox's 30% platform fee. Roblox Plus discounts (10%, rising to 20% after the 2nd month) are **subsidized by Roblox**, so you still earn 70 R$ on a 100 R$ item even when a Plus subscriber pays only 80–90.
+**Revenue share basics:** for passes, products, Robux subscriptions, and private servers, the creator receives **70%** of the Robux price after Roblox's 30% platform fee. Roblox Plus discounts (10%, rising to 20% from the third consecutive month) are **subsidized by Roblox**, so you still earn 70 R$ on a 100 R$ item even when a Plus subscriber pays only 80–90 [official, verified 2026-11-05: https://devforum.roblox.com/t/4567894].
 
 ### 1.1 The in-game Shop and Managed Pricing (platform features, 2026)
 
@@ -70,8 +73,10 @@
 
 | Rate | Value | Applies to |
 |---|---|---|
-| **Standard** | **$0.0038 per Earned Robux** ($114 per 30,000 R$) | Effective Sept 5, 2025, 10am PT. Before that it was $0.0035, and Robux earned before that time still cash out at $0.0035 first. |
-| **U.S. 18+ rate** | **$0.0054 per Earned Robux** | Robux from passes, developer products, subscriptions, and private servers bought by **U.S. players age-verified 18+**, in **eligible games**. Announced Apr 30, 2026, effective ~June 8, 2026. The game must be **R15-only**, or use custom characters that meet the articulation rules, for 100% of active playtime. Avatar Settings → "R15 Only". Roblox runs background compliance checks. |
+| **Standard** | **$0.0038 per Earned Robux** ($114 per 30,000 R$) | Effective Sept 5, 2025, 10am PT. Before that it was $0.0035, and Robux earned before that time still cash out at $0.0035 [official, verified 2026-11-05: https://devforum.roblox.com/t/3920159]. |
+| **U.S. 18+ rate** | **$0.0054 per Earned Robux** | Robux from passes, developer products, in-game Robux subscriptions, private servers, and (since Sept 21, 2026) **Paid Access in Robux**, bought by **U.S. players (economic location, VPNs excluded) age-checked 18+**, in **eligible games**. In-game avatar items don't qualify. Announced Apr 30, 2026, live **June 8, 2026**. Eligible games: Avatar Settings → "R15 Only", and avatars are always R15, *or* always a custom human-form rig with 15+ joints/parts, *or* always a custom non-human rig (quadrupeds, dragons, vehicles), *or* there are no visible player characters (puzzle, strategy, card games). Roblox runs ongoing compliance checks [official, verified 2026-11-05: https://devforum.roblox.com/t/4607091]. |
+
+- **Age Check API (Oct 2026):** `Player:PromptAgeCheck()` (non-yielding; one prompt per player per 15 minutes per session, extra calls dropped silently; not supported on console/VR) and the replicated read-only `Player.AgeChecked` (`Enum.AgeCheckStatus.Unchecked`/`Checked`) let a game invite players to age-check, which grows the share of spend that earns the 18+ rate. Prompt on a deliberate player action, gate only an optional reward behind it, and treat `Unchecked` as a normal, sometimes permanent state [official, verified 2026-11-05: https://devforum.roblox.com/t/4607091 ; members present in `reference/api/API-Dump.txt`].
 
 - **Eligibility:** 13+, at least 30,000 Earned Robux, verified email, a DevEx portal (Tipalti) account, a W-9/W-8 tax form, and full ToS compliance.
 - **Not Earned Robux:** bought Robux, stipends, trading/resale, Robux received through transfers, gift cards, passes in template games with no real visits, or anything from moderated content.
@@ -81,6 +86,8 @@
 **Bot note:** if you design R15-only character systems, the game may qualify for the 18+ rate. That is a cheap win for a game aimed at older players. Don't force R6 in games meant to monetize adults.
 
 ### Creator Rewards (replaced Premium Payouts / Engagement-Based Payouts on July 24, 2025)
+
+[official, verified 2026-11-05: formula below matches `creator-rewards.md` in the mirror and https://create.roblox.com/docs/creator-rewards ; launch date from https://devforum.roblox.com/t/3838257 and https://devforum.roblox.com/t/3777628]
 
 - **Daily Engagement Rewards:** **5 Robux per Active Spender per day** when your game is one of the first **three** games that user plays for **10+ minutes** that day. An Active Spender is a user with **≥ $9.99** of Robux/Premium/subscription purchases in the last 60 days who isn't a new or reactivated user.
 - **Audience Expansion Rewards:** **35% revenue share on the first $100** of platform-wide purchases, over 60 days, by **New** or **Reactivated** (60+ days lapsed) users you bring in. Qualifying entry routes are your **Share Link**, a direct link as their first session, or a search for your exact game name. They must play 10+ minutes, and your game must average **100+ DAU** over the 60 days.
@@ -273,7 +280,7 @@ MarketplaceService:BindReceiptHandler(Enum.ReceiptType.RobuxTransferSender, func
 end)
 ```
 
-**Choose one style per game.** Recommendation: `ProcessReceipt` (3.2) for products, plus `BindReceiptHandler` only if you add Robux transfers. **[UNCERTAIN]** The docs don't say whether `ProcessReceipt` will be deprecated. As of 2026-11 it isn't.
+**Choose one style per game.** Recommendation: `ProcessReceipt` (3.2) for products, plus `BindReceiptHandler` only if you add Robux transfers. **[UNCERTAIN]** The docs don't say whether `ProcessReceipt` will be deprecated. As of 2026-11 it isn't (the 2026-11-05 API dump lists `Callback MarketplaceService.ProcessReceipt` with no Deprecated tag, and no deprecation announcement was found on the DevForum).
 
 ### 3.4 Game pass ownership with caching
 
@@ -639,12 +646,17 @@ Option 3 is usually the best player experience and keeps revenue.
 
 ### 7.1 The rulebooks you must follow
 
-- **Roblox Terms of Use** (help article 115004647846), updated **April 2026** per DevForum.
-- **Roblox Community Standards** (help article 203313410 / about.roblox.com/community-standards), with an Economy section covering paid random items.
-- **Advertising Standards** (13722260778260), updated with "New Advertising Policies & Standards" (DevForum 2026).
+- **Roblox Terms of Use** (help article 115004647846). Updated Terms of Use and Privacy Policy took effect **April 30, 2026** (announced March 30, 2026) [official, verified 2026-11-05: https://devforum.roblox.com/t/4548394].
+- **Roblox Community Standards** (https://about.roblox.com/community-standards ; help article 203313410). Paid random items sit under the **Commerce** heading (next to "Roblox Economy", which covers fraud, off-platform sales and promo offers) [official, verified 2026-11-05 against the saved page `.sources/policy/community-standards.html`]. Rules from it that matter for games:
+  - Paid random items: numeric odds before purchase, odds modifiers explained before purchase, **every possible outcome must give the buyer some benefit** (no "you just lose your payment" outcome), bundles that contain a random item count as paid random items, and you must use `ArePaidRandomItemsRestricted` / `IsPaidItemTradingAllowed` (§7.5).
+  - **Directing users off-platform:** no URLs or external links anywhere except the Social Links feature on game, group, or user detail pages, which only age-checked users 16+ can access.
+  - **Contests and sweepstakes:** you may not independently promote contests, games of chance, or competitions with Robux or anything of real-money value as the prize.
+  - **Promotional offers:** off-platform commercial promotions bundled with on-platform rewards need a contract with Roblox; don't sell on-platform items through off-platform stores.
+  - **Misusing Roblox systems** now explicitly includes failing to use the required PolicyService and TextChatService APIs to declare policy-covered features (such as text chat), and third-party tools that kick/ban without Roblox's Kick and Ban APIs.
+- **Advertising Standards** (13722260778260), updated by "New Advertising Policies & Standards": the new **Advertising Integrations** policy took effect **May 4, 2026**, and a Roblox/creator revenue share for ad integrations starts in **early 2027** [official, verified 2026-11-05: https://devforum.roblox.com/t/4527365]. See §7.7.
 - **Age-Restricted ("Restricted") Content Policy** (15869919570708).
 - **Marketplace Policy, Commerce Standards, DevEx Terms.**
-- **[UNCERTAIN]** These pages could not be fetched live from this session (network allowlist). Summaries here come from the docs mirror and secondary coverage. Re-check them before relying on fine details.
+- Help-center pages (en.help.roblox.com) still could not be fetched on 2026-11-05 (HTTP 403), so the Terms text, Advertising Standards text, Restricted Content Policy and Brazil Digital ECA article are summarized from the docs mirror and staff DevForum posts **[could not verify the help-center text itself]**.
 
 ### 7.2 Content maturity labels and the Maturity & Compliance Questionnaire (2026 model)
 
@@ -658,10 +670,10 @@ Option 3 is usually the best player experience and keeps revenue.
 | **Content May Vary** | You answered only the first question ("No" to age-restricted content) | **Age-checked 16+ only** |
 | **Restricted** (18+) | Strong violence, heavy realistic blood, romantic themes, alcohol, strong language, unplayable gambling | **Age-verified (ID) 18+ only.** Unplayable in some countries (e.g. Korea, Saudi Arabia, Türkiye). Creator must be ID-verified 18+. A Restricted label can't later be lowered. |
 
-History: "Restricted" was 17+ until 2025. In Aug–Sept 2025 it moved to **18+** for players and creators.
+History: "Restricted" was 17+ until 2025. On **Aug 28, 2025** under-18s stopped seeing Restricted games in search and recommendations, and on **Nov 6, 2025** access was fully blocked for everyone under 18. New Restricted games need an 18+ creator [official, verified 2026-11-05: https://devforum.roblox.com/t/3905863].
 
 **Questionnaire items that force a higher age, whatever the label:**
-- **Social hangout** (the main activity is chatting: hangouts, vibe games, "sad rooms"): 16+. With **private spaces** (bedrooms, bathroom stalls, small tents): ID-verified 18+. Roleplay games are not hangouts *if* the roleplay is central.
+- **Social hangout** (the main activity is chatting: hangouts, vibe games, "sad rooms"): 16+. With **private spaces** (bedrooms, bathroom stalls, small tents): ID-verified 18+. Roleplay games are not hangouts *if* the roleplay is central. (Social hangouts, free-form user creation and sensitive-issue games moved from 13+ to **16+ on May 19, 2026**; private-space hangouts became ID-verified 17+ in Aug 2025, then followed Restricted to 18+ [official, verified 2026-11-05: https://devforum.roblox.com/t/3882864].) Roblox recommends single-occupancy logic for private spaces (toilets, beds), because it shuts down servers where violations happen in them.
 - **Free-form user creation** (drawing, spray paint, pixel canvases visible to others): **16+**. Building with 3D assets doesn't count.
 - **Sensitive issues as the primary theme**: 16+, and not recommended unless the player is age-verified.
 - **Romantic themes, private-space settings, adult venues** (bars, clubs), **alcohol**, **strong language**, **heavy realistic blood**: 18+ (Restricted).
@@ -669,13 +681,13 @@ History: "Restricted" was 17+ until 2025. In Aug–Sept 2025 it moved to **18+**
 
 **Bot defaults for a broad-audience original game:**
 - Aim for **Minimal or Mild**: cartoon violence, bodies that vanish at 0 HP, no realistic blood, no romance, no drawing canvases, not a chat-focused hangout.
-- Answer **every** question (complete the questionnaire, not just Q1) so the game can reach Kids and Select.
+- Answer **every** question (complete the questionnaire, not just Q1) so the game can reach Kids and Select. (Since Oct 2026 a single-question path, "no age-restricted content", publishes to 16+ in most regions with the "Content May Vary" label; the full questionnaire is still needed for Kids/Select, Restricted content, and some regions [official, verified 2026-11-05: https://devforum.roblox.com/t/4930524].)
 - Implement both policy APIs if you have paid random items or trading.
 - Re-submit only when an update changes an answer. Re-submitting temporarily suspends **ads eligibility** while it is reviewed.
 
 ### 7.3 Roblox Kids / Select and the publishing evaluation (live globally in 2026)
 
-Since April 2026 (global launch later in spring/summer 2026), accounts fall into three tiers:
+Announced **April 13, 2026**; rollout began **May 19, 2026** in New Zealand, the Netherlands, Australia and Indonesia, and went **global on June 16, 2026** [official, verified 2026-11-05: https://about.roblox.com/newsroom/2026/04/introducing-roblox-kids-and-select-accounts ; https://devforum.roblox.com/t/4630944 ; https://devforum.roblox.com/t/4685717]. Accounts fall into three tiers:
 - **Roblox Kids** (5–8): Minimal/Mild content. Chat off by default.
 - **Roblox Select** (9–15, including all self-declared 9+ accounts that haven't age-checked): up to Moderate. Chat is introduced gradually after an age check.
 - **Roblox** (age-checked 16+).
@@ -685,21 +697,26 @@ Since April 2026 (global launch later in spring/summer 2026), accounts fall into
 | Requirement | Kids & Select | 16+ only |
 |---|---|---|
 | Creator account age-checked | Yes | Yes (account at least 2 days old) |
-| Verification | Facial age estimation if under 18; **government ID if 18+** | Facial estimation or ID |
+| Verification | Facial age estimation if under 18 (the ID requirement for under-18 creators was removed Sept 11, 2026); **government ID if 18+** | Facial estimation or ID |
 | 2-Step Verification | Yes | — |
-| Fee or subscription | **1,000 R$ refundable publishing fee** per game, OR an active Plus/Premium subscription held 2+ consecutive months | None |
-| Evaluation | Trial phase visible only to 16+. Then **250 unique plays by "highly engaged" age-checked players within 60 days**, plus a safety review. Progress shown on the Audience Reach dashboard. | None |
-| Expedited review | **50,000 R$ refundable fee** (mirror, 2026-11). It was 100,000 R$ at announcement, so it has changed. Refundable after 90 days if the game stays in good standing with 25 highly engaged players. | — |
+| Fee or subscription | **1,000 R$ refundable publishing fee** per game, OR an active Plus/Premium subscription held 2+ consecutive months. Checked only when you publish or update for all ages; a lapsed subscription doesn't take a live game down | None |
+| Evaluation | Trial phase visible only to 16+. Then **250 unique plays by "highly engaged" age-checked players within 60 days**, plus a safety review. Progress shown on the Audience Reach dashboard (updated hourly since Oct 2026). | None |
+| Expedited review | **50,000 R$ refundable fee** per game, review within ~48 h, bypasses the highly-engaged threshold. It launched at 100,000 R$ on June 16, 2026 and dropped to 50,000 on Sept 11, 2026. Refund can be requested after 90 days if the game is in good standing with 25 highly engaged players, or left in place to keep eligibility. | — |
 
-- **The publishing fee** is refunded if the game keeps 25 highly engaged players for 60 days without moderation. It is forfeited if the game is permanently moderated.
-- **Ads Manager "Engagement" objective** buys plays from age-checked highly engaged players, as a paid path toward the 250 threshold.
+[official, verified 2026-11-05: live https://create.roblox.com/docs/production/publishing/kids-and-select (250 plays, 50,000 R$); https://devforum.roblox.com/t/4685717 ; https://devforum.roblox.com/t/4820164 ; https://devforum.roblox.com/t/4865780 ; https://devforum.roblox.com/t/4930524]
+
+- **Highly-engaged threshold history:** entry bar 500 at launch → **250 on Aug 19, 2026**; Roblox announced it will drop to **100 in November 2026** (not yet reflected in the docs on 2026-11-05, so check Audience Reach). The bar to *stay* in the catalog is **25** highly engaged players over 60 days (lowered from 100 on July 16, 2026). A highly engaged player meets account-tenure, playtime-in-your-game and platform-spend criteria (a minimum purchase anywhere on Roblox in the last 60 days); they don't need to spend in your game [official, verified 2026-11-05: https://devforum.roblox.com/t/4820164 ; https://devforum.roblox.com/t/4685717 ; https://devforum.roblox.com/t/4930524].
+- **The publishing fee** refund: `publish-games-and-places.md` says it is refunded if the game keeps 25 highly engaged players for 60 days without moderation, while the Kids & Select FAQ (and the staff post https://devforum.roblox.com/t/4630944) says it is refunded automatically 90 days after the game becomes eligible, or 90 days after payment if it never does. Either way it is forfeited only if the game is permanently removed for severe Community Standards violations. The docs disagree on the exact trigger, so check Audience Reach.
+- **Free Plus grant and fee waiver:** ~100,000 existing creators (a game with 100+ hours of playtime in the 30 days before Apr 13, 2026, and no major violations) got 6 months of free Plus starting May 19, 2026, which waived the publishing fee. The grant ends **Nov 19, 2026**; the publishing-fee waiver is extended to **Dec 19, 2026**. After that, publishing a *new* game to Kids & Select needs the 1,000 R$ fee or another eligible requirement; existing games stay live [official, verified 2026-11-05: https://devforum.roblox.com/t/4573166 ; https://devforum.roblox.com/t/4567894 (Oct 30, 2026 update)].
+- **Early testers (Oct 2026):** age-checked creators 9+ can invite up to 10 friends (or group members) of similar age, or Trusted Friends, to preview an unpublished game; this replaced the "Private"/"Limited" audience settings with **Playtest** vs **Public** [official, verified 2026-11-05: https://devforum.roblox.com/t/4930524].
+- **Ads Manager "Engagement" objective** (beta since June 16, 2026; only for games not yet in Kids/Select) buys plays from highly engaged players, as a paid path toward the threshold. Cost per play is higher than the Plays objective, and campaigns don't auto-pause when you reach the threshold [official, verified 2026-11-05: https://devforum.roblox.com/t/4685717].
 - **Implication for the bot's launch plan:** a new game starts **16+ only**. Plan the first 2–8 weeks around reaching 250 engaged age-checked plays (friends, community, Ads Manager), then the under-16 audience opens up.
 
 ### 7.4 Age checks and chat (2025–2026 safety changes)
 
-- **Facial age estimation** (vendor Persona; images deleted after processing) or **ID verification** is **required to use chat**. It started in select markets in Dec 2025 and went **global on January 7, 2026**.
-- **Age-based chat:** users can chat only with similar age groups. Under 9s need parental consent.
-- **Social media links** on experience pages and profiles are visible only to **age-checked 16+** users. Only 16+ age-checked creators can add them.
+- **Facial age estimation** (vendor Persona; images and video deleted immediately after processing) or **ID verification** is **required to use chat**. It became required in Australia, New Zealand and the Netherlands in early Dec 2025 and rolled out **globally from January 7, 2026** [official, verified 2026-11-05: https://about.roblox.com/newsroom/2025/11/roblox-requires-age-checks-limits-minor-and-adult-chat ; https://about.roblox.com/newsroom/2026/01/roblox-age-checks-required-to-chat].
+- **Age-based chat:** age groups are Under 9, 9–12, 13–15, 16–17, 18–20 and 21+. By default users chat with their own group and the groups directly above and below. Under 9s need parental consent. Age-checked 13+ users can chat more widely with **Trusted Connections** [official, verified 2026-11-05, same sources].
+- **Social media links** on experience pages, profiles, Community pages and Creator Store pages are visible only to **age-checked 16+** users (raised from 13+ on **June 30, 2026**). Only 16+ age-checked creators can add them. `PolicyService`'s `AllowedExternalLinkReferences` now returns an empty list, so there is no sanctioned in-game link display any more [official, verified 2026-11-05: https://devforum.roblox.com/t/4685717 ; https://devforum.roblox.com/t/4079702 ; `production/promotion/social-media-links.md`].
 - **Game design implications:**
   - Many players, especially under-16s on new accounts, **can't chat**. Don't make core gameplay depend on text or voice chat. Use emotes, pings, quick-chat wheels, and in-game signals.
   - Use `TextChatService` (the default chat). Don't build custom chat that bypasses filtering and age rules.
@@ -712,13 +729,15 @@ They apply when **Robux, or currency bought with Robux, pays for a random outcom
 **Disclosure checklist (from the official policy):**
 - [ ] List **all possible outcomes** with **numerical probability percentages**, visible **before purchase**.
 - [ ] Percentages sum to **exactly 100%**. If rounded, round to at least 4 decimal places past the first non-zero digit and add the disclaimer "Probabilities are rounded; total of displayed individual probabilities may not equal 100%."
+- [ ] **Every possible outcome must give the buyer some benefit.** There cannot be an outcome where the player simply loses their payment (no "empty" or "nothing" result) [official, verified 2026-11-05: Community Standards → Commerce → Paid Random Items, https://about.roblox.com/community-standards].
+- [ ] Bundling a random item into a paid "pack" makes the whole bundle a paid random item [same source].
 - [ ] If the list doesn't fit, use a clickable popup labeled with a **word** ("Info" or "Details"). An (i) icon alone is **not enough**.
 - [ ] Items with identical odds can share one line: "Odds for each item listed below: X%".
 - [ ] If an outcome can be obtained only once, **recompute the remaining odds** for that player and show them.
 - [ ] Luck boosts and lucky items must **numerically explain** their effect before purchase. While active, the **displayed odds update** to the player's true odds.
 - [ ] This also applies to **indirect** purchases (keys, tokens, tickets bought with Robux). Disclose before they spend the in-game currency.
 - [ ] Check `ArePaidRandomItemsRestricted` and apply a treatment from §6.
-- [ ] Answer the questionnaire item. **Brazil:** under-18s are ineligible for paid random items (Digital ECA). PolicyService handles this if you respect the flag.
+- [ ] Answer the questionnaire item. **Brazil:** under-18s are ineligible for paid random items (Digital ECA, in force from March 2026). PolicyService handles this if you respect the flag. **[could not verify: the Roblox help article (en.help.roblox.com …/48706630819476) returns 403 and no staff DevForum post or create.roblox.com page states it; treat `ArePaidRandomItemsRestricted` as the source of truth]**
 - Random rewards earned **without** paying (a key found in the world) don't need disclosure, though disclosing odds anyway builds trust.
 - Rewarded-ad rewards may **not** be random.
 
@@ -773,7 +792,9 @@ Filter anything one player types that others can see: pet names, plot names, sig
 - Social links go only in the experience page's **Social Links** section.
 - Don't create games whose purpose is to send users off Roblox.
 - **Never** promise free Robux, use "Robux giveaway" titles, or make fake "claim Robux" UI. This is a scam pattern. It is also demoted by discovery ("Leading with giveaways").
-- **Independent ads** inside your game (brand content you place yourself) require clear "Ad" disclosure. They must be gated with `AreAdsAllowed` (hide, replace, or remove ineligible users), and **must not copy Roblox's official ad labels**. Rewarded video ads are shown only to users 13+.
+- **Independent ads** inside your game (brand content you place yourself) require clear "Ad" disclosure. They must be gated with `AreAdsAllowed` (hide, replace, or remove ineligible users). Rewarded video ads are shown only to users 13+.
+  - **Changed May 4, 2026:** independent ads must now be **registered as Advertising Integrations in Ads Manager** and use Roblox's **standardized ad labels** (applied in Studio and rendered automatically for registered assets, plus `AdService:RegisterDisclosureButton`). This applies even to promoting your own content when it meets the ad criteria. A per-qualified-visit revenue share between Roblox and the creator starts in **early 2027**; brands labelling their own assets in their own games are exempt from that cost [official, verified 2026-11-05: https://devforum.roblox.com/t/4527365 ; `production/promotion/ad-integrations.md`]. The older rule "**must not copy Roblox's official ad labels**" (`comply-with-advertising-standards.md`) still applies to any disclosure you draw yourself outside the registered-integration flow.
+  - Community Standards also bar independently run contests or sweepstakes with Robux or real-money-value prizes (§7.1).
 - **Ad fraud** (bots, forced views, incentivized impression inflation) → loss of payouts and suspension.
 
 ### 7.8 Gambling
@@ -888,7 +909,7 @@ Filter anything one player types that others can see: pet names, plot names, sig
 
 | Product | Where it shows | Notes |
 |---|---|---|
-| **Sponsored games** | "Sponsored" sort on Home | Managed in **Ads Manager** (`create.roblox.com/advertise`). Objectives include **Plays/Visits**, **Earnings** (likely spenders), and **Engagement** (age-checked highly engaged players, toward Kids/Select eligibility, higher cost per play). Audiences: new, recent, lapsed. Auto-bidding. |
+| **Sponsored games** | "Sponsored" sort on Home | Managed in **Ads Manager** (`create.roblox.com/advertise`). Objectives include **Plays/Visits**, **Earnings** (likely spenders), and **Engagement** (beta since June 16, 2026: highly engaged players, toward Kids/Select eligibility, higher cost per play; only for games not yet in Kids/Select) [Engagement objective: official, verified 2026-11-05: https://devforum.roblox.com/t/4685717]. Audiences: new, recent, lapsed. Auto-bidding. |
 | **Search ads** | Sponsored tiles in Search results | Bid on keywords relevant to your game. Relevance-adjusted second-price auction. Audience 13+, all regions; targeting can't be changed. |
 | **Rewarded video / billboards / portals (as advertiser)** | Inside other games | Drive teleports and awareness. |
 | **Sponsored items** | Marketplace | For avatar items, not games. |
@@ -903,7 +924,7 @@ Filter anything one player types that others can see: pet names, plot names, sig
 
 - Find mid-size Roblox YouTubers and TikTokers in your genre. Send a short pitch: one-sentence hook, a 30-second gameplay clip, a creator code or private server, and a launch date.
 - **Video Stars program** members can earn Creator Rewards for driving new users, so your Share Link benefits both sides.
-- **Star Codes** were retired (Oct 24, 2025) in favor of Creator Rewards. **[UNCERTAIN: secondary source.]**
+- **Star Codes** were retired in favor of Creator Rewards (the Video Stars program now earns through Creator Rewards, per `creator-rewards.md`). That Star Codes are gone is corroborated by a March 2026 DevForum documentation report (https://devforum.roblox.com/t/4531687, community post, not staff). The **Oct 24, 2025** date comes only from a secondary site **[could not verify the date: no staff DevForum post or newsroom page found; influencers.roblox.com and the help center were unreachable]**.
 - **Never pay with off-platform deals that break rules**, and never ask influencers to promise "free Robux". Sponsored content must be disclosed by the influencer under platform rules (FTC/ASA, etc.).
 - Give influencers something to show: a secret area, a custom cosmetic, an early-access server.
 
@@ -1042,22 +1063,24 @@ end)
 | Creator Rewards audience expansion | 35% of first $100 over 60 days; game needs 100+ avg DAU |
 | Roblox Plus signup earnings | 250 R$/month × 3 = 750 R$ per new subscriber |
 | Plus discount to buyers (Roblox-subsidized) | 10% (months 1–2), 20% (from month 3) |
-| Robux transfer (Plus) | 10–500 R$; game earns 10% |
+| Robux transfer (Plus) | 10–500 R$ per transfer; game earns 10%; user caps 500/day, 1,000/month (5,000/10,000 with 2SV) |
 | Regional price bounds | 30%–100% of default |
 | Price optimization volume | ~60k transactions / 30 days |
 | Paid access (Robux) | 25–1000 R$ |
 | Subscription min (Robux) | 49 R$; price change every 60 days |
 | Promoted pass on Buy Robux page | >49 and <801 R$ |
 | Rewarded video eligibility | 13+, ID-verified, public, 2k+ unique visitors/month |
-| Kids/Select publishing fee | 1,000 R$ refundable, or 2+ months of Plus/Premium |
-| Kids/Select evaluation | 250 unique highly engaged age-checked plays in 60 days |
-| Expedited review | 50,000 R$ refundable (was 100k at announcement) |
+| Kids/Select publishing fee | 1,000 R$ refundable, or 2+ months of Plus/Premium (free-Plus-grant fee waiver runs to 2026-12-19) |
+| Kids/Select evaluation | 250 unique highly engaged age-checked plays in 60 days (500 until 2026-08-19; announced to drop to 100 in Nov 2026); stay-eligible bar 25 |
+| Expedited review | 50,000 R$ refundable since 2026-09-11 (100k from 2026-06-16 launch); ~48 h |
 | Free badges | 5 per game per 24 h, then 100 R$ each |
 | Icon / thumbnail | 512×512 / 1920×1080 16:9, up to 10 |
 | Description hook | First ~160 characters; total ≤1,000 characters |
-| Chat age check | Required globally since 2026-01-07 |
-| Restricted label | Age-verified 18+ (was 17+ before 2025) |
-| Cross-game pass/product sales | Disabled since ~2026-05-29/30 |
+| Chat age check | Required globally since 2026-01-07 (AU/NZ/NL since early Dec 2025) |
+| Restricted label | Age-verified 18+ (fully enforced 2025-11-06; was 17+) |
+| Cross-game pass/product sales | Disabled since 2026-05-29 |
+| US 18+ DevEx rate | Live 2026-06-08; Paid Access (Robux) eligible since 2026-09-21 |
+| Social links visibility | Age-checked 16+ only since 2026-06-30 (was 13+) |
 | Premium Payouts | Deprecated 2025-07-24 → Creator Rewards |
 
 ---
@@ -1076,9 +1099,51 @@ end)
 **Web (checked 2026-11-05; treated as data):**
 - Roblox Plus: [DevForum — Introducing Roblox Plus](https://devforum.roblox.com/t/introducing-roblox-plus/4567894); [BusinessWire press release, Apr 10 2026](https://www.businesswire.com/news/home/20260410099173/en); [Tubefilter, Apr 13 2026](https://www.tubefilter.com/2026/04/13/roblox-plus-creator-payouts/amp/)
 - DevEx 18+ rate: [Tubefilter, May 1 2026](https://www.tubefilter.com/2026/05/01/roblox-hikes-developer-earnings-by-42-but-only-if-they-make-games-aimed-at-adults/amp/); [Netinfluencer](https://www.netinfluencer.com/roblox-to-raise-developer-exchange-rate-for-games-aimed-at-18-plus-players-as-adult-cohort-surges/)
-- Creator Rewards: [DevForum — Introducing Creator Rewards](https://devforum.roblox.com/t/introducing-creator-rewards-earn-more-by-growing-the-community/3777628); [DevForum — Creator Rewards is Live](https://devforum.roblox.com/t/creator-rewards-is-live/3838257); [Star Codes retirement (secondary)](https://www.gamingamigos.com/post/roblox-retire-star-codes-october-24-creator-rewards)
+- Creator Rewards: [DevForum — Introducing Creator Rewards](https://devforum.roblox.com/t/introducing-creator-rewards-earn-more-by-growing-the-community/3777628); [DevForum — Creator Rewards is Live](https://devforum.roblox.com/t/creator-rewards-is-live/3838257); [Star Codes retirement (secondary)](https://www.gamingamigos.com/post/roblox-retire-star-codes-october-24-creator-rewards); [DevForum community report that Star Codes are removed (Mar 2026)](https://devforum.roblox.com/t/4531687)
 - Age checks for chat: [Roblox newsroom Nov 2025](https://corp.roblox.com/newsroom/2025/11/roblox-requires-age-checks-limits-minor-and-adult-chat); [Nasdaq/press release Jan 7 2026](https://www.nasdaq.com/press-release/roblox-requires-users-worldwide-age-check-access-chat-2026-01-07); [PC Gamer](https://www.pcgamer.com/gaming-industry/roblox-to-make-facial-age-checks-mandatory-to-access-any-chat-features-and-will-put-common-sense-limits-on-the-age-ranges-users-can-chat-within)
 - Kids & Select: [Roblox newsroom Apr 2026](https://about.roblox.com/newsroom/2026/04/introducing-roblox-kids-and-select-accounts); [DevForum — Kids and Select Global Launch](https://devforum.roblox.com/t/roblox-kids-and-select-global-launch-upcoming-updates-to-eligibility-ads-manager-and-expedited-review/4685717); [DevForum — New Publishing Requirements & Evaluation Process](https://devforum.roblox.com/t/new-publishing-requirements-evaluation-process-for-games/4573166)
 - Restricted 18+: [DevForum — Updating Age Requirements for 'Restricted'](https://devforum.roblox.com/t/updating-age-requirements-for-experiences-with-%E2%80%98restricted%E2%80%99-content-maturity-label/3905863); [Roblox newsroom Aug 2025 — romantic and sexual content policy](https://about.roblox.com/newsroom/2025/08/extending-roblox-policy-on-romantic-and-sexual-content); [DevForum — Strengthening Our Safety Policies and Tools](https://devforum.roblox.com/t/strengthening-our-safety-policies-and-tools/3882864)
 - Cross-game sales / transfers: [PiunikaWeb, May 2026](https://piunikaweb.com/2026/05/05/roblox-disable-gamepasses-sales-players-furious/); [Axeetech Transfers guide](https://axeetech.com/how-to-transfer-robux-after-the-may-29-update/)
-- Policy pages (could not be fetched from this session, so the network allowlist blocks them): Terms of Use `en.help.roblox.com/hc/articles/115004647846`, Community Standards `en.help.roblox.com/hc/articles/203313410`, Advertising Standards `.../13722260778260`, Restricted Content Policy `.../15869919570708`; [DevForum — Updates to the Roblox Terms of Use (April 2026)](https://devforum.roblox.com/t/updates-to-the-roblox-terms-of-use-april-2026/4548394); [DevForum — New Advertising Policies & Standards](https://devforum.roblox.com/t/new-advertising-policies-standards/4527365); [Brazil Digital ECA updates](https://en.help.roblox.com/hc/cs/articles/48706630819476-Brazil-Digital-ECA-Updates)
+- Policy pages on the help center (still HTTP 403 on 2026-11-05): Terms of Use `en.help.roblox.com/hc/articles/115004647846`, Community Standards `en.help.roblox.com/hc/articles/203313410`, Advertising Standards `.../13722260778260`, Restricted Content Policy `.../15869919570708`; [DevForum — Updates to the Roblox Terms of Use (April 2026)](https://devforum.roblox.com/t/updates-to-the-roblox-terms-of-use-april-2026/4548394); [DevForum — New Advertising Policies & Standards](https://devforum.roblox.com/t/new-advertising-policies-standards/4527365); [Brazil Digital ECA updates](https://en.help.roblox.com/hc/cs/articles/48706630819476-Brazil-Digital-ECA-Updates)
+- **Primary sources added in the 2026-11-05 verification pass:** Community Standards (https://about.roblox.com/community-standards, saved at `.sources/policy/community-standards.html`); [DevEx +8.5%, Sept 5 2025](https://devforum.roblox.com/t/3920159); [US 18+ DevEx rate + Age Check API](https://devforum.roblox.com/t/4607091); [Disabling cross-game sales + Transfers API](https://devforum.roblox.com/t/4618396); [Update on Plus, Transfers and Community Gifting](https://devforum.roblox.com/t/4637912); [Roblox Plus newsroom, Apr 10 2026](https://about.roblox.com/newsroom/2026/04/introducing-roblox-plus-subscription); [Alternate Publishing Requirements (1,000 R$ fee)](https://devforum.roblox.com/t/4630944); [Highly Engaged Player threshold drops to 250](https://devforum.roblox.com/t/4820164); [Making Publishing Easier (expedited 50k, 250→100 plan)](https://devforum.roblox.com/t/4865780); [A Simpler Path to Publish + early testers](https://devforum.roblox.com/t/4930524); [Age checks to access chat, Team Create and links](https://devforum.roblox.com/t/4079702); [Jan 7 2026 newsroom](https://about.roblox.com/newsroom/2026/01/roblox-age-checks-required-to-chat); [Live Kids & Select doc](https://create.roblox.com/docs/production/publishing/kids-and-select)
+
+---
+
+## Verification log (2026-11-05)
+
+Re-checked every second-hand, [UNCERTAIN] or date-sensitive claim against live primary sources (staff DevForum posts, create.roblox.com, about.roblox.com newsroom, saved Community Standards page). en.help.roblox.com returned 403 and influencers.roblox.com was unreachable.
+
+**Corrected**
+- Cross-game pass/product sales: "~May 29–30, 2026" → **May 29, 2026**, with scope added (EDP sales and avatar items unaffected, no same-owner exceptions).
+- Plus discount: "20% after the 2nd month" → 20% **from the third consecutive month** (same meaning, now in the announcement's wording).
+- US 18+ DevEx rate: "effective ~June 8" → **live June 8, 2026**. Eligibility widened to custom human rigs (15+ joints), non-human rigs and games with no visible characters. **Paid Access in Robux** added as eligible spend (since Sept 21, 2026). Avatar items excluded.
+- Restricted 18+ timing: "Aug–Sept 2025" → hidden from under-18 search/recs **Aug 28, 2025**, fully blocked **Nov 6, 2025**.
+- Kids/Select timeline: "Since April 2026 (global later)" → announced Apr 13, rollout May 19 (NZ/NL/AU/ID), **global June 16, 2026**.
+- Kids/Select threshold: added history (500 → 250 on Aug 19, 2026; announced drop to 100 in Nov 2026; stay-eligible bar 100 → 25 on July 16, 2026).
+- Expedited review: dates added (100,000 R$ at launch June 16, 2026 → 50,000 R$ on Sept 11, 2026; ~48 h; bypasses the threshold).
+- Publishing-fee refund: flagged that the docs disagree (25 players for 60 days vs automatic 90 days after eligibility).
+- Social-link visibility: confirmed 16+ and added that it was **raised from 13+ on June 30, 2026**; `AllowedExternalLinkReferences` now returns an empty list.
+- Independent ads: added the **May 4, 2026 Advertising Integrations** requirement (register in Ads Manager, standardized labels, revenue share from early 2027).
+- Paid random items: added the Community Standards rule that **every outcome must give some benefit**, and that bundles with a random item count as paid random items.
+- Social hangouts / free-form creation / sensitive issues: noted the move from 13+ to **16+ on May 19, 2026**.
+
+**Added (new since the chapter was written)**
+- Free 6-month Plus grant for ~100k creators ends Nov 19, 2026; publishing-fee waiver extended to Dec 19, 2026.
+- Robux transfer caps (500/day, 1,000/month; 5,000/10,000 with 2SV) and parental-approval age lowered to 16 (June 2, 2026).
+- Age Check API (`Player:PromptAgeCheck`, `Player.AgeChecked`).
+- Single-question "Content May Vary" path to 16+ and early testers (Oct 2026); FAE replaced ID for under-18 creators (Sept 11, 2026).
+- Community Standards rules on contests/sweepstakes, promotional offers, and required PolicyService/TextChatService/Ban API use.
+
+**Confirmed unchanged ([official, verified 2026-11-05])**
+- DevEx $0.0038 from Sept 5, 2025 10am PT (older balances at $0.0035); US 18+ $0.0054.
+- Creator Rewards live July 24, 2025; formula (5 R$ per Active Spender, first 3 games, 10+ min; 35% of first $100 over 60 days, 100+ avg DAU).
+- Roblox Plus: launched Apr 30, 2026, $4.99/mo, 250 R$ × 3 signup bonus, private-server payouts up to 100 R$ per subscriber (60+ min, top 5 servers), transfers 10% to the game.
+- Terms of Use update effective Apr 30, 2026; chat age check global from Jan 7, 2026 (Persona; age bands).
+- Kids/Select: 1,000 R$ refundable fee or 2+ months of Plus/Premium; 250 plays in 60 days; 50,000 R$ expedited review (live docs).
+- `ProcessReceipt` not deprecated in the 2026-11-05 API dump.
+
+**Still unverified**
+- Star Codes retirement **date** (Oct 24, 2025); the retirement itself is corroborated only by a community DevForum post.
+- Brazil Digital ECA paid-random-item rule (help article is 403).
+- Help-center text of the Terms of Use, Advertising Standards and Restricted Content Policy.
+

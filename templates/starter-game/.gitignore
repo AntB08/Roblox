@@ -1,0 +1,21 @@
+# build output
+/build/
+*.rbxl.lock
+*.rbxlx.lock
+# packages (restored by wally install). The vendored copies under src/ are committed.
+/Packages/
+/ServerPackages/
+/DevPackages/
+wally.lock.bak
+# generated tooling files
+sourcemap.json
+/.luau-lsp/
+roblox.yml
+# secrets
+.env
+*.key
+# OS/editor
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/settings.json
