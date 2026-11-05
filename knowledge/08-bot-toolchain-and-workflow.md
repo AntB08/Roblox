@@ -556,7 +556,12 @@ Jest Roblox also expects a `jest.config.luau` ModuleScript in each test root, fo
 }
 ```
 
-If Rojo rejects merging a nested project at the root like this, duplicate the tree from `default.project.json` and add the `DevPackages` node. Production builds use `globIgnorePaths: ["**/__tests__/**", "**/*.spec.luau"]`, so test files never ship.
+> **Verified 2026-11-05 with Rojo 7.7.1: do NOT use the nested-root pattern above.** It builds
+> without error, but the result contains **two `ReplicatedStorage` services** (one from the nested
+> project, one from the outer tree) instead of merging them. Instead, keep `test.project.json` as a
+> full copy of the `default.project.json` tree plus the `DevPackages` and test nodes, and regenerate
+> it with a script whenever `default.project.json` changes (see
+> `templates/starter-game/scripts/sync-test-project.py`). Production builds use `globIgnorePaths: ["**/__tests__/**", "**/*.spec.luau"]`, so test files never ship.
 
 ---
 

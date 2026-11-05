@@ -1,7 +1,8 @@
 # rokit.toml: pinned toolchain. Run `rokit install` after cloning.
 # Versions copied from knowledge/08-bot-toolchain-and-workflow.md (snapshot 2026-11-05).
-# VERIFY before relying on them: if a pinned version has no linux-x86_64 release asset,
-# run `rokit add <repo>` without a version and record what it picked here.
+# Checked 2026-11-05: every version below exists as a git tag upstream (and was the latest tag).
+# NOT checked: that each release has a binary for your platform. If `rokit install` fails for
+# one, run `rokit add <repo>` without a version and record what it picked here.
 [tools]
 rojo = "rojo-rbx/rojo@7.7.1"
 wally = "UpliftGames/wally@0.3.2"

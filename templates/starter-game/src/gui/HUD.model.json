@@ -1,0 +1,649 @@
+{
+  "className": "ScreenGui",
+  "properties": {
+    "ResetOnSpawn": false,
+    "DisplayOrder": 0,
+    "ScreenInsets": "CoreUISafeInsets",
+    "SafeAreaCompatibility": "None",
+    "ZIndexBehavior": "Sibling"
+  },
+  "children": [
+    {
+      "className": "Frame",
+      "name": "LeftStack",
+      "properties": {
+        "AnchorPoint": [0, 0.5],
+        "Position": {"UDim2": [[0, 12], [0.5, 0]]},
+        "AutomaticSize": "XY",
+        "Size": {"UDim2": [[0, 0], [0, 0]]},
+        "BackgroundTransparency": 1
+      },
+      "children": [
+        {
+          "className": "UIScale",
+          "name": "Responsive",
+          "properties": {
+            "Scale": 1
+          }
+        },
+        {
+          "className": "UIListLayout",
+          "name": "UIListLayout",
+          "properties": {
+            "FillDirection": "Vertical",
+            "Padding": {"UDim": [0, 12]},
+            "SortOrder": "LayoutOrder"
+          }
+        },
+        {
+          "className": "Frame",
+          "name": "CoinsPill",
+          "properties": {
+            "AutomaticSize": "X",
+            "Size": {"UDim2": [[0, 0], [0, 44]]},
+            "BackgroundColor3": [0.078, 0.086, 0.11],
+            "BackgroundTransparency": 0.15,
+            "LayoutOrder": 1
+          },
+          "attributes": {
+            "Currency": "Coins"
+          },
+          "children": [
+            {
+              "className": "UICorner",
+              "name": "UICorner",
+              "properties": {
+                "CornerRadius": {"UDim": [0.5, 0]}
+              }
+            },
+            {
+              "className": "UIStroke",
+              "name": "UIStroke",
+              "properties": {
+                "Color": [0, 0, 0],
+                "Thickness": 2,
+                "Transparency": 0.6,
+                "ApplyStrokeMode": "Border"
+              }
+            },
+            {
+              "className": "UIPadding",
+              "name": "UIPadding",
+              "properties": {
+                "PaddingTop": {"UDim": [0, 6]},
+                "PaddingRight": {"UDim": [0, 16]},
+                "PaddingBottom": {"UDim": [0, 6]},
+                "PaddingLeft": {"UDim": [0, 6]}
+              }
+            },
+            {
+              "className": "UIListLayout",
+              "name": "UIListLayout",
+              "properties": {
+                "FillDirection": "Horizontal",
+                "VerticalAlignment": "Center",
+                "Padding": {"UDim": [0, 8]},
+                "SortOrder": "LayoutOrder"
+              }
+            },
+            {
+              "className": "ImageLabel",
+              "name": "Icon",
+              "properties": {
+                "Size": {"UDim2": [[0, 32], [0, 32]]},
+                "BackgroundColor3": [1.0, 0.784, 0.157],
+                "BackgroundTransparency": 0,
+                "Image": "rbxassetid://0",
+                "LayoutOrder": 1
+              },
+              "children": [
+                {
+                  "className": "UICorner",
+                  "name": "UICorner",
+                  "properties": {
+                    "CornerRadius": {"UDim": [0.5, 0]}
+                  }
+                }
+              ]
+            },
+            {
+              "className": "TextLabel",
+              "name": "Amount",
+              "properties": {
+                "AutomaticSize": "X",
+                "Size": {"UDim2": [[0, 0], [1, 0]]},
+                "BackgroundTransparency": 1,
+                "Text": "0",
+                "TextColor3": [0.961, 0.969, 0.98],
+                "TextSize": 22,
+                "FontFace": {
+                  "family": "rbxasset://fonts/families/BuilderSans.json",
+                  "weight": "ExtraBold",
+                  "style": "Normal"
+                },
+                "TextXAlignment": "Left",
+                "LayoutOrder": 2
+              },
+              "children": [
+                {
+                  "className": "UIScale",
+                  "name": "Pop",
+                  "properties": {
+                    "Scale": 1
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "className": "Frame",
+          "name": "Menu",
+          "properties": {
+            "AutomaticSize": "XY",
+            "Size": {"UDim2": [[0, 0], [0, 0]]},
+            "BackgroundTransparency": 1,
+            "LayoutOrder": 2
+          },
+          "children": [
+            {
+              "className": "UIGridLayout",
+              "name": "UIGridLayout",
+              "properties": {
+                "CellSize": {"UDim2": [[0, 64], [0, 64]]},
+                "CellPadding": {"UDim2": [[0, 10], [0, 10]]},
+                "FillDirectionMaxCells": 2,
+                "SortOrder": "LayoutOrder"
+              }
+            },
+            {
+              "className": "TextButton",
+              "name": "DailyButton",
+              "properties": {
+                "Size": {"UDim2": [[0, 64], [0, 64]]},
+                "BackgroundColor3": [0.118, 0.129, 0.161],
+                "BackgroundTransparency": 0.1,
+                "Text": "",
+                "LayoutOrder": 1,
+                "AutoButtonColor": false,
+                "Selectable": true,
+                "Tags": ["AnimatedButton"]
+              },
+              "children": [
+                {
+                  "className": "UICorner",
+                  "name": "UICorner",
+                  "properties": {
+                    "CornerRadius": {"UDim": [0, 16]}
+                  }
+                },
+                {
+                  "className": "UIStroke",
+                  "name": "UIStroke",
+                  "properties": {
+                    "Color": [0.227, 0.247, 0.302],
+                    "Thickness": 2,
+                    "Transparency": 0.2,
+                    "ApplyStrokeMode": "Border"
+                  }
+                },
+                {
+                  "className": "TextLabel",
+                  "name": "Label",
+                  "properties": {
+                    "Size": {"UDim2": [[1, 0], [1, 0]]},
+                    "BackgroundTransparency": 1,
+                    "Text": "Daily",
+                    "TextColor3": [0.961, 0.969, 0.98],
+                    "TextSize": 16,
+                    "FontFace": {
+                      "family": "rbxasset://fonts/families/BuilderSans.json",
+                      "weight": "Bold",
+                      "style": "Normal"
+                    },
+                    "TextWrapped": true
+                  }
+                },
+                {
+                  "className": "Frame",
+                  "name": "Badge",
+                  "properties": {
+                    "AnchorPoint": [1, 0],
+                    "Position": {"UDim2": [[1, 4], [0, -4]]},
+                    "Size": {"UDim2": [[0, 16], [0, 16]]},
+                    "BackgroundColor3": [0.922, 0.282, 0.282],
+                    "Visible": false,
+                    "ZIndex": 2
+                  },
+                  "children": [
+                    {
+                      "className": "UICorner",
+                      "name": "UICorner",
+                      "properties": {
+                        "CornerRadius": {"UDim": [0.5, 0]}
+                      }
+                    },
+                    {
+                      "className": "UIStroke",
+                      "name": "UIStroke",
+                      "properties": {
+                        "Color": [0.961, 0.969, 0.98],
+                        "Thickness": 2,
+                        "Transparency": 0,
+                        "ApplyStrokeMode": "Border"
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "className": "TextButton",
+              "name": "CodesButton",
+              "properties": {
+                "Size": {"UDim2": [[0, 64], [0, 64]]},
+                "BackgroundColor3": [0.118, 0.129, 0.161],
+                "BackgroundTransparency": 0.1,
+                "Text": "",
+                "LayoutOrder": 2,
+                "AutoButtonColor": false,
+                "Selectable": true,
+                "Tags": ["AnimatedButton"]
+              },
+              "children": [
+                {
+                  "className": "UICorner",
+                  "name": "UICorner",
+                  "properties": {
+                    "CornerRadius": {"UDim": [0, 16]}
+                  }
+                },
+                {
+                  "className": "UIStroke",
+                  "name": "UIStroke",
+                  "properties": {
+                    "Color": [0.227, 0.247, 0.302],
+                    "Thickness": 2,
+                    "Transparency": 0.2,
+                    "ApplyStrokeMode": "Border"
+                  }
+                },
+                {
+                  "className": "TextLabel",
+                  "name": "Label",
+                  "properties": {
+                    "Size": {"UDim2": [[1, 0], [1, 0]]},
+                    "BackgroundTransparency": 1,
+                    "Text": "Codes",
+                    "TextColor3": [0.961, 0.969, 0.98],
+                    "TextSize": 16,
+                    "FontFace": {
+                      "family": "rbxasset://fonts/families/BuilderSans.json",
+                      "weight": "Bold",
+                      "style": "Normal"
+                    },
+                    "TextWrapped": true
+                  }
+                }
+              ]
+            },
+            {
+              "className": "TextButton",
+              "name": "StoreButton",
+              "properties": {
+                "Size": {"UDim2": [[0, 64], [0, 64]]},
+                "BackgroundColor3": [0.118, 0.129, 0.161],
+                "BackgroundTransparency": 0.1,
+                "Text": "",
+                "LayoutOrder": 3,
+                "AutoButtonColor": false,
+                "Selectable": true,
+                "Tags": ["AnimatedButton"]
+              },
+              "attributes": {
+                "Product": "Coins100"
+              },
+              "children": [
+                {
+                  "className": "UICorner",
+                  "name": "UICorner",
+                  "properties": {
+                    "CornerRadius": {"UDim": [0, 16]}
+                  }
+                },
+                {
+                  "className": "UIStroke",
+                  "name": "UIStroke",
+                  "properties": {
+                    "Color": [0.227, 0.247, 0.302],
+                    "Thickness": 2,
+                    "Transparency": 0.2,
+                    "ApplyStrokeMode": "Border"
+                  }
+                },
+                {
+                  "className": "TextLabel",
+                  "name": "Label",
+                  "properties": {
+                    "Size": {"UDim2": [[1, 0], [1, 0]]},
+                    "BackgroundTransparency": 1,
+                    "Text": "+100",
+                    "TextColor3": [0.961, 0.969, 0.98],
+                    "TextSize": 16,
+                    "FontFace": {
+                      "family": "rbxasset://fonts/families/BuilderSans.json",
+                      "weight": "Bold",
+                      "style": "Normal"
+                    },
+                    "TextWrapped": true
+                  }
+                },
+                {
+                  "className": "TextLabel",
+                  "name": "PriceLabel",
+                  "properties": {
+                    "AnchorPoint": [0.5, 1],
+                    "Position": {"UDim2": [[0.5, 0], [1, -2]]},
+                    "Size": {"UDim2": [[1, -8], [0, 16]]},
+                    "BackgroundTransparency": 1,
+                    "Text": "",
+                    "TextColor3": [1.0, 0.784, 0.157],
+                    "TextSize": 13,
+                    "FontFace": {
+                      "family": "rbxasset://fonts/families/BuilderSans.json",
+                      "weight": "Bold",
+                      "style": "Normal"
+                    },
+                    "ZIndex": 2
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "className": "Frame",
+      "name": "BottomCenter",
+      "properties": {
+        "AnchorPoint": [0.5, 1],
+        "Position": {"UDim2": [[0.5, 0], [1, -24]]},
+        "Size": {"UDim2": [[0, 220], [0, 64]]},
+        "BackgroundTransparency": 1
+      },
+      "children": [
+        {
+          "className": "UIScale",
+          "name": "Responsive",
+          "properties": {
+            "Scale": 1
+          }
+        },
+        {
+          "className": "TextButton",
+          "name": "CollectButton",
+          "properties": {
+            "Size": {"UDim2": [[1, 0], [1, 0]]},
+            "BackgroundColor3": [0.18, 0.8, 0.443],
+            "Text": "Collect",
+            "TextColor3": [0.063, 0.071, 0.094],
+            "TextSize": 24,
+            "FontFace": {
+              "family": "rbxasset://fonts/families/BuilderSans.json",
+              "weight": "ExtraBold",
+              "style": "Normal"
+            },
+            "AutoButtonColor": false,
+            "Visible": false,
+            "Selectable": true,
+            "Tags": ["AnimatedButton"]
+          },
+          "children": [
+            {
+              "className": "UICorner",
+              "name": "UICorner",
+              "properties": {
+                "CornerRadius": {"UDim": [0, 16]}
+              }
+            },
+            {
+              "className": "UIStroke",
+              "name": "UIStroke",
+              "properties": {
+                "Color": [0, 0, 0],
+                "Thickness": 2,
+                "Transparency": 0.5,
+                "ApplyStrokeMode": "Border"
+              }
+            },
+            {
+              "className": "TextLabel",
+              "name": "KeyHint",
+              "properties": {
+                "AnchorPoint": [1, 0],
+                "Position": {"UDim2": [[1, -8], [0, 8]]},
+                "Size": {"UDim2": [[0, 24], [0, 24]]},
+                "BackgroundColor3": [0.078, 0.086, 0.11],
+                "BackgroundTransparency": 0.2,
+                "Text": "E",
+                "TextColor3": [0.961, 0.969, 0.98],
+                "TextSize": 14,
+                "FontFace": {
+                  "family": "rbxasset://fonts/families/BuilderSans.json",
+                  "weight": "Bold",
+                  "style": "Normal"
+                },
+                "Visible": false
+              },
+              "children": [
+                {
+                  "className": "UICorner",
+                  "name": "UICorner",
+                  "properties": {
+                    "CornerRadius": {"UDim": [0, 6]}
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "className": "Frame",
+      "name": "CodesPanel",
+      "properties": {
+        "AnchorPoint": [0.5, 0.5],
+        "Position": {"UDim2": [[0.5, 0], [0.5, 0]]},
+        "Size": {"UDim2": [[0, 360], [0, 196]]},
+        "BackgroundColor3": [0.118, 0.129, 0.161],
+        "Visible": false,
+        "SelectionGroup": true,
+        "ZIndex": 5
+      },
+      "children": [
+        {
+          "className": "UIScale",
+          "name": "Responsive",
+          "properties": {
+            "Scale": 1
+          }
+        },
+        {
+          "className": "UICorner",
+          "name": "UICorner",
+          "properties": {
+            "CornerRadius": {"UDim": [0, 16]}
+          }
+        },
+        {
+          "className": "UIStroke",
+          "name": "UIStroke",
+          "properties": {
+            "Color": [0.227, 0.247, 0.302],
+            "Thickness": 2,
+            "Transparency": 0,
+            "ApplyStrokeMode": "Border"
+          }
+        },
+        {
+          "className": "UIPadding",
+          "name": "UIPadding",
+          "properties": {
+            "PaddingTop": {"UDim": [0, 16]},
+            "PaddingRight": {"UDim": [0, 16]},
+            "PaddingBottom": {"UDim": [0, 16]},
+            "PaddingLeft": {"UDim": [0, 16]}
+          }
+        },
+        {
+          "className": "Frame",
+          "name": "Body",
+          "properties": {
+            "Size": {"UDim2": [[1, 0], [1, 0]]},
+            "BackgroundTransparency": 1
+          },
+          "children": [
+            {
+              "className": "UIListLayout",
+              "name": "UIListLayout",
+              "properties": {
+                "FillDirection": "Vertical",
+                "Padding": {"UDim": [0, 12]},
+                "SortOrder": "LayoutOrder",
+                "HorizontalAlignment": "Center"
+              }
+            },
+            {
+              "className": "TextLabel",
+              "name": "Title",
+              "properties": {
+                "Size": {"UDim2": [[1, -48], [0, 28]]},
+                "BackgroundTransparency": 1,
+                "Text": "Enter a code",
+                "TextColor3": [0.961, 0.969, 0.98],
+                "TextSize": 22,
+                "FontFace": {
+                  "family": "rbxasset://fonts/families/BuilderSans.json",
+                  "weight": "Bold",
+                  "style": "Normal"
+                },
+                "TextXAlignment": "Left",
+                "LayoutOrder": 1
+              }
+            },
+            {
+              "className": "TextBox",
+              "name": "Input",
+              "properties": {
+                "Size": {"UDim2": [[1, 0], [0, 48]]},
+                "BackgroundColor3": [0.078, 0.086, 0.11],
+                "Text": "",
+                "PlaceholderText": "CODE",
+                "PlaceholderColor3": [0.647, 0.675, 0.729],
+                "TextColor3": [0.961, 0.969, 0.98],
+                "TextSize": 20,
+                "FontFace": {
+                  "family": "rbxasset://fonts/families/BuilderSans.json",
+                  "weight": "Bold",
+                  "style": "Normal"
+                },
+                "ClearTextOnFocus": false,
+                "LayoutOrder": 2
+              },
+              "children": [
+                {
+                  "className": "UICorner",
+                  "name": "UICorner",
+                  "properties": {
+                    "CornerRadius": {"UDim": [0, 10]}
+                  }
+                },
+                {
+                  "className": "UIStroke",
+                  "name": "UIStroke",
+                  "properties": {
+                    "Color": [0.227, 0.247, 0.302],
+                    "Thickness": 2,
+                    "Transparency": 0.2,
+                    "ApplyStrokeMode": "Border"
+                  }
+                },
+                {
+                  "className": "UIPadding",
+                  "name": "UIPadding",
+                  "properties": {
+                    "PaddingTop": {"UDim": [0, 0]},
+                    "PaddingRight": {"UDim": [0, 12]},
+                    "PaddingBottom": {"UDim": [0, 0]},
+                    "PaddingLeft": {"UDim": [0, 12]}
+                  }
+                }
+              ]
+            },
+            {
+              "className": "TextButton",
+              "name": "RedeemButton",
+              "properties": {
+                "Size": {"UDim2": [[1, 0], [0, 48]]},
+                "BackgroundColor3": [0.251, 0.569, 1.0],
+                "Text": "Redeem",
+                "TextColor3": [0.961, 0.969, 0.98],
+                "TextSize": 20,
+                "FontFace": {
+                  "family": "rbxasset://fonts/families/BuilderSans.json",
+                  "weight": "Bold",
+                  "style": "Normal"
+                },
+                "AutoButtonColor": false,
+                "LayoutOrder": 3,
+                "Selectable": true,
+                "Tags": ["AnimatedButton"]
+              },
+              "children": [
+                {
+                  "className": "UICorner",
+                  "name": "UICorner",
+                  "properties": {
+                    "CornerRadius": {"UDim": [0, 10]}
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "className": "TextButton",
+          "name": "CloseButton",
+          "properties": {
+            "AnchorPoint": [1, 0],
+            "Position": {"UDim2": [[1, 0], [0, -4]]},
+            "Size": {"UDim2": [[0, 44], [0, 44]]},
+            "BackgroundColor3": [0.165, 0.18, 0.224],
+            "Text": "×",
+            "TextColor3": [0.961, 0.969, 0.98],
+            "TextSize": 24,
+            "FontFace": {
+              "family": "rbxasset://fonts/families/BuilderSans.json",
+              "weight": "Bold",
+              "style": "Normal"
+            },
+            "AutoButtonColor": false,
+            "Selectable": true,
+            "Tags": ["AnimatedButton"]
+          },
+          "children": [
+            {
+              "className": "UICorner",
+              "name": "UICorner",
+              "properties": {
+                "CornerRadius": {"UDim": [0.5, 0]}
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

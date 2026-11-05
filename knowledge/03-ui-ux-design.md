@@ -733,23 +733,23 @@ Example: a currency pill as `src/StarterGui/HUD/LeftStack/Currencies/Coins.model
   "className": "Frame",
   "properties": {
     "AutomaticSize": "X",
-    "Size": [[0, 0], [0, 40]],
+    "Size": {"UDim2": [[0, 0], [0, 40]]},
     "BackgroundColor3": [0.08, 0.086, 0.11],
     "BackgroundTransparency": 0.15,
     "LayoutOrder": 1
   },
   "attributes": { "Currency": "Coins" },
   "children": [
-    { "className": "UICorner", "properties": { "CornerRadius": [0.5, 0] } },
+    { "className": "UICorner", "properties": { "CornerRadius": {"UDim": [0.5, 0]} } },
     { "className": "UIStroke", "properties": { "Thickness": 2, "Color": [0, 0, 0], "Transparency": 0.6, "ApplyStrokeMode": "Border" } },
     { "className": "UIPadding", "properties": {
-        "PaddingLeft": [0, 6], "PaddingRight": [0, 14], "PaddingTop": [0, 4], "PaddingBottom": [0, 4] } },
+        "PaddingLeft": {"UDim": [0, 6]}, "PaddingRight": {"UDim": [0, 14]}, "PaddingTop": {"UDim": [0, 4]}, "PaddingBottom": {"UDim": [0, 4]} } },
     { "className": "UIListLayout", "properties": {
-        "FillDirection": "Horizontal", "VerticalAlignment": "Center", "Padding": [0, 8], "SortOrder": "LayoutOrder" } },
+        "FillDirection": "Horizontal", "VerticalAlignment": "Center", "Padding": {"UDim": [0, 8]}, "SortOrder": "LayoutOrder" } },
     { "name": "Icon", "className": "ImageLabel", "properties": {
-        "Size": [[0, 32], [0, 32]], "BackgroundTransparency": 1, "Image": "rbxassetid://0", "LayoutOrder": 1 } },
+        "Size": {"UDim2": [[0, 32], [0, 32]]}, "BackgroundTransparency": 1, "Image": "rbxassetid://0", "LayoutOrder": 1 } },
     { "name": "Amount", "className": "TextLabel", "properties": {
-        "AutomaticSize": "X", "Size": [[0, 0], [1, 0]], "BackgroundTransparency": 1,
+        "AutomaticSize": "X", "Size": {"UDim2": [[0, 0], [1, 0]]}, "BackgroundTransparency": 1,
         "Text": "0", "TextSize": 22, "TextColor3": [1, 1, 1], "TextXAlignment": "Left",
         "FontFace": { "family": "rbxasset://fonts/families/BuilderSans.json", "weight": "ExtraBold", "style": "Normal" },
         "LayoutOrder": 2 } }
@@ -757,7 +757,7 @@ Example: a currency pill as `src/StarterGui/HUD/LeftStack/Currencies/Coins.model
 }
 ```
 
-(Replace `rbxassetid://0` with a real uploaded icon. Keep asset IDs in one config module.)
+(UDim2/UDim values must use the explicit `{"UDim2": ...}` / `{"UDim": ...}` forms: Rojo 7.7.1 rejects bare arrays for them — verified by `rojo build` on 2026-11-05. Replace `rbxassetid://0` with a real uploaded icon. Keep asset IDs in one config module.)
 
 ---
 
