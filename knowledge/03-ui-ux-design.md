@@ -1571,7 +1571,8 @@ end)
 applyLayout()
 refreshHints()
 
-local notify = ReplicatedStorage:FindFirstChild("Remotes") and ReplicatedStorage.Remotes:FindFirstChild("Notify")
+local remotes = ReplicatedStorage:FindFirstChild("Remotes")
+local notify = remotes and remotes:FindFirstChild("Notify")
 if notify and notify:IsA("RemoteEvent") then
 	Toast.listen(notify)
 end

@@ -512,20 +512,7 @@ end
 return Builders
 ```
 
-Usage (server Script or command bar):
-
-```lua
-local B = require(game.ReplicatedStorage.Art.StylizedBuilders)
-local village = Instance.new("Folder"); village.Name = "Village"; village.Parent = workspace
-for i = 1, 6 do
-	B.House(CFrame.new(i * 26, 0, 0) * CFrame.Angles(0, math.rad((i % 2) * 180), 0), i).Parent = village
-end
-local rng = Random.new(42)
-for i = 1, 40 do
-	local pos = Vector3.new(rng:NextNumber(-20, 180), 0, rng:NextNumber(20, 80))
-	B.Tree(CFrame.new(pos) * CFrame.Angles(0, rng:NextNumber(0, 2 * math.pi), 0), i, i % 2 == 0 and "lowpoly" or "round").Parent = village
-end
-```
+Usage: `B.House(CFrame.new(x, 0, z) * CFrame.Angles(0, yaw, 0), seed).Parent = folder`, and likewise `B.Tree(cf, seed, "lowpoly")`. Scatter trees with a seeded `Random` and a minimum spacing.
 
 Notes: verify roof slab orientation visually after the first run (signs on `pitch`/offset are the usual place for a mistake). Part count per house ≈ 25; per tree ≈ 6–10 — trivially cheap. If you need 500+ trees, convert one good tree to a single mesh (export via Studio *Export Selection* → Blender → decimate → re-import) and clone the MeshPart.
 
@@ -713,7 +700,6 @@ Why the palette trick looks good: shading is "painted" by face normal (light top
 | Check orientation | Build so the object's "front" faces Blender **−Y** |
 | Render a thumbnail | add camera + sun, `scene.render.filepath=...; bpy.ops.render.render(write_still=True)` (Eevee/Workbench headless) |
 
-Blender in CI: `apt install blender` versions lag; prefer the official tarball. `--factory-startup` avoids user add-ons. Use `-noaudio` on servers without audio.
 
 ---
 
@@ -825,10 +811,6 @@ def colorize(v, dark, base, light):
 grass = colorize(seamless_noise(256, seed=3), "4E9A35", "6DBE45", "9BD66A")
 Image.fromarray(grass).save("Grass_Color.png")
 
-h = 256
-grad = np.linspace(0, 1, h)[:, None, None]
-top, bot = np.array([0x9B, 0xD6, 0x6A]), np.array([0x4E, 0x9A, 0x35])
-Image.fromarray((bot + (top - bot) * (1 - grad)).repeat(16, axis=1).astype(np.uint8)).save("Leaf_Gradient.png")
 ```
 
 Always preview a 3×3 tiling (`np.tile(img, (3, 3, 1))`) before uploading a "seamless" texture; bicubic resampling can leave a faint seam, which a 1–2 px edge blend fixes.
@@ -925,27 +907,6 @@ end)
 | Rig Builder | Studio Avatar ▸ Rig Builder → block/mesh R15/R6 rig | Quick blank NPC to dress |
 | Custom mesh NPC | skinned FBX + `AnimationController` + `Animator` (no Humanoid) | Cheapest for crowds/monsters; Humanoid is expensive at scale |
 
-```lua
--- Spawn a styled villager NPC from a HumanoidDescription (server).
-local Players = game:GetService("Players")
-
-local function makeVillager(cf: CFrame, skin: Color3, shirtId: number?, pantsId: number?): Model
-	local d = Instance.new("HumanoidDescription")
-	for _, prop in { "HeadColor", "TorsoColor", "LeftArmColor", "RightArmColor", "LeftLegColor", "RightLegColor" } do
-		(d :: any)[prop] = skin
-	end
-	if shirtId then d.Shirt = shirtId end
-	if pantsId then d.Pants = pantsId end
-	d.HeightScale, d.WidthScale = 1, 1
-	local npc = Players:CreateHumanoidModelFromDescriptionAsync(d, Enum.HumanoidRigType.R15)
-	npc.Name = "Villager"
-	local hum = npc:FindFirstChildOfClass("Humanoid") :: Humanoid
-	hum.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
-	npc:PivotTo(cf)
-	npc.Parent = workspace
-	return npc
-end
-```
 
 Performance: > ~30 Humanoid NPCs near a player gets expensive (state machine, physics). Anchor idle NPCs' HRP, disable unneeded `HumanoidStateType`s with `SetStateEnabled`, stream them, and play animations from the client where possible.
 
