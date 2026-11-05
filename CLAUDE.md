@@ -27,6 +27,8 @@ raw reference for exact APIs.
 | Is this API/rule still current? Deprecations, forced migrations, policy timeline | `knowledge/15-platform-changes-and-deprecations.md` |
 | What reviewers praise/criticize in builds, UI, icons, thumbnails; self-critique checklist | `knowledge/16-devforum-art-building-feedback.md` |
 | Outside tools: Blender, Blockbench, Substance, Photoshop/Photopea/Krita/GIMP, Aseprite, Figma, Audacity/LMMS/BandLab, sfxr | `knowledge/17-external-tools-3d-2d-audio.md` (+ Blender manual in `reference/tools/blender-manual/`) |
+| Symptom → cause → fix for common scripting bugs; code-review critiques; debugging playbook | `knowledge/19-devforum-scripting-problems-and-solutions.md` |
+| Game-design Q&A from developers; best tutorials and community resources catalogs | `knowledge/20-devforum-game-design-tutorials-resources.md` (+ `reference/devforum-index/`) |
 | Best YouTube lessons per topic (summarized), Studio plugins, dev tools | `knowledge/18-video-lessons-plugins-and-dev-tools.md` (+ full catalog `reference/video-library/`) |
 
 ## Start every new game from the template
