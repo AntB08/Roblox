@@ -18,6 +18,12 @@ raw reference for exact APIs.
 | Effects, sound, music, animation, camera, "make it feel good" | `knowledge/05-game-feel-vfx-audio-animation.md` |
 | Robux products, economy, policy/age rating, publishing, marketing | `knowledge/07-monetization-policy-launch.md` |
 | Rojo/Lune/Wally/Open Cloud setup, project template, testing | `knowledge/08-bot-toolchain-and-workflow.md` |
+| Meshes, Blender, textures, characters/rigs, free-model safety | `knowledge/09-3d-art-assets-and-characters.md` |
+| Map layout, obby stages, hubs, quests, dialogue, NPC AI/pathfinding | `knowledge/10-level-design-world-narrative.md` |
+| Combat, hitboxes, projectiles, vehicles, physics, rounds/matchmaking, input | `knowledge/11-multiplayer-physics-combat-systems.md` |
+| Testing, CI, playtests, MicroProfiler, performance budgets, analytics events | `knowledge/12-testing-qa-performance-analytics.md` |
+| Updates, events, daily rewards, codes, admin tools, community, translation, accessibility | `knowledge/13-liveops-community-localization-accessibility.md` |
+| Coming up with ideas, scoping an MVP, milestones, docs templates, postmortems | `knowledge/14-production-scope-and-idea-generation.md` |
 
 ## Look up exact facts (never guess an API)
 ```bash
