@@ -330,12 +330,12 @@ Then test the retry, migration and session-lock logic of your `PlayerData` modul
 
 ### 3.3 Running tests: Studio, Lune, and Open Cloud Luau Execution
 
-| Runner | What it can run | When to use |
+| Runner | What it can run | Use |
 |---|---|---|
-| **Studio** (Run mode, a server Script requiring the spec runner) | Everything, including real engine APIs | Local development |
-| **Lune** (`lune run script.luau`) | Pure Luau with no Roblox engine: `@lune/fs`, `@lune/net`, `@lune/process`, `@lune/serde`, `@lune/task`, `@lune/roblox` (serialize and deserialize place or model files and edit instances offline, but **no physics, no services, no task scheduler of a real server**) | CI glue scripts, static checks of `.rbxl` files (e.g., "no free-model scripts", "every RemoteEvent is in the allowlist"), calling Open Cloud |
-| **Open Cloud Luau Execution API** | Runs a Luau script on a real headless Roblox server, loaded with a specific place version | Headless Jest runs in CI with real engine APIs |
-| `roblox-cli` | Roblox's internal command-line runner, referenced in Jest docs as internal-only | Not available to external developers; ignore it |
+| **Studio** | Everything, with real engine APIs | Local development |
+| **Lune** | Pure Luau plus `@lune/fs`, `net`, `process`, `serde`, `task`, `roblox` (read and write `.rbxl` files offline). **No engine runtime**, so Jest Roblox can't run in it | CI glue, static checks of built places, calling Open Cloud |
+| **Open Cloud Luau Execution** | A Luau script on a real headless server loaded with a given place version | Headless Jest in CI |
+| `roblox-cli` | Roblox-internal only | Ignore |
 
 **Open Cloud Luau Execution API.** This is the official way to run engine-backed tests in CI. Facts I verified: the operations are `CreateLuauExecutionSessionTask` (with or without a place version), `GetLuauExecutionSessionTask`, `ListLuauExecutionSessionTaskLogs` and `CreateLuauExecutionSessionTaskBinaryInput`, and the API-key scope family is `universe.place.luau-execution-session:*`. Shape from DevForum and SDK sources **[verify against the official reference before relying on exact field names]**:
 
@@ -563,12 +563,12 @@ The recommended setup:
 | **Production** | Main universe | **OFF** | Public |
 
 Practices:
-1. **Prefix or version keys by environment** as a second safety net: `local STORE_NAME = (game.GameId == PROD_UNIVERSE_ID) and "PlayerData_v3" or "PlayerData_v3_TEST"`.
-2. **Abstract DataStore access** behind a module, so unit tests inject `MockDataStore` and Studio playtests in non-test places can fall back to an in-memory store when API access is off (`pcall(function() DataStoreService:GetDataStore("x"):GetAsync("probe") end)` fails with a 403-type error in that case).
-3. **Test failure paths**: throttling (use the mock's `failRate`), a player leaving mid-save, a server shutdown (`game:BindToClose`, which gives about 30 s), and two servers holding the same player (session locking, for example with `UpdateAsync` and a lock timestamp).
-4. **Schema migration tests**: keep JSON fixtures of every past schema version in `tests/fixtures/data_v1.json` and so on, and assert that `migrate(fixture)` produces valid current data.
-5. **Use Open Cloud DataStore APIs** (scoped key, test universe) to seed or inspect test data from scripts, not by hand.
-6. Before launch, run a **"data soak"**: 4–8 testers play 30 minutes in Server & Clients or a private server with repeated rejoins, then compare data snapshots.
+1. **Second safety net:** pick the store name by universe, e.g. `(game.GameId == PROD_UNIVERSE_ID) and "PlayerData_v3" or "PlayerData_v3_TEST"`.
+2. **Abstract DataStore access** behind a module, so tests inject `MockDataStore` and Studio sessions without API access fall back to memory (detect this by probing `GetAsync` inside `pcall`).
+3. **Test failure paths:** throttling (mock `failRate`), leaving mid-save, `BindToClose` on shutdown (about 30 s), and two servers holding the same player (session lock via `UpdateAsync`).
+4. **Migration tests:** keep JSON fixtures of every past schema and assert that `migrate(fixture)` produces valid current data.
+5. Seed and inspect test data with **Open Cloud DataStore APIs** using a key scoped to the test universe.
+6. Before launch, run a **data soak**: 4–8 testers play for 30 minutes with repeated rejoins, then compare snapshots.
 
 ---
 
@@ -580,13 +580,13 @@ Automated tests prove the game *works*. Playtests show whether it is *understand
 
 | Method | Notes |
 |---|---|
-| **Friends via Team Test or Studio collaboration** | Fast. Good for multiplayer bugs. Testers need edit access. |
-| **Invite early testers** (Studio *File → Invite early testers*) | Up to **10** friends or trusted friends of similar age can preview an unreleased game before it has a content maturity label. They see a "preview" watermark, and safety tools stay active. Age rules apply (for example, testers under 16 cannot preview above their parental maturity setting). |
-| **Private servers / friends-only** | After release, a dedicated VIP server or friends-only playtests let you control who joins. |
-| **Separate "beta" place or universe** | Run a *Beta* universe that gets updates first, and reward participants with a badge (for example "Beta Tester"). Promote it from your community (group, Discord, X). |
-| **Paid Early Access** | Charging Robux for access is possible (paid access setting), but it throttles your sample size and discovery. Use it only for an established community. |
-| **Focus group** | 5–8 players from the *target age and genre*, observed live (screen share) with a facilitator. This is where most FTUE insight comes from. |
-| **Soft launch** | Release publicly with little or no promotion, observe analytics for 1–2 weeks, iterate, then promote. |
+| **Team Test / collaborators** | Fast, good for multiplayer bugs. Testers need edit access |
+| **Invite early testers** (*File → Invite early testers*) | Up to **10** similar-age friends or trusted friends can preview an unreleased game before it has a maturity label. They see a preview watermark and safety tools stay active. Age rules apply |
+| **Private servers / friends-only** | Controlled sessions after release |
+| **Beta universe** | Gets updates first. Reward participants with a "Beta Tester" badge. Recruit from your group or Discord |
+| **Paid access** | Possible, but it shrinks the sample and hurts discovery. Only for an established community |
+| **Focus group** | 5–8 target-age players observed live by a facilitator. The best source of FTUE insight |
+| **Soft launch** | Public release with no promotion. Watch analytics for 1–2 weeks, iterate, then promote |
 
 ### 5.2 Running a moderated playtest
 
@@ -844,19 +844,16 @@ Remote hygiene:
 
 Creator Hub → your game → **Analytics**. Full KPIs are unlocked once the game has **more than 10 DAU and 10 play hours for 7 consecutive days**. Owners (and group members with analytics permission) must accept the analytics terms. A verified email and 2-step verification are required.
 
-| Dashboard | Key metrics | Questions it answers |
-|---|---|---|
-| **Overview** | Benchmark scorecard, topline KPIs | Is the game healthy relative to similar games? |
-| **Retention** | D1, D7, D30 retention by new-user cohort; new-user cohort breakdowns | Do new players come back? (Cohort charts are dated by *first play date*, so the latest D7 and D30 points are blank until time passes) |
-| **Engagement** | DAU, MAU, average session time, playtime, **new user first-session retention** | Do players stay once in? |
-| **Monetization** | Revenue, payer conversion, ARPPU, **ARPDAU**, sales by product, Premium payouts; spender segments (Top 15% / Intermediate 35% / Casual 50% / Lapsed, which are percentile-based within your game) | Are players paying, and who pays? |
-| **Acquisition** | Impressions, **qualified play-through rate**, sources (Home recommendations, search, sponsored, ads, external links), conversion by source | Is discovery working? Does the thumbnail convert? |
-| **Demographics** | Age, gender, country, language, platform | Who is the audience? (localize, tune the UI for the platform) |
-| **Feedback** | Ratings and comments | What do players say? |
-| **Performance** (Monitoring) | Client FPS and memory, server heartbeat and memory, crash rate, client API calls after join | Is a technical problem hurting retention? |
-| **Error Report**, **Crashes** (Monitoring) | Luau errors and warnings; server out-of-memory and platform crashes | What broke? |
-| **Explore** | Custom charts from custom events and standard metrics, formulas, overlays of benchmarks and prior periods, segment comparisons | Ad-hoc analysis (unlocked once you send custom events) |
-| **Funnels / Economy / Custom events** pages | Charts for `AnalyticsService` events | Where do players drop off? Is the economy balanced? |
+| Dashboard | Key metrics |
+|---|---|
+| **Overview** | Benchmark scorecard, topline KPIs |
+| **Retention** | D1, D7, D30 by new-user cohort (dated by first play, so the newest D7/D30 points stay blank until time passes) |
+| **Engagement** | DAU, MAU, average session time, playtime, new-user first-session retention |
+| **Monetization** | Revenue, payer conversion, ARPPU, ARPDAU, sales by product, spender segments (Top 15% / Intermediate 35% / Casual 50% / Lapsed, as percentiles within your game) |
+| **Acquisition** | Impressions, qualified play-through rate, traffic sources and their conversion |
+| **Demographics / Feedback** | Age, gender, country, language, platform; ratings and comments |
+| **Monitoring: Performance, Error Report, Crashes** | Client FPS and memory, server heartbeat and memory, crash rate, client API calls after join; Luau errors; out-of-memory and platform crashes |
+| **Explore** | Custom charts, formulas, benchmark and prior-period overlays, segment comparisons (unlocked by custom events) |
 
 **Benchmarks.** For behavior KPIs (retention, session time, payer conversion, ARPPU, and so on), the dashboard shows a band from the **50th to the 90th percentile of experiences with similar players**. It falls back to genre or all experiences when needed, using games with at least 100 DAU. For overall-success KPIs it uses the top 1,000 games by 30-day playtime. Example from the docs: a D1 benchmark band of **12.11%–18.73%** means half of similar games are below 12.11% and only 10% are above 18.73%. The same data is available programmatically through the (experimental) **Open Cloud Benchmarks API** (`POST https://apis.roblox.com/analytics-benchmark/v1/universes/{universeId}/benchmarks`, metric for example `ForwardD1Retention`, scope `universe.analytics:read`).
 
@@ -1182,15 +1179,7 @@ Workflow: after publishing, wait 15–60 minutes, filter "new errors since <new 
 
 ### 19.2 Structured logging (LogService)
 
-`LogService` now has **structured logging**: `LogService:Info(message, context)`, `:Warn`, `:Error` (which always throws a structured error table with `message`, `template`, `context` and `stack`; wrap it in `pcall`), `:Log`, and named loggers via `LogService:GetLogger("Combat")` (child loggers via `Logger:GetLogger()`). Template placeholders like `{count}` are filled from the context table, and the context is preserved for the Developer Console and Output. `LogService.MessageOut(message, messageType, context)` fires for `print`, `warn`, errors and structured logs.
-
-```lua
-local LogService = game:GetService("LogService")
-local log = LogService:GetLogger("Shop")
-log:Info("Purchase {sku} by {userId}", { sku = "SpeedCoil", userId = player.UserId })
-```
-
-Check the `Class.Logger` API page before using child-logger features heavily. The structured API is newer than most community examples.
+`LogService` now supports structured logging: `:Info`, `:Warn`, `:Log` and `:Error(message, context)`. `:Error` always throws a table with `message`, `template`, `context` and `stack`, so wrap it in `pcall`. Named loggers come from `LogService:GetLogger("Shop")`. `{key}` placeholders are filled from the context, and `LogService.MessageOut(message, messageType, context)` receives the context. Example: `LogService:GetLogger("Shop"):Info("Purchase {sku}", { sku = "SpeedCoil" })`. This API is newer than most community examples, so check the `Logger` class page before relying on child loggers.
 
 ### 19.3 Error-reporting module
 
