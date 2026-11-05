@@ -16,7 +16,7 @@
 6. **Shared server moments beat solo moments.** Server-wide weather, boss spawns, admin events and theft raids make players notice one another. Roblox is a social platform first.
 7. **Paid random items must disclose odds** (all outcomes, as percentages that sum to 100%) and must respect `PolicyService:GetPolicyInfoForPlayerAsync().ArePaidRandomItemsRestricted`. Luck boosts and pity systems count as paid random items too.
 8. **Rewarded video ads give a predictable second revenue line.** Official Roblox genre playbooks target opt-in rates of 10–15%+ and 2.5–3+ views per user per day. Ad rewards must be deterministic (no random rewards) and preferably consumable and non-tradable.
-9. **Build mobile-first.** Big buttons, one-thumb play, under about 20 UI elements on screen, and work on low-end phones. Most Roblox play is on mobile, and top shooters credit cross-input design.
+9. **Build mobile-first.** Big buttons, one-thumb play, under about 20 UI elements on screen, and work on low-end phones. A large share of Roblox players are on phones, trend coverage says players expect games to work on every device, and analyses of the top shooter credit mobile-first, cross-input design.
 10. **Scope down ruthlessly.** A bot-built MVP should be one map, one core loop, 3–5 upgrade lines, one meta loop (rebirth or collection) and one social hook. Ship in that state, then add an update every week or two.
 11. **Prefer genres with low art demand and high systems demand** (simulator, tycoon, incremental, garden/idle, obby, tower defense, steal/raid). The bot is strongest at code and numbers. Avoid art-heavy (fashion, anime RPG, horror atmosphere) or physics-feel-heavy (racing, fighting, FPS) genres unless the twist depends on them.
 12. **Always have a sink for every source.** Inflation kills economies and trading. Rebirth resets, consumables, upgrade fees and cosmetics remove currency.
@@ -1100,3 +1100,94 @@ buy tier-1 item ─► place on grid ─► merge 2 equal ─► tier+1 ─► p
 **Original twists.** Pets with genetics and breeding (traits inherit). Pets that age into jobs. A "lend" system (temporary trades). Trading via an auction house with sinks (listing fees).
 
 ---
+
+## Part D — Hybrid trends and picking a genre
+
+### D.1 Hybrid patterns that worked (2024–2026)
+
+Trend coverage for 2025–2026 keeps pointing at **hybrids**: familiar loops combined so each covers the other's weakness.
+
+| Hybrid | Loop A gives | Loop B gives | Example pattern |
+|---|---|---|---|
+| Idle growth × tycoon × social theft | offline progress, return visits | visible base, rivalry | garden games with night stealing |
+| Tycoon × tag/raid | passive income | action, stories | steal-base games (8 bases + central conveyor) |
+| Survival × horror × co-op | systems, planning | tension, shareability | forest night-survival runs |
+| Simulator × RNG roll | number growth | gacha thrill each roll | aura/roll games |
+| Fishing × collection × exploration | relaxing minigame | bestiary, many paths | fishing games with "more than one end goal" |
+| Fighting × anime collection | mastery | character unlocks | battlegrounds |
+| TD × gacha × meme theme | strategy | collection, virality | meme tower defense |
+| Obby × escape story | easy content | narrative hook | "escape the X" obbies |
+
+**Rule of thumb:** combine a **retention loop** (offline growth, collection, prestige) with an **excitement loop** (theft, chase, gacha reveal, event), and make both **visible to other players**.
+
+### D.2 Choosing a genre for a solo/small bot-made game
+
+Score each candidate (1–5) and multiply: `Fit = BotFit × MonetizationFit × RetentionPotential / (ArtDemand × NetcodeRisk)`. Then sanity-check scope.
+
+**Strong candidates for a bot:** incremental/merge, simulator, garden/idle, tycoon, steal/raid, fishing, tower defense, obby. All are systems- and math-heavy, tolerate simple low-poly or primitive art, and need little latency-sensitive netcode.
+
+**Avoid as a first project** unless the twist depends on it: fighting, FPS, racing (feel and netcode), fashion, roleplay, anime RPG (art and content volume), story (consumed once).
+
+**Scope realism checklist (MVP must satisfy all):**
+1. A single place, at most one lobby-to-match teleport.
+2. The core loop is playable in under 60 s from join.
+3. At most about 25 unique art assets (primitives + recolors + a few meshes).
+4. At most 1 meta loop (rebirth OR collection OR ranked).
+5. Data model fits in one ProfileStore profile under about 100 KB.
+6. 2–4 game passes + 2–4 devproducts + 1 rewarded-video placement.
+7. 1 recurring content mechanism that needs no new art (rotating shop, weekly event modifier, weather).
+8. Mobile UI tested at phone resolution.
+
+**Weekly update cadence after launch:** new zone/tier (numbers), event (modifier + 3 recolored items), quality-of-life fix. Top live games refresh constantly, and the official liveops docs emphasize planned content updates.
+
+### D.3 Twist generator (to stay original)
+
+Take a proven loop and change **exactly one or two** of: the *verb* (click → tune, grow → brew, steal → borrow), the *setting* (garden → reef → asteroid), the *social rule* (compete → co-op meter), the *time model* (session → real-time offline), or the *ownership model* (personal → shared server asset). Then check the result against the originality list in TL;DR rule 15.
+
+---
+
+## Sources
+
+Official Roblox docs (local mirror `/home/user/Roblox/.sources/Roblox_creator-docs/content/en-us`):
+- `production/game-design/core-loops.md`, `balance-virtual-economies.md`, `monetization-foundations.md`, `liveops-essentials.md`, `subscription-design.md`
+- `production/monetization/paid-random-items.md` (odds disclosure), `developer-exchange.md` (DevEx $0.0038 / $0.0054), `price-optimization.md`, `regional-pricing.md`, `subscriptions.md`
+- `production/rewarded-video-guides.md` and `production/promotion/rewarded-video-playbooks/{incremental-sim,tycoon,obby,survival,shooter,rpg,sports}.md` (opt-in/frequency benchmarks, placement strategies)
+- `production/ad-placements/{growagarden,brookhaven,sols}.md`
+- `production/roblox-user-base.md`
+- `tutorials/curriculums/gameplay-scripting/detect-hits.md`, `implement-blasters.md` (laser-tag hit validation)
+- `tutorials/use-case-tutorials/lighting/create-flickering-lights.md`, `audio/add-3D-audio.md`, `data-storage/save-player-data.md`
+- `reference/engine/classes/PolicyService.yaml`, `AdService.yaml`, `WorldRoot.yaml`
+
+Web (accessed 2026-11-05; third-party figures are directional):
+- Naavik, "Predicting the next big hits on Roblox": https://naavik.co/digest/predicting-the-next-big-hits-on-roblox/ (search summary only; fetch blocked)
+- RoLearn, Grow a Garden CCU analysis / case study: https://rolearn.dev/insights/grow-a-garden-ccu-record-analysis, https://rolearn.dev/case-studies/idle-garden-zero-to-20m-ccu
+- GamesBeat interview with Grow a Garden's creator: https://gamesbeat.com/?p=305182
+- gam3s.gg, "Grow A Garden Hits Over 8 Million CCUs": https://gam3s.gg/news/grow-a-garden-hits-over-8m-users
+- Pocket Tactics, Grow a Garden mutations: https://www.pockettactics.com/grow-a-garden-mutations
+- PocketGamer.biz, Steal a Brainrot first to 25M CCU: https://www.pocketgamer.biz/robloxs-steal-a-brainrot-becomes-first-game-to-surpass-25m-concurrent-players
+- PocketGamer.biz, Roblox peak 47.4M: https://www.pocketgamer.biz/robloxs-peak-concurrent-user-count-hits-record-474m-as-steal-a-brainrot-and-grow-a-garden-compete
+- Steal a Brainrot (Wikipedia, via search summary): https://en.wikipedia.org/wiki/Steal_a_Brainrot
+- RoWatcher, brainrot trend CCU: https://rowatcher.com/news/is-the-brainrot-trend-dying-what-ccu-data-from-three-top-games-reveals
+- games.gg, 99 Nights in the Forest overview: https://games.gg/pt-BR/99-nights-in-the-forest/
+- shapes.inc fan wiki on Doors: https://shapes.inc/fandom/doors
+- Roblox DevForum, Creator Spotlight on Fisch: https://devforum.roblox.com/t/creator-spotlight-woozynate-makes-a-splash-with-fisch/3269481
+- Roblox Wiki (Fandom), Fisch: https://roblox.fandom.com/wiki/Fisching/Fisch
+- Varsity, Dress to Impress review: https://varsity.co.uk/fashion/28397
+- RoWatcher, Dress to Impress: https://rowatcher.com/news/dress-to-impress-how-a-teen-developer-s-fashion-game-hit-9-7-billion-visits
+- RoWatcher, Brookhaven 80B visits: https://rowatcher.com/news/brookhaven-rp-at-80-billion-visits-inside-roblox-s-unstoppable-digital-dollhouse
+- mapshot.gg, Voldex acquires Brookhaven: https://mapshot.gg/news/voldex-acquires-brookhaven-how-robloxs-most-visited-game-could-see-a-monetization-overhaul
+- RoWatcher, RIVALS: https://rowatcher.com/news/rivals-how-roblox-s-top-shooter-built-a-nearly-million-player-empire
+- RoLearn, RIVALS case study: https://rolearn.dev/case-studies/fps-rivals-competitive-shooter-growth
+- noping.com / games.gg, Strongest Battlegrounds combat guides: https://noping.com/blog/the-strongest-battlegrounds-tsb-in-roblox
+- Roblox DevForum hitbox threads: https://devforum.roblox.com/t/client-side-or-server-side-hitboxes/3089136, https://devforum.roblox.com/t/what-system-do-big-battlegrounds-games-use-for-hitboxes/3972418, https://devforum.roblox.com/t/securing-client-side-hit-detection-in-sword-combat/2961187
+- Roblox DevForum, FastCast: https://devforum.roblox.com/t/making-a-combat-game-with-ranged-weapons-fastcast-may-be-the-module-for-you/133474
+- Roblox DevForum, chassis types: https://devforum.roblox.com/t/tank-chassis-constraint-chassis/59923
+- Roblox DevForum, difficulty chart guide: https://devforum.roblox.com/t/the-guide-to-making-a-difficulty-chartpart-1/1135152
+- creation.dev obby design guide: https://www.creation.dev/blog/roblox-obby-design-guide
+- TD wave scaling examples: https://roblox-tower-defense-wave-script.pages.dev, https://west-games.com/tower-defense-wave-hp-scaling-calculator/, https://devforum.roblox.com/t/organizing-tower-defense-wave-data/3266290
+- Screenwise, Pet Simulator 99 parent guide: https://screenwiseapp.com/guides/parent-s-guide-to-roblox-pet-simulator-99
+- creation.dev simulator guide: https://www.creation.dev/blog/roblox-simulator-game-guide
+- DevForum, rewarded video expansion: https://devforum.roblox.com/t/more-creators-can-now-use-rewarded-video-ads/3838678
+- Trend roundups (low confidence): https://kitsblox.com/blog/popular-roblox-game-genres-2026, https://rolearn.dev/trend-reports/emerging-roblox-game-genres-q2-2026
+
+Note: in this session, direct fetches of naavik.co, wikipedia.org and devforum.roblox.com were blocked by the network allowlist, so claims from those sites rely on search-result summaries. Deconstructor of Fun, RoMonitor and Rolimons pages were not retrieved, and no figures from them are used.

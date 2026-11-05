@@ -916,3 +916,923 @@ Net.CoinsChanged.Fire(player, 150)
 Schema validation is **not** game-logic validation. Ownership, price, cooldowns, and range checks are still on you.
 
 ---
+## 5. Data persistence
+
+### 5.1 DataStoreService limits (current values from the docs)
+
+| Limit | Value |
+|---|---|
+| Key name / store name / scope | 50 characters each |
+| Value size | 4,194,304 characters per key (JSON-encoded) |
+| Per-key throughput | 25 MB/min read, 4 MB/min write (rounded up to the nearest KB per request) |
+| **Per-server default** (standard) | Read `60 + 40×players`/min, Write `60 + 40×players`/min, List `5 + 2×players`, Remove `60 + 40×players` |
+| **Per-server default** (ordered) | Read `60 + 40×players`, Write `30 + 5×players`, List (`GetSortedAsync`) `5 + 2×players` |
+| **Experience-wide** (shared with Open Cloud) | Standard read `300 + 40×CCU`, write `300 + 20×CCU`, list `300 + 2×CCU`, remove `300 + 40×CCU` |
+| Storage | `500 MB + 1 MB × lifetime users` (latest versions) |
+| Throttle queues | 30 requests per queue. Beyond that, requests fail with errors 301–306. |
+
+- `UpdateAsync` consumes **both** read and write budget.
+- `DataStoreService:GetRequestBudgetForRequestType(Enum.DataStoreRequestType.X)` returns the remaining budget. `SetRateLimitForRequestType` configures per-server limits; call it once at startup.
+- `GlobalDataStore:OnUpdate` is **deprecated**. Use MessagingService for change notifications.
+- `OrderedDataStore` supports `BatchGetAsync(keys)` (up to 100 keys). It throws on standard stores.
+- Studio uses separate static limits and needs "Enable Studio Access to API Services" turned on. Use a separate place or store name for testing.
+
+### 5.2 UpdateAsync is the only safe read-modify-write
+
+`SetAsync` blindly overwrites, so two servers writing the same key will lose data. `UpdateAsync` retries your transform against the latest value. The transform **must not yield** and **may be called multiple times**. Return `nil` to cancel the write.
+
+```lua
+--!strict
+local DataStoreService = game:GetService("DataStoreService")
+local guildStore = DataStoreService:GetDataStore("Guilds_v1")
+
+-- Atomically add a member if there's room. Returns true on success.
+local function addGuildMember(guildId: string, userId: number): boolean
+	local added = false
+	local ok, err = pcall(function()
+		guildStore:UpdateAsync(guildId, function(current: any, keyInfo: DataStoreKeyInfo?)
+			added = false
+			local guild = current or { members = {}, createdAt = os.time() }
+			if #guild.members >= 50 or table.find(guild.members, userId) then
+				return nil              -- cancel: no write
+			end
+			table.insert(guild.members, userId)
+			added = true
+			-- Return value, plus optional userIds (GDPR) and metadata:
+			return guild, { userId }
+		end)
+	end)
+	if not ok then
+		warn("addGuildMember failed:", err)
+		return false
+	end
+	return added
+end
+```
+
+### 5.3 Session locking (why ProfileStore)
+
+Without a lock, a player who hops servers quickly can have server A save stale data after server B has loaded and modified it. That's the classic item-duplication and rollback bug. **Session locking** stores "owned by JobId X" in the record. Other servers wait, ask the owner to release, or steal the lock after a timeout. ProfileStore does this for you:
+
+- `AUTO_SAVE_PERIOD = 300 s` autosave, plus a save on `EndSession`
+- Session conflict: the new server sends a release request and steals after `SESSION_STEAL = 40 s`. A session that hasn't updated for `ASSUME_DEAD = 630 s` is treated as crashed.
+- It binds `game:BindToClose` internally and saves all active profiles on shutdown (`ProfileStore.IsClosing`).
+- Each save is one `UpdateAsync`. `ProfileStore.IsCriticalState` / `OnCriticalToggle` report DataStore outages, and `OnError` reports errors.
+
+### 5.4 Complete ProfileStore data module
+
+Install: Wally `lm-loleris/profilestore@1.0.3` (realm `server`, so it lands in `ServerPackages`), or put the `ProfileStore` ModuleScript in ServerScriptService.
+
+```lua
+--!strict
+-- ServerScriptService/Server/Services/PlayerData.luau
+-- Owns all persistent player data. The ONLY module that touches ProfileStore for players.
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+local ServerScriptService = game:GetService("ServerScriptService")
+
+local ProfileStore = require(ServerScriptService.ServerPackages.ProfileStore)
+local Signal = require(ReplicatedStorage.Packages.Signal)
+
+-- ===== Schema =====
+local CURRENT_VERSION = 3
+
+local TEMPLATE = {
+	Version = CURRENT_VERSION,
+	Coins = 0,
+	Gems = 0,
+	Wins = 0,
+	OwnedItems = {} :: { [string]: boolean },
+	Equipped = "" :: string,
+	Settings = { Music = 0.5, Sfx = 0.8 },
+	PurchaseIdCache = {} :: { string },
+	Stats = { PlayTimeSeconds = 0, FirstJoin = 0, LastJoin = 0 },
+}
+export type Data = typeof(TEMPLATE)
+type Profile = ProfileStore.Profile<Data>
+
+-- Migrations: MIGRATIONS[v] upgrades data from version v to v + 1. Never edit an old step; add new ones.
+local MIGRATIONS: { [number]: (data: any) -> () } = {
+	[1] = function(data)
+		-- v1 stored "Cash"; v2 renamed it to "Coins"
+		data.Coins = (data.Coins or 0) + (data.Cash or 0)
+		data.Cash = nil
+	end,
+	[2] = function(data)
+		-- v2 stored Inventory as an array of ids; v3 uses a set
+		local owned = {}
+		for _, id in data.Inventory or {} do
+			owned[id] = true
+		end
+		data.OwnedItems = owned
+		data.Inventory = nil
+	end,
+}
+
+local function migrate(data: any)
+	local version = data.Version or 1
+	while version < CURRENT_VERSION do
+		local step = MIGRATIONS[version]
+		assert(step, `Missing migration for version {version}`)
+		step(data)
+		version += 1
+		data.Version = version
+	end
+end
+
+-- ===== Store =====
+local STORE_NAME = "PlayerData_v1"   -- change ONLY with a migration plan; a new name = wiped data
+local PlayerStore = ProfileStore.New(STORE_NAME, TEMPLATE)
+-- In Studio without API access, use the mock store (in-memory, never saved):
+local USE_MOCK = RunService:IsStudio() and workspace:GetAttribute("MockData") == true
+local Store = if USE_MOCK then PlayerStore.Mock else PlayerStore
+
+local profiles: { [Player]: Profile } = {}
+local waiters: { [Player]: { thread } } = {}
+local joinClock: { [Player]: number } = {}
+
+local PlayerData = {}
+PlayerData.Priority = 100   -- load before services that depend on data
+
+-- Fired as (player, data) once a profile is ready.
+PlayerData.Loaded = Signal.new()
+-- Fired as (player, key, newValue) whenever a top-level field changes through this API.
+PlayerData.Changed = Signal.new()
+
+local function resumeWaiters(player: Player, data: Data?)
+	local list = waiters[player]
+	waiters[player] = nil
+	if list then
+		for _, thread in list do
+			task.spawn(thread, data)
+		end
+	end
+end
+
+local function onPlayerAdded(player: Player)
+	local profile = Store:StartSessionAsync(`Player_{player.UserId}`, {
+		Cancel = function()
+			return player.Parent ~= Players   -- stop retrying if they leave mid-load
+		end,
+	} :: any)   -- `Cancel` is documented but missing from the exported param type
+
+	if profile == nil then
+		-- Only happens when the server is shutting down or the player left
+		if player.Parent == Players then
+			player:Kick("Data failed to load. Please rejoin.")
+		end
+		resumeWaiters(player, nil)
+		return
+	end
+
+	profile:AddUserId(player.UserId)   -- GDPR / right-to-erasure association
+	migrate(profile.Data)              -- migrate BEFORE Reconcile
+	profile:Reconcile()                -- fill fields added to TEMPLATE since this profile was created
+
+	profile.OnSessionEnd:Connect(function()
+		profiles[player] = nil
+		if player.Parent == Players then
+			player:Kick("Your data was loaded on another server. Please rejoin.")
+		end
+	end)
+
+	profile.OnLastSave:Connect(function()
+		-- Final chance to write session-derived data (no yielding here)
+		local started = joinClock[player]
+		if started then
+			profile.Data.Stats.PlayTimeSeconds += math.floor(os.clock() - started)
+			joinClock[player] = nil
+		end
+	end)
+
+	if player.Parent ~= Players then
+		profile:EndSession()   -- left while loading
+		resumeWaiters(player, nil)
+		return
+	end
+
+	local now = os.time()
+	if profile.Data.Stats.FirstJoin == 0 then
+		profile.Data.Stats.FirstJoin = now
+	end
+	profile.Data.Stats.LastJoin = now
+	joinClock[player] = os.clock()
+
+	profiles[player] = profile
+	PlayerData.Loaded:Fire(player, profile.Data)
+	resumeWaiters(player, profile.Data)
+end
+
+local function onPlayerRemoving(player: Player)
+	local profile = profiles[player]
+	if profile then
+		profile:EndSession()   -- OnLastSave fires, final save, lock released
+	end
+	resumeWaiters(player, nil)
+end
+
+-- ===== Public API =====
+function PlayerData.get(player: Player): Data?
+	local p = profiles[player]
+	return if p then p.Data else nil
+end
+
+function PlayerData.getProfile(player: Player): Profile?
+	return profiles[player]
+end
+
+-- Yields until the player's data loads. Returns nil if they leave or loading fails.
+function PlayerData.waitFor(player: Player): Data?
+	local p = profiles[player]
+	if p then return p.Data end
+	if player.Parent ~= Players then return nil end
+	local list = waiters[player]
+	if list == nil then
+		list = {}
+		waiters[player] = list
+	end
+	table.insert(list, coroutine.running())
+	return coroutine.yield()
+end
+
+function PlayerData.addCoins(player: Player, amount: number, reason: string): boolean
+	assert(amount == amount and amount >= 0 and amount % 1 == 0, "amount must be a non-negative integer")
+	local p = profiles[player]
+	if not p then return false end
+	p.Data.Coins += amount
+	PlayerData.Changed:Fire(player, "Coins", p.Data.Coins)
+	return true
+end
+
+-- Atomic check-and-deduct. No yields, so nothing can interleave.
+function PlayerData.trySpendCoins(player: Player, amount: number): boolean
+	assert(amount == amount and amount >= 0 and amount % 1 == 0, "amount must be a non-negative integer")
+	local p = profiles[player]
+	if not p or p.Data.Coins < amount then return false end
+	p.Data.Coins -= amount
+	PlayerData.Changed:Fire(player, "Coins", p.Data.Coins)
+	return true
+end
+
+function PlayerData.incrementWins(player: Player)
+	local p = profiles[player]
+	if not p then return end
+	p.Data.Wins += 1
+	PlayerData.Changed:Fire(player, "Wins", p.Data.Wins)
+end
+
+function PlayerData.setSetting(player: Player, key: string, value: number)
+	local p = profiles[player]
+	if not p then return end
+	local settings = p.Data.Settings :: any
+	if settings[key] == nil then return end    -- only known keys
+	settings[key] = math.clamp(value, 0, 1)
+end
+
+-- ===== Lifecycle =====
+function PlayerData:Init()
+	ProfileStore.OnError:Connect(function(message, storeName, key)
+		warn(`[PlayerData] DataStore error {storeName}/{key}: {message}`)
+	end)
+	ProfileStore.OnCriticalToggle:Connect(function(isCritical)
+		warn(`[PlayerData] critical state: {isCritical}`)   -- e.g. show a "saving paused" banner
+	end)
+end
+
+function PlayerData:Start()
+	Players.PlayerAdded:Connect(onPlayerAdded)
+	Players.PlayerRemoving:Connect(onPlayerRemoving)
+	for _, player in Players:GetPlayers() do   -- players who joined before Start
+		task.spawn(onPlayerAdded, player)
+	end
+end
+
+return PlayerData
+```
+
+Notes:
+- **Never replace `profile.Data`** with a new table. Mutate fields. Store only JSON-safe values: no Instances, Vector3, CFrame, or Color3. Serialize them as numbers or arrays (or use buffers).
+- Don't use mixed tables or numeric-string ambiguity. A dictionary keyed by `tostring(userId)` is fine. A sparse array is not.
+- `Reconcile` only fills **missing** keys. It never deletes old keys or changes types. That's what migrations are for.
+- ProfileStore's `MessageAsync` / `MessageHandler` let you send data to an offline player's profile (gifts, admin grants). It's processed when they next load.
+- `Profile:Save()` costs one UpdateAsync. Reserve it for critical moments like purchases.
+- **GDPR:** `AddUserId` associates the key with the user. Handle right-to-erasure requests by removing that key (`PlayerStore:RemoveAsync(key)` or Open Cloud).
+
+### 5.5 Leaderstats
+
+`leaderstats` is a Folder under the Player containing `IntValue` / `NumberValue` / `StringValue` children. The default player list displays it. It's display only. The source of truth is PlayerData.
+
+```lua
+--!strict
+-- ServerScriptService/Server/Services/Leaderstats.luau
+local PlayerData = require(script.Parent.PlayerData)
+
+local SHOWN = { "Coins", "Wins" }   -- order = column order
+
+local Leaderstats = {}
+
+function Leaderstats:Init()
+	PlayerData.Loaded:Connect(function(player: Player, data: PlayerData.Data)
+		local folder = Instance.new("Folder")
+		folder.Name = "leaderstats"
+		for _, key in SHOWN do
+			local value = Instance.new("IntValue")
+			value.Name = key
+			value.Value = (data :: any)[key]
+			value.Parent = folder
+		end
+		folder.Parent = player   -- parent last: one replication packet, no partial state
+	end)
+
+	PlayerData.Changed:Connect(function(player: Player, key: string, newValue: any)
+		local folder = player:FindFirstChild("leaderstats")
+		local stat = folder and folder:FindFirstChild(key)
+		if stat and stat:IsA("IntValue") then
+			stat.Value = newValue
+		end
+	end)
+end
+
+return Leaderstats
+```
+
+Because PlayerData has `Priority = 100`, it inits first. Leaderstats connects to `Loaded` during `Init`, before PlayerData's `Start` begins loading profiles, so no `Loaded` event is missed.
+
+### 5.6 Raw DataStore + BindToClose (when not using ProfileStore)
+
+For non-player global data (e.g. a world-state key written by one server), or if you must avoid ProfileStore:
+
+```lua
+--!strict
+local DataStoreService = game:GetService("DataStoreService")
+local RunService = game:GetService("RunService")
+local store = DataStoreService:GetDataStore("WorldState_v1")
+
+local dirty: { [string]: any } = {}
+
+local function flush()
+	for key, value in dirty do
+		local ok, err = pcall(function()
+			store:UpdateAsync(key, function()
+				return value
+			end)
+		end)
+		if ok then
+			dirty[key] = nil
+		else
+			warn("flush failed", key, err)
+		end
+	end
+end
+
+task.spawn(function()
+	while true do
+		task.wait(120)
+		flush()
+	end
+end)
+
+game:BindToClose(function()
+	if RunService:IsStudio() then return end   -- avoid 30 s hangs when stopping playtests
+	flush()   -- BindToClose gives at most ~30 seconds total
+end)
+```
+
+### 5.7 OrderedDataStore leaderboards
+
+- Values must be **integers**. Write sparingly: the ordered write budget is only `30 + 5×players`/min per server. Write on leave, or every few minutes for active players, never on every change.
+- Read with `GetSortedAsync(ascending, pageSize)` at most once a minute or so, and cache the result (list budget is `5 + 2×players`).
+
+```lua
+--!strict
+local DataStoreService = game:GetService("DataStoreService")
+local Players = game:GetService("Players")
+local winsBoard = DataStoreService:GetOrderedDataStore("GlobalWins_v1")
+
+local Leaderboard = {}
+local cached: { { userId: number, name: string, wins: number } } = {}
+
+function Leaderboard.submit(player: Player, wins: number)
+	local ok, err = pcall(function()
+		winsBoard:SetAsync(tostring(player.UserId), math.floor(wins))
+	end)
+	if not ok then warn("Leaderboard submit failed:", err) end
+end
+
+local nameCache: { [number]: string } = {}
+local function nameOf(userId: number): string
+	local cachedName = nameCache[userId]
+	if cachedName then return cachedName end
+	local ok, name = pcall(Players.GetNameFromUserIdAsync, Players, userId)
+	local result = if ok then name else `User{userId}`
+	nameCache[userId] = result
+	return result
+end
+
+function Leaderboard.refresh()
+	local ok, pages = pcall(function()
+		return winsBoard:GetSortedAsync(false, 50)
+	end)
+	if not ok then
+		warn("Leaderboard read failed:", pages)
+		return
+	end
+	local entries = {}
+	for _, entry in (pages :: DataStorePages):GetCurrentPage() do
+		local userId = tonumber(entry.key)
+		if userId then
+			table.insert(entries, { userId = userId, name = nameOf(userId), wins = entry.value })
+		end
+	end
+	cached = entries
+end
+
+function Leaderboard.top() return cached end
+
+task.spawn(function()
+	while true do
+		Leaderboard.refresh()
+		task.wait(90)
+	end
+end)
+
+return Leaderboard
+```
+
+### 5.8 MemoryStoreService: queues, sorted maps, hash maps
+
+MemoryStore is fast, ephemeral, cross-server memory: matchmaking, server browsers, global rate limits, live events, and short-lived leaderboards. Everything has an **expiration** (max 45 days). Limits:
+- Memory quota: `64 KB + 1.2 KB × users` per experience.
+- Requests: `1000 + 120 × CCU` request units per minute (range reads cost one unit per returned item).
+- Max 1,000,000 items and 100 MB per sorted map or queue.
+- Each sorted map or queue lives on a **single partition** (throttling at roughly 30k units/min). Hash maps spread across partitions, with a per-key limit of about 5k writes and 15k reads per minute. Shard hot structures.
+
+```lua
+--!strict
+local MemoryStoreService = game:GetService("MemoryStoreService")
+local HttpService = game:GetService("HttpService")
+
+-- ===== Queue: matchmaking =====
+local queue = MemoryStoreService:GetQueue("Matchmaking_Ranked", 30)  -- 30 s invisibility timeout
+
+local function enqueue(player: Player, rating: number)
+	local ok, err = pcall(function()
+		-- value, expiration (s), priority (higher = read first)
+		queue:AddAsync({ userId = player.UserId, rating = rating, jobId = game.JobId }, 120, 0)
+	end)
+	if not ok then warn("enqueue failed", err) end
+end
+
+-- One "matchmaker" loop per server (or only on a designated server)
+local function matchmakerTick(placeId: number)
+	local ok, items, readId = pcall(function()
+		-- count, allOrNothing, waitTimeout
+		return queue:ReadAsync(8, true, 5)
+	end)
+	if not ok or items == nil or #items == 0 then return end
+	-- Reserve a server for the match and notify the owning servers (MessagingService), then:
+	local matchId = HttpService:GenerateGUID(false)
+	-- ... publish {matchId, userIds} so each origin server teleports its players ...
+	pcall(function()
+		queue:RemoveAsync(readId)   -- acknowledge; otherwise items reappear after the invisibility timeout
+	end)
+end
+
+-- ===== Sorted map: server browser / live leaderboard =====
+local servers = MemoryStoreService:GetSortedMap("ServerBrowser")
+
+local function heartbeatServer(playerCount: number, mapName: string)
+	pcall(function()
+		-- key, value, expiration (s), sortKey (optional; number or string)
+		servers:SetAsync(game.JobId, { players = playerCount, map = mapName }, 60, playerCount)
+	end)
+end
+
+local function listServers(): { any }
+	local ok, result = pcall(function()
+		-- direction, count, exclusiveLowerBound?, exclusiveUpperBound?
+		return servers:GetRangeAsync(Enum.SortDirection.Descending, 50)
+	end)
+	return if ok then result else {}
+end
+
+-- Atomic update (transform may run multiple times; return nil to cancel)
+local function bumpEventScore(teamId: string, delta: number)
+	pcall(function()
+		servers:UpdateAsync(`team_{teamId}`, function(old: any, sortKey: any)
+			local new = (old or 0) + delta
+			return new, new
+		end, 3600)
+	end)
+end
+
+-- ===== Hash map: per-key fast state (no ordering, scales well) =====
+local partyMap = MemoryStoreService:GetHashMap("Parties")
+
+local function setParty(partyId: string, members: { number })
+	pcall(function()
+		partyMap:SetAsync(partyId, members, 600)
+	end)
+end
+
+local function getParty(partyId: string): { number }?
+	local ok, v = pcall(function()
+		return partyMap:GetAsync(partyId)
+	end)
+	return if ok then v else nil
+end
+```
+
+### 5.9 MessagingService: cross-server pub/sub
+
+Limits: message ≤ **1 KB**. Send `600 + 240 × players`/min per server. Receive per topic `40 + 80 × servers`/min. Subscriptions `20 + 8 × players` per server. Delivery is best-effort: no guarantee and no ordering. Use it for notifications, and store the truth in DataStore or MemoryStore.
+
+```lua
+--!strict
+local MessagingService = game:GetService("MessagingService")
+local HttpService = game:GetService("HttpService")
+
+local TOPIC = "GlobalAnnouncement"
+
+local function subscribe(onMessage: (text: string, sentAt: number) -> ())
+	for attempt = 1, 5 do
+		local ok, conn = pcall(function()
+			return MessagingService:SubscribeAsync(TOPIC, function(message)
+				-- message.Data = payload, message.Sent = unix time sent
+				local data = message.Data
+				if typeof(data) == "string" then
+					local decoded = HttpService:JSONDecode(data)
+					onMessage(decoded.text, message.Sent)
+				end
+			end)
+		end)
+		if ok then return conn end
+		task.wait(2 ^ attempt)
+	end
+	warn("SubscribeAsync failed permanently")
+	return nil
+end
+
+local function announce(text: string)
+	local payload = HttpService:JSONEncode({ text = text, from = game.JobId })
+	assert(#payload <= 1000, "message too large")
+	local ok, err = pcall(MessagingService.PublishAsync, MessagingService, TOPIC, payload)
+	if not ok then warn("PublishAsync failed:", err) end
+end
+```
+
+**Which to use:** DataStore = durable truth. MemoryStore = shared, fast, expiring state with atomic updates. MessagingService = "something happened" notifications. Global leaderboard = OrderedDataStore, or a MemoryStore sorted map for time-boxed events.
+
+---
+
+## 6. Player lifecycle, cleanup, and Signals
+
+### 6.1 The lifecycle
+
+```
+Server starts → Script runs (players may ALREADY be in game in Studio / fast joins)
+Players.PlayerAdded(player)
+  → load data (yields!)
+  → player.CharacterAdded(character)    (every respawn; first one may fire before you connect)
+       → character.Humanoid.Died
+       → player.CharacterRemoving(character)
+Players.PlayerRemoving(player)          (player still accessible; save + clean up here)
+game:BindToClose                         (server shutdown; ≤30 s)
+```
+
+### 6.2 Correct join handling + per-player/per-character cleanup with Trove
+
+```lua
+--!strict
+-- ServerScriptService/Server/Services/PlayerLifecycle.luau
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Trove = require(ReplicatedStorage.Packages.Trove)
+
+type Trove = typeof(Trove.new())
+
+local playerTroves: { [Player]: Trove } = {}
+
+local PlayerLifecycle = {}
+
+local function onCharacterAdded(player: Player, character: Model, playerTrove: Trove)
+	-- A sub-trove: cleaned when THIS character goes away, or when the player trove is cleaned
+	local charTrove = playerTrove:Extend()
+
+	local humanoid = character:WaitForChild("Humanoid", 10) :: Humanoid?
+	if not humanoid or character.Parent == nil then
+		playerTrove:Remove(charTrove)
+		return
+	end
+
+	charTrove:Connect(humanoid.Died, function()
+		print(`{player.Name} died`)
+	end)
+
+	-- Example: a server-created part that must die with the character
+	local marker = charTrove:Add(Instance.new("Part"))
+	marker.Anchored = true
+	marker.CanCollide = false
+	marker.Transparency = 1
+	marker.Parent = character
+
+	-- Clean everything when the character is removed (respawn/leave/destroy)
+	charTrove:Connect(character.AncestryChanged, function(_, parent)
+		if parent == nil then
+			playerTrove:Remove(charTrove)   -- Remove() also cleans it
+		end
+	end)
+end
+
+local function onPlayerAdded(player: Player)
+	if playerTroves[player] then return end   -- guard double-call (loop + event race)
+	local trove = Trove.new()
+	playerTroves[player] = trove
+
+	trove:Connect(player.CharacterAdded, function(character)
+		onCharacterAdded(player, character, trove)
+	end)
+	if player.Character then   -- character spawned before we connected
+		task.spawn(onCharacterAdded, player, player.Character, trove)
+	end
+end
+
+local function onPlayerRemoving(player: Player)
+	local trove = playerTroves[player]
+	if trove then
+		playerTroves[player] = nil
+		trove:Destroy()
+	end
+end
+
+function PlayerLifecycle:Start()
+	Players.PlayerAdded:Connect(onPlayerAdded)
+	Players.PlayerRemoving:Connect(onPlayerRemoving)
+	for _, player in Players:GetPlayers() do
+		task.spawn(onPlayerAdded, player)
+	end
+end
+
+-- Let other modules attach per-player resources that auto-clean on leave
+function PlayerLifecycle.troveFor(player: Player): Trove?
+	return playerTroves[player]
+end
+
+return PlayerLifecycle
+```
+
+Trove API (v1.8): `Trove.new()`, `:Add(obj, cleanupMethod?)` (Instances → `Destroy`, connections → `Disconnect`, functions → called, threads → `task.cancel`, tables with `Destroy`/`Disconnect`, Promises via `AddPromise`), `:Connect(signal, fn)`, `:Once(signal, fn)`, `:Clone(instance)`, `:Construct(Class, ...)`, `:BindToRenderStep(name, priority, fn)`, `:Extend()` (child trove), `:Remove(obj)` (removes **and cleans**), `:Pop(obj)`, `:Clean()`, `:WrapClean()`, `:AttachToInstance(inst)` (cleans when the instance is destroyed), `:Destroy()`. Maid and Janitor are equivalent alternatives (Janitor has `:LinkToInstance`). Pick one per project.
+
+### 6.3 Memory leak sources the bot must avoid
+
+- **Tables keyed by Player/Instance that are never cleared.** Clear them in `PlayerRemoving` or use a per-player Trove.
+- **Connections to long-lived signals** (`RunService.Heartbeat`, `Players.PlayerAdded`, a module Signal) made per object or per round and never disconnected.
+- **Connections on Instances are cleaned by `:Destroy()`**, but not if you just set `Parent = nil`. Destroy what you create.
+- **Player and character instances**: set `Workspace.PlayerCharacterDestroyBehavior = Enabled` so the engine calls `Destroy()` on old characters when they respawn and on the `Player` when they leave. That disconnects their connections. Don't keep references to old characters either way.
+- **Closures capturing big tables** inside connections that outlive their purpose.
+- **Threads waiting forever**: `WaitForChild` without a timeout, or `Signal:Wait()` on something that never fires.
+- **Unbounded caches**: cap them, or use weak tables (`setmetatable({}, { __mode = "k" })`) for Instance-keyed caches. Note that weak-keyed Instance tables only release after the Instance has been destroyed and collected.
+
+### 6.4 Signals
+
+Use `sleitnick/signal` (pure Luau, typed, fast, no BindableEvent overhead):
+
+```lua
+--!strict
+local Signal = require(ReplicatedStorage.Packages.Signal)
+
+local roundEnded = Signal.new() :: Signal.Signal<string, { Player }>  -- (reason, winners)
+local conn = roundEnded:Connect(function(reason, winners) print(reason, #winners) end)
+roundEnded:Once(function(reason) print("first end:", reason) end)
+roundEnded:Fire("TimeUp", {})
+local reason = roundEnded:Wait()   -- yields until next Fire
+conn:Disconnect()
+roundEnded:DisconnectAll()
+roundEnded:Destroy()
+-- Signal.Wrap(rbxScriptSignal) adapts an engine signal; :FireDeferred uses task.defer.
+```
+
+Don't use `BindableEvent` for module-to-module events. It deep-copies tables and strips metatables.
+
+### 6.5 Promises (optional)
+
+`evaera/promise` v4 gives you composable async code: `Promise.new`, `Promise.try`, `:andThen`, `:catch`, `:finally`, `Promise.all`, `Promise.race`, `:timeout(s)`, `Promise.retryWithDelay(fn, times, seconds)`, and cancellation. It's useful for complex async UIs and flows. Plain `pcall` with retries is fine for most server code. Don't mix styles chaotically within one module.
+
+---
+
+## 7. OOP, typed classes, state machines, ECS
+
+### 7.1 A typed class (metatables + Luau types)
+
+The documented pattern: define the data type, derive the class type with `typeof(setmetatable({} :: Data, Class))`, and annotate `self` explicitly.
+
+```lua
+--!strict
+-- ReplicatedStorage/Shared/Classes/Inventory.luau
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Signal = require(ReplicatedStorage.Packages.Signal)
+
+local Inventory = {}
+Inventory.__index = Inventory
+
+type InventoryData = {
+	_slots: { [string]: number },
+	_capacity: number,
+	Changed: Signal.Signal<string, number>,   -- (itemId, newCount)
+}
+
+export type Inventory = typeof(setmetatable({} :: InventoryData, Inventory))
+
+function Inventory.new(capacity: number): Inventory
+	local self = setmetatable({
+		_slots = {},
+		_capacity = capacity,
+		Changed = Signal.new(),
+	} :: InventoryData, Inventory)
+	return self
+end
+
+function Inventory.count(self: Inventory, itemId: string): number
+	return self._slots[itemId] or 0
+end
+
+function Inventory.usedSlots(self: Inventory): number
+	local n = 0
+	for _ in self._slots do
+		n += 1
+	end
+	return n
+end
+
+function Inventory.add(self: Inventory, itemId: string, amount: number): boolean
+	assert(amount > 0 and amount % 1 == 0, "amount must be a positive integer")
+	local current = self._slots[itemId]
+	if current == nil and self:usedSlots() >= self._capacity then
+		return false
+	end
+	local new = (current or 0) + amount
+	self._slots[itemId] = new
+	self.Changed:Fire(itemId, new)
+	return true
+end
+
+function Inventory.remove(self: Inventory, itemId: string, amount: number): boolean
+	local current = self._slots[itemId] or 0
+	if current < amount then
+		return false
+	end
+	local new = current - amount
+	self._slots[itemId] = if new > 0 then new else nil
+	self.Changed:Fire(itemId, new)
+	return true
+end
+
+function Inventory.serialize(self: Inventory): { [string]: number }
+	return table.clone(self._slots)
+end
+
+function Inventory.destroy(self: Inventory)
+	self.Changed:Destroy()
+	table.clear(self._slots)
+end
+
+return Inventory
+```
+
+```lua
+local Inventory = require(ReplicatedStorage.Shared.Classes.Inventory)
+local inv = Inventory.new(20)
+inv.Changed:Connect(function(id, n) print(id, n) end)
+inv:add("apple", 3)        -- method call works; autocomplete knows `inv: Inventory`
+```
+
+**Inheritance:** prefer **composition** (an `Enemy` *has* a `Health` component) over metatable inheritance chains. If you must inherit, set `setmetatable(Derived, { __index = Base })` and keep it to one level.
+
+### 7.2 State machines
+
+Most game objects (round, NPC AI, weapon, door) are state machines. Make them explicit.
+
+```lua
+--!strict
+-- ReplicatedStorage/Shared/StateMachine.luau
+export type StateDef<S, C> = {
+	enter: ((ctx: C, from: S?) -> ())?,
+	exit: ((ctx: C, to: S) -> ())?,
+	update: ((ctx: C, dt: number) -> S?)?,   -- return a state to transition
+	allowed: { S }?,                         -- legal next states (nil = any)
+}
+
+local StateMachine = {}
+StateMachine.__index = StateMachine
+
+type Data<S, C> = {
+	_states: { [S]: StateDef<S, C> },
+	_ctx: C,
+	current: S?,
+}
+export type StateMachine<S, C> = typeof(setmetatable({} :: Data<S, C>, StateMachine))
+
+function StateMachine.new<S, C>(states: { [S]: StateDef<S, C> }, ctx: C): StateMachine<S, C>
+	return setmetatable({ _states = states, _ctx = ctx, current = nil } :: Data<S, C>, StateMachine) :: any
+end
+
+function StateMachine.transition<S, C>(self: StateMachine<S, C>, to: S): boolean
+	local from = self.current
+	if from == to then return false end
+	if from ~= nil then
+		local fromDef = self._states[from]
+		if fromDef.allowed and not table.find(fromDef.allowed, to) then
+			warn(`Illegal transition {tostring(from)} -> {tostring(to)}`)
+			return false
+		end
+		if fromDef.exit then fromDef.exit(self._ctx, to) end
+	end
+	self.current = to
+	local toDef = self._states[to]
+	assert(toDef, `Unknown state {tostring(to)}`)
+	if toDef.enter then toDef.enter(self._ctx, from) end
+	return true
+end
+
+function StateMachine.update<S, C>(self: StateMachine<S, C>, dt: number)
+	local cur = self.current
+	if cur == nil then return end
+	local def = self._states[cur]
+	if def.update then
+		local nextState = def.update(self._ctx, dt)
+		if nextState ~= nil then
+			self:transition(nextState)
+		end
+	end
+end
+
+return StateMachine
+```
+
+Example: a simple NPC with `"Idle" | "Chase" | "Attack"` states, where `update` returns the next state based on the distance to the nearest player. Drive all NPCs from **one** Heartbeat loop, not one loop per NPC.
+
+### 7.3 ECS with jecs (when it pays off)
+
+Use an ECS when you have **hundreds or thousands of similar entities** with data-oriented behavior (projectiles, crowds, resource nodes, tower defense units), or when composing behavior from components beats deep class trees. Skip it for small games, UI, or a few unique objects. Plain modules plus tags are simpler.
+
+```lua
+--!strict
+-- jecs 0.11 (wally: ukendio/jecs)
+local jecs = require(ReplicatedStorage.Packages.jecs)
+local RunService = game:GetService("RunService")
+
+local world = jecs.world()
+
+local Position = world:component() :: jecs.Id<Vector3>
+local Velocity = world:component() :: jecs.Id<Vector3>
+local Lifetime = world:component() :: jecs.Id<number>
+local Model = world:component() :: jecs.Id<BasePart>
+local Projectile = world:entity()   -- a tag (component without data)
+
+local function spawnProjectile(origin: Vector3, dir: Vector3, part: BasePart)
+	local e = world:entity()
+	world:set(e, Position, origin)
+	world:set(e, Velocity, dir.Unit * 120)
+	world:set(e, Lifetime, 3)
+	world:set(e, Model, part)
+	world:add(e, Projectile)
+	return e
+end
+
+-- Cleanup hook: destroy the part when the Model component is removed / entity deleted
+world:set(Model, jecs.OnRemove, function(entity)
+	local part = world:get(entity, Model)
+	if part then part:Destroy() end
+end)
+
+local toDelete: { jecs.Entity } = {}
+RunService.Heartbeat:Connect(function(dt)
+	for e, pos, vel, life in world:query(Position, Velocity, Lifetime):with(Projectile) do
+		local newPos = pos + vel * dt
+		world:set(e, Position, newPos)
+		local remaining = life - dt
+		if remaining <= 0 then
+			table.insert(toDelete, e)
+		else
+			world:set(e, Lifetime, remaining)
+		end
+	end
+	for _, e in toDelete do
+		world:delete(e)   -- don't structurally change the archetype mid-iteration
+	end
+	table.clear(toDelete)
+
+	-- Render/sync step (batch CFrame writes)
+	local parts, cframes = {}, {}
+	for _, part, pos in world:query(Model, Position) do
+		table.insert(parts, part)
+		table.insert(cframes, CFrame.new(pos))
+	end
+	workspace:BulkMoveTo(parts, cframes, Enum.BulkMoveMode.FireCFrameChanged)
+end)
+```
+
+jecs features: relationships (`jecs.pair(ChildOf, parent)`), wildcards, hooks (`OnAdd` / `OnChange` / `OnRemove`), cached queries (`:cached()`), and query filters (`:with`, `:without`). See `/home/user/Roblox/.sources/Ukendio_jecs/how_to/`.
+
+---
