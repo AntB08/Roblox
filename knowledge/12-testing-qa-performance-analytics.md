@@ -25,7 +25,7 @@
 
 ## 1. The QA process for a Roblox game
 
-A solo or small-team Roblox game does not need heavyweight QA, but it does need *repeatable* QA. Most bad launches come from two causes: a change that broke an older feature (a regression), and a feature that works for one player in Studio but fails with 10 players on phones over cellular data.
+Small teams don't need heavyweight QA, but they do need *repeatable* QA. Most bad launches come from regressions, or from features that work solo in Studio and fail with 10 players on phones over cellular data.
 
 ### 1.1 Test plan (one per feature)
 
@@ -49,9 +49,7 @@ Analytics: LogEconomyEvent(Sink, "Coins", 500, ..., "Gameplay", "Egg_Basic")
 Exit criteria: all cases pass, no new errors in Output, no frame-time spike > 5 ms
 ```
 
-Rules:
-- Label each case with the **realm** (server, client, or both), and add **exploit**, **DataStore**, **edge**, **UI** and **network** cases for anything that matters.
-- High-risk areas are always DataStores, purchases (`ProcessReceipt`), teleports, trading, anything a client can trigger through a remote, and the FTUE (first-time user experience).
+Label each case by realm and add exploit, DataStore, edge, UI and network cases. High-risk areas are always DataStores, `ProcessReceipt`, teleports, trading, client-callable remotes and the FTUE.
 
 ### 1.2 Smoke test (every build, about 5 minutes)
 
@@ -90,14 +88,9 @@ Keep `qa/regression.md` in the repo and grow it every time a bug is fixed: *each
 
 Run the **full** regression list before major updates and the **[Core]+[Data]+[Monetize]** subset before every publish.
 
-### 1.4 Severity and triage
+### 1.4 Severity
 
-| Severity | Definition | Response |
-|---|---|---|
-| S0 Blocker | Data loss, Robux taken without item, crash on join, game-breaking exploit | Hotfix now; restart servers; consider closing the game |
-| S1 Critical | Core loop broken for a segment (e.g., all phones), purchase UI broken | Fix within 24 h |
-| S2 Major | Feature broken but a workaround exists; heavy error spam | Next scheduled update |
-| S3 Minor | Cosmetic, typo, rare edge case | Backlog |
+**S0** (data loss, Robux taken without the item, crash on join, game-breaking exploit): hotfix now and restart servers. **S1** (core loop broken for a segment such as all phones): fix within 24 h. **S2** (broken but with a workaround, or error spam): next update. **S3** (cosmetic): backlog.
 
 ---
 
@@ -114,20 +107,13 @@ Studio's current toolbar (the "mezzanine") offers these playtest options. Older 
 | **Team Test** | – | A cloud-hosted session that collaborators join from their own Studio | Real network latency, playtests with collaborators |
 | **Party Simulator** | – | Emulates party assignments for test players (`Player.PartyId`, `SocialService:GetPartyAsync()`) | Games using party APIs |
 
-**Client/Server toggle.** In solo Test or Test Here you can switch between **Client** view (blue border; your controls) and **Server** view (green border; free camera, you can inspect server-side properties). Use it to answer "does the server think this door is open?". Output lines are labeled blue (client) or green (server).
-
-**Pause / Step.** Pause freezes physics and animations, not scripts. **Step Forward** advances 1/60 s. This is useful for inspecting collisions and ragdolls.
+In solo modes, the **Client/Server toggle** switches between client view (blue border) and server view (green border, free camera) so you can inspect server state. **Pause** freezes physics and animations (not scripts), and **Step Forward** advances 1/60 s.
 
 ### 2.1 Device Simulator (phones, tablets, console, VR)
 
 The **Device Simulator** toolbar (beta at the time of writing; enable it under *File → Beta Features*) sits above the viewport and has categories for **Phone** (phones and tablets, with touch and on-screen keyboard), **Desktop**, **Console** (output resolutions, gamepad-first input) and **Headset**. You can switch device mid-playtest.
 
-Use it for:
-- Aspect ratios, safe areas, notches, and touch-button reachability (thumb zones).
-- Text size readability (on phones, text below about 14 px is unreadable) **[heuristic]**.
-- Checking that gamepad selection works on every menu (console).
-
-Do **not** use it for performance or memory numbers. The docs say plainly that the emulator "isn't accurate for memory usage" because Studio runs both server and client. Use real devices for that (§6).
+Use it for aspect ratios, safe areas, touch-button reachability, text readability (below about 14 px is unreadable on phones **[heuristic]**) and gamepad navigation. Do **not** use it for performance or memory, because Studio runs server and client together and the docs call its memory readings inaccurate.
 
 ### 2.2 Network simulation (latency, jitter, packet loss)
 
@@ -141,7 +127,7 @@ Standard test profiles **[heuristic]**:
 | Typical mobile | 75 ms | 25 ms | 1% |
 | Bad mobile | 150 ms | 50 ms | 3% |
 
-What to watch: buttons that give no feedback until the server answers, double purchases from repeated taps, rubber-banding, hit registration, and UI that assumes remote events arrive in order.
+Watch for: no feedback until the server replies, double purchases from repeated taps, rubber-banding, and UI that assumes remote events arrive in order.
 
 ### 2.3 Other Studio tools
 
@@ -153,14 +139,7 @@ The **Output** window (filter by client or server), the **script debugger** (bre
 
 ### 3.1 What to automate
 
-Roblox games are full of physics and UI, which are hard to unit-test. Automate the parts where bugs are expensive and logic is deterministic:
-
-- **Economy math**: prices, cost curves, rebirth multipliers, offline earnings, reward tables.
-- **Data schema**: default data, migrations from v1 to vN, validation and sanitization of loaded data.
-- **Inventory and trade rules**: caps, duplicates, atomic swap logic.
-- **Server validation**: remote argument validators (types, ranges, rate limits).
-- **Pure utilities**: formatting numbers ("1.2K"), time strings, weighted random with a seeded `Random`.
-- **State machines**: round flow, quest states.
+Automate deterministic logic where bugs are expensive: economy math (prices, cost curves, rebirth, offline earnings), data schema (defaults, migrations, sanitization), inventory and trade rules, remote-argument validators and rate limiters, pure utilities (number formatting, seeded weighted random), and state machines (rounds, quests).
 
 Architecture rule: **keep Roblox services out of the logic.** Pass them in (dependency injection), so tests can supply fakes:
 
@@ -639,7 +618,7 @@ If Roblox itself is at fault (an engine crash, or a spike in **platform crashes*
 | Client crash rate | Investigate above **2–3%**, especially a jump right after an update |
 | Load (join) time | Under ~10 s on mid-range phones over Wi-Fi; under 20 s on low-end **[heuristic]** |
 
-Why low-end matters: **Android is roughly 65% of a typical game's player base, and about 60% of those players have 2–4 GB of RAM.** More than half of all Roblox players are on devices scoring 10,000–20,000 on Passmark. Pick at least one **baseline low-end device**, for example an Infinix Smart 9, Motorola Moto G05, Oppo A18 or Amazon Fire HD 10 (2023), which the docs list as test devices, and test on it throughout development, not only at the end.
+Why low-end matters: **Android is about 65% of a typical game's players, and about 60% of those have 2–4 GB of RAM.** More than half of players use devices scoring 10k–20k on Passmark. Test throughout development on a **baseline low-end device** (the docs suggest e.g. Infinix Smart 9, Moto G05, Oppo A18, Fire HD 10 2023).
 
 ### 7.2 Performance budget per device tier
 
@@ -679,21 +658,15 @@ Available in Studio **and in live games** (on phones from the in-game menu). The
 | **Server Jobs** (server view) | Task scheduler jobs. **Heartbeat → Steps Per Sec** is server FPS | Heartbeat < 60 |
 | **Server Stats** (server view) | Average **data ping** for all players, plus other server health stats | Rising ping = server overloaded or saturating replication |
 
-Other overlays (client):
-- **Performance Stats** (Ctrl+Alt+F7, or the in-game settings menu): memory, CPU, GPU, network sent and received, ping.
-- **Debug Stats**: Shift+F1 through Shift+F5 (Summary, Render with **Draw (scene)** calls and triangles, Physics, Network, and so on). In Studio, use *Window → Performance → Stats*. Studio skews FPS, so read FPS on the client.
+Other overlays: **Performance Stats** (Ctrl+Alt+F7 or the settings menu) shows memory, CPU, GPU, network and ping. **Debug Stats** (Shift+F1–F5 in the client, Ctrl+Shift+F1–F5 in Studio) include Summary, Render (**Draw (scene)** calls and triangles), Physics and Network. Studio skews FPS, so read it on a client.
 
 ### 8.2 MicroProfiler
 
 Open with **Ctrl+Alt+F6** (⌘⌥F6) on the client, or start a **server** capture from the Developer Console. It works on devices, so you can capture a dump on a phone and open it on your PC.
 
 How to read it:
-1. **Frame time bar graph** (top): each bar is one frame and its height is the milliseconds taken. Look for **spikes** (one tall bar, an occasional hitch) versus **consistently tall** bars (something runs every frame).
-   - **Orange** bars: Jobs Wall Time > Render Wall Time. A worker thread (scripts, physics, animation) was the bottleneck.
-   - **Blue** bars: Render Wall Time > Jobs Wall Time. Rendering was the bottleneck.
-   - **Red** bars: usually object complexity, texture size or effects. Optimize them like blue bars.
-   - Focus on frame *time*, not color. There is no "good" color.
-2. **Timeline** (below): tasks per thread, where wider means longer. Hover to see names and durations. Click a bar to jump to that frame. Pause with Ctrl+P (or the menu) to freeze the capture.
+1. **Frame time bar graph** (top): bar height is the frame's milliseconds. A single tall bar is a hitch. Consistently tall bars mean something runs every frame. **Orange** means a worker thread was the bottleneck (scripts, physics, animation). **Blue** means rendering was. **Red** usually comes from object complexity, textures or effects, so optimize it like blue. Focus on frame *time*, not color.
+2. **Timeline** (below): tasks per thread, where wider means longer. Hover to see names and durations. Click a bar to jump to that frame.
 3. **Label your own code** so it shows up by name:
 
 ```lua
@@ -741,37 +714,32 @@ Common scopes to know (from the docs' tag reference):
 
 ### 9.2 Physics
 
-- **Unanchored decorative parts**: every unanchored assembly is simulated (and network ownership adds cost). Anchor everything that does not need to move.
-- **Precise collision fidelity** on meshes costs the most CPU and memory (`PhysicsParts`). Use **Box** for small or non-interactive items and **Hull** for medium ones. Build custom invisible box colliders for big complex meshes. For non-colliding props, set `CanCollide`, `CanTouch` and `CanQuery` to false **and** use Box fidelity, because collision geometry stays in memory otherwise.
-- **Fixed 240 Hz physics** (instead of adaptive timestepping) quadruples physics work. Keep **adaptive**.
-- **Complex mechanisms**: minimize constraints. Use `NoCollisionConstraint` on ragdoll limbs to prevent self-collision.
-- **Physics throttling**: when the server cannot keep up, the engine throttles physics, which players feel as slow motion. Watch the Physics debug stats (Shift+F4 area) and the `worldStep` time. The cure is fewer simulated assemblies, not engine settings.
-- **Network ownership**: set ownership explicitly (`part:SetNetworkOwner(player)` for player vehicles, `nil` for server-authoritative objects) to avoid ownership flip-flopping.
+- **Unanchored decorative parts** are all simulated. Anchor everything that doesn't need to move.
+- **Precise collision fidelity** costs the most CPU and memory (`PhysicsParts`). Use Box for small props, Hull for medium ones, and invisible box colliders for big complex meshes. For non-colliding props, set `CanCollide`, `CanTouch` and `CanQuery` to false **and** use Box, because collision geometry stays in memory otherwise.
+- Keep **adaptive timestepping**. Fixed 240 Hz quadruples physics work.
+- Minimize constraints, and add `NoCollisionConstraint`s between ragdoll limbs.
+- **Physics throttling** (slow-motion physics when the server falls behind): reduce the number of simulated assemblies and watch `worldStep` time.
+- Set **network ownership** explicitly (`SetNetworkOwner(player)` for vehicles, `nil` for server-authoritative objects).
 
-### 9.3 Humanoids and characters
+### 9.3 Humanoids
 
-- Humanoids are expensive. **Static NPCs** (shopkeepers) should use `AnimationController` plus `Animator`, not a Humanoid.
-- Disable unneeded `HumanoidStateType`s on NPCs (for example `Climbing`, `Swimming`) with `Humanoid:SetStateEnabled`.
-- **Play NPC animations on the client** (create the `Animator` on the client), and animate only NPCs near the player.
-- Avoid frequent respawning and rescaling of Humanoid models, especially with layered clothing. Pool NPCs.
-- For crowds, consider `Workspace.EnableSLIMAvatars` and `Model.LevelOfDetail = SLIM` (see `workspace/streaming/slim.md`).
+Humanoids are expensive. Give static NPCs an `AnimationController` plus `Animator` instead. Disable unused states (`Humanoid:SetStateEnabled`, e.g. Climbing, Swimming). Play NPC animations on the client, and only for nearby NPCs. Pool NPCs instead of respawning them, and avoid rescaling (layered clothing makes `updateInvalidatedFastClusters` expensive). For crowds, see `Workspace.EnableSLIMAvatars` and `Model.LevelOfDetail = SLIM`.
 
 ### 9.4 Rendering
 
-- **Draw calls** scale with *unique* mesh, material and texture combinations, so reuse the same assets (instancing). 1,000 copies of the same MeshPart are far cheaper than 1,000 different meshes.
-- **Huge unions** (`UnionOperation`, CSG) produce dense collision and render geometry, and some cannot be updated by the place publishing API. Prefer MeshParts made in Blender, and use Box or Hull collision.
-- **Transparency**: overlapping transparent surfaces (glass, water planes, beams, layered ParticleEmitters, big transparent GUI) cause *overdraw*. Especially avoid large transparent parts stacked in front of each other, and many full-screen particles.
-- **Textures**: built-in materials use far less memory than custom textures. Keep custom textures at 512 or 1024 px unless they are hero assets. Reuse `SurfaceAppearance`s.
-- **Lights and shadows**: limit shadow-casting `PointLight`/`SpotLight`s. Set `CastShadow = false` on small props.
-- **UI**: hundreds of frames with `UIGradient`/`UIStroke` updating every frame are expensive. Update only when values change.
-- **Particles**: lower `Rate` and `Lifetime`, and disable emitters off-screen or far away.
+- **Draw calls** scale with *unique* mesh, material and texture combinations, so reuse assets.
+- **Huge unions** (CSG) have dense geometry and can't be updated by the place publishing API. Prefer MeshParts with Box or Hull collision.
+- **Overlapping transparency** (glass, water planes, beams, stacked particles, large transparent GUI) causes overdraw.
+- Prefer built-in materials over custom textures, and keep textures at 512–1024 px except for hero assets.
+- Limit shadow-casting lights, and set `CastShadow = false` on small props.
+- Update UI only when values change. Lower particle `Rate` and `Lifetime`, and disable emitters far away.
 
 ### 9.5 Networking
 
-- **Excessive remotes**: firing a RemoteEvent every frame (for example sending mouse position at 60 Hz) or sending whole tables (the full inventory) when one item changed. Send deltas, throttle to 10–20 Hz for continuous data, and batch multiple updates into one remote per frame. Consider **unreliable remote events** (`UnreliableRemoteEvent`) for high-frequency, loss-tolerant data such as cosmetic positions.
-- **Creating or destroying big instance trees** at runtime (whole maps) floods replication. Chunk them over frames, or use StreamingEnabled.
-- **Leftover animation data** inside rigs (the `AnimSaves` objects from Animation Editor plugins) replicates every time the rig is cloned. Delete it before publishing.
-- **Server-only VFX**: the server should only tell clients "explosion at X". Clients create the visuals.
+- **Excessive remotes:** don't fire every frame or send whole tables. Send deltas, throttle continuous data to 10–20 Hz, and batch updates. Use `UnreliableRemoteEvent` for loss-tolerant, high-frequency cosmetic data.
+- Don't create or destroy big instance trees at runtime. Chunk them, or let streaming handle it.
+- Delete leftover Animation Editor data (`AnimSaves`) from rigs before cloning them.
+- Server VFX: the server sends "explosion at X" and clients build the visuals.
 
 ### 9.6 Content hygiene and part counts [heuristic]
 
@@ -795,10 +763,7 @@ Instance streaming improves join time, memory and frame rate, and it is on by de
 | `StreamOutBehavior` | `Opportunistic` | Streams out content beyond the target radius even without memory pressure. Big memory savings and fewer out-of-memory crashes |
 | `Model.ModelStreamingMode` | `Default`/`Nonatomic` for scenery; `Atomic` for models whose parts scripts need together; `Persistent` only for essentials (wait for `Workspace.PersistentLoaded`); `PersistentPerPlayer` with `Model:AddPersistentPlayer()` | Don't make large models Persistent, because that defeats streaming |
 
-Streaming coding rules:
-- On the client, **never assume an instance exists**. Use `WaitForChild` with a timeout, or better, `CollectionService:GetInstanceAddedSignal(tag)` and `GetInstanceRemovedSignal(tag)` to attach and detach behavior.
-- Client physics only runs in streamed areas. Add a replication focus (`Player.ReplicationFocus` or extra foci) if something far away must simulate.
-- Use `Player:RequestStreamAroundAsync(position)` before teleporting a player across the map.
+Streaming coding rules: on the client never assume an instance exists. Use `CollectionService:GetInstanceAddedSignal` and `GetInstanceRemovedSignal` (or `WaitForChild` with a timeout). Client physics only runs in streamed areas. Call `Player:RequestStreamAroundAsync(position)` before teleporting a player across the map.
 
 ---
 
@@ -806,10 +771,10 @@ Streaming coding rules:
 
 ### 11.1 Server health checklist
 
-- **Heartbeat** at 60 (F9 → Server Jobs → Heartbeat → Steps Per Sec, or a server MicroProfiler capture).
-- **Server memory** under 50% of the allocation, flat over hours. Use a long-running private server test (2–6 hours with bots or testers) to catch leaks that only show with uptime. Out-of-memory snapshots on the Crashes page show what grew.
-- **Data ping** (Server Stats) close to network ping. A growing gap means replication queues are backing up because the server sends more than the network can carry.
-- If the heartbeat stays low after optimizing, Roblox offers **Extended Services for Compute** to reserve more server CPU. That is a paid last resort, not a substitute for optimizing.
+- **Heartbeat** at 60 (F9 → Server Jobs → Heartbeat → Steps Per Sec).
+- **Memory** under 50% of the allocation and flat over hours. Run a 2–6 hour private-server soak to catch uptime leaks.
+- **Data ping** (Server Stats) close to network ping. A growing gap means replication queues are backing up.
+- Last resort if the heartbeat stays low after optimizing: **Extended Services for Compute** (paid, reserves extra CPU).
 
 ### 11.2 Self-monitoring
 
@@ -825,11 +790,7 @@ Roblox does not publish a hard per-player cap. These are commonly used studio bu
 | Client → server | ≤ 5–10 KB/s | > 20 KB/s |
 | Remote events per client per second | ≤ 20–30 total | > 60 (one per frame) |
 
-Measure with Performance Stats (network sent and received) on a client, and with Debug Stats → Network (Shift+F3 shows data ping and network stats). In Studio, *Studio Settings → Network* has replication diagnostics. Compute the budget from the data: a 12-byte Vector3 plus overhead sent at 20 Hz to 20 players is small. A 2 KB inventory table at 10 Hz to 30 players is 600 KB/s of server egress. **That is what kills servers.**
-
-Remote hygiene:
-- Server-side **rate limit every remote** per player (token bucket) and validate the types and ranges of every argument. This is both a security and a performance requirement.
-- Fire to only the players who need it (`FireClient` for nearby players), not `FireAllClients`, for local events.
+Measure with Performance Stats and Debug Stats → Network (Shift+F3). Do the arithmetic: a 2 KB inventory table at 10 Hz to 30 players is 600 KB/s of server egress, and **that is what kills servers**. Rate-limit every remote per player on the server (token bucket), validate every argument, and use `FireClient` for the players concerned instead of `FireAllClients`.
 
 ---
 
@@ -1094,7 +1055,7 @@ Rules: write one hypothesis per experiment ("bossHealth 500→300 raises D1 ≥ 
 
 **Thumbnail personalization** (Creator Hub → Places → Thumbnails → Home Page): activate **2 or more** thumbnails, and Roblox shows each one to random users, learns which converts best per user group (the goal is **qualified play-through rate**), then shifts impressions toward the winners while still exploring. In Roblox's testing, games averaged **+8.5%** qualified play-through rate, and some reached +50%. Keep several thumbnails active rather than picking one "winner", so personalization can adapt. Analyze the results in the personalization performance view.
 
-Thumbnail iteration loop: make 3–5 visually distinct concepts (different subject, color and composition, not small tweaks), activate them, wait about 1–2 weeks, retire the clear losers, add new challengers. Track **impressions → plays (qualified play-through rate)** on the Acquisition dashboard. Thumbnails and icons drive *acquisition*, so judge them by click-through and quality of plays, not by retention.
+Loop: make 3–5 *distinct* concepts (subject, color, composition), run them for 1–2 weeks, retire the clear losers, add challengers. Judge thumbnails by qualified play-through rate on the Acquisition dashboard, not by retention.
 
 ---
 
@@ -1150,11 +1111,9 @@ Events: gate content behind a **Config flag or a UTC server-time check**, so it 
 
 ### 19.1 Built-in: Error Report dashboard
 
-Creator Hub → game → **Monitoring → Error Report**: up-to-the-minute Luau errors and warnings for server and client. Filters: date range (1 h, 1 d, 7 d, 30 d), place, **show version** annotations, severity, platform, OS, and **"new errors since" version**. The table shows count, severity, type (server or client), message, first seen, **first seen version**, and an expandable **stack trace**.
+**Monitoring → Error Report** shows near-real-time Luau errors and warnings for server and client. You can filter by date, place, severity, platform and OS, add version annotations, and filter to **"new errors since" a version**. Each row has count, message, first seen, **first seen version** and a stack trace. After every publish, check "new errors since vNNN" at +15 and +60 minutes.
 
-Workflow: after publishing, wait 15–60 minutes, filter "new errors since <new version>", and fix anything with a large count.
-
-**Open Cloud Error Reporting API** (scopes `universe.analytics:read` and `:write`; 60 requests/min per key) lets scripts fetch error details (message, stack trace, severity, platform, first-seen version) and manage **grouping rules** (regexes that merge or ignore noisy messages). This is useful for a daily CI job that posts new errors to the team chat.
+The **Open Cloud Error Reporting API** (`universe.analytics:read`/`write`, 60 requests/min per key) fetches error details and manages grouping and ignore rules. Use it for a daily job that posts new errors to team chat.
 
 ### 19.2 Structured logging (LogService)
 
@@ -1265,10 +1224,10 @@ Notes: `ScriptContext.Error` passes `(message, stackTrace, script)` and does **n
 
 ### 19.4 Crash analysis
 
-1. **Client crashes** (Performance dashboard → crash rate by device): a spike right after an update on low-RAM devices means a memory regression. Bisect by place version, then check the textures, meshes and sounds added (F9 Memory → PlaceMemory → GraphicsTexture, GraphicsMeshParts, Sounds) and whether streaming is on.
-2. **Server out-of-memory crashes** (Crashes page): open the snapshot treemap. Large `Workspace` folders mean spawned objects were never destroyed. Large script memory means leaked tables or connections. If crashes correlate with **uptime**, it is a leak. Reproduce it with a long private-server soak while watching F9 Server Memory and Luau Heap snapshots (compare two snapshots 30 minutes apart).
-3. **Platform crashes** are Roblox's to fix. If you see a significant uptick, file a DevForum bug report.
-4. **Alerts**: Creator Hub analytics **Alerts** (`production/analytics/alerts.md`) can notify you about KPI and performance anomalies. Turn them on for crash rate, error count and CCU drops.
+1. **Client crashes** (Performance dashboard, by device): a spike after an update on low-RAM devices is a memory regression. Bisect by version and check F9 → PlaceMemory (GraphicsTexture, GraphicsMeshParts, Sounds) and streaming.
+2. **Server out-of-memory crashes** (Crashes page): read the snapshot treemap. Big Workspace folders mean spawned objects that were never destroyed. Big script memory means leaked tables or connections. Crashes that correlate with uptime point to a leak. Reproduce it with a long private-server soak, comparing Luau Heap snapshots taken 30 minutes apart.
+3. **Platform crashes** are Roblox's to fix. File a DevForum report if they spike.
+4. Turn on analytics **Alerts** (`production/analytics/alerts.md`) for crash rate, errors and CCU drops.
 
 ---
 

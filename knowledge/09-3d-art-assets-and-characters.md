@@ -115,11 +115,7 @@ Accepts `.fbx`, `.gltf/.glb`, `.obj` (plus images, audio, video). Shows a previe
 
 **Re-import:** keep the source `.blend` and export path stable. Studio supports re-importing a changed file onto existing MeshParts (see `art/modeling/reimport.md`) so instances keep their properties.
 
-### 2.6 Roblox Blender Plugin
-
-The official "Roblox Blender Plugin" lets you log in and upload/re-upload meshes from Blender directly. Useful for a human artist; the bot should prefer the Open Cloud API (§17) because it is scriptable without a GUI.
-
-### 2.7 Export checklist
+### 2.6 Export checklist
 
 - [ ] Units None, object scale 1/1/1, rotation 0/0/0 (applied)
 - [ ] Origin at intended pivot; object near world origin
@@ -143,7 +139,7 @@ The official "Roblox Blender Plugin" lets you log in and upload/re-upload meshes
 
 ### 3.2 Texel density
 
-Pick a target and keep it consistent across all props so nothing looks blurrier than its neighbour. The docs' guideline (256 px per 2×2×2-stud volume) equals ~128 px/stud. Roblox's own reference points:
+Keep one density across all props. The docs' guideline (256 px per 2×2×2-stud volume) equals ~128 px/stud. Roblox's own reference points:
 
 | Surface | Texel density |
 |---|---|
@@ -195,8 +191,6 @@ Mesh `TextureID` is ignored when a `SurfaceAppearance` is present. `Decal` now a
 5. Multiply AO into the albedo *lightly* for stylized looks (Roblox has no separate AO slot).
 6. Save PNGs; name with affixes (`Crate_Color.png`, `Crate_Normal.png`, `Crate_Roughness.png`, `Crate_Metalness.png`) so the importer and humans can match them.
 
-Headless baking with bpy is possible (`bpy.ops.object.bake(type='NORMAL', use_selected_to_active=True, cage_extrusion=0.05)` with Cycles, then `image.save()`), but CPU baking is slow; keep resolutions small (512²).
-
 ### 4.3 Hand-painted vs PBR vs flat
 
 | Style | Maps | Look | Cost | Bot-friendliness |
@@ -245,7 +239,6 @@ Three ways to colour flat low-poly meshes:
 - `Precise` = always full detail (hero objects you look at closely from far away; costs more).
 - `Performance` = always simplified (background clutter).
 - Roblox auto-generates LODs; you can't import your own LOD chain. For large distant scenery, make a cheap low-poly version and swap via `Model.LevelOfDetail` (StreamingMesh imposters for streamed models) or manual distance swaps.
-- `Model.LevelOfDetail = StreamingMesh` + `ModelStreamingMode` give streaming imposters when Workspace streaming is on (covered in the performance chapter); design big landmarks as a single Model so their imposter is meaningful.
 
 ---
 
@@ -286,9 +279,9 @@ Rules:
 - Set union `CollisionFidelity` to `Box`/`Hull` where possible; default decomposition on complex unions is expensive.
 - Use CSG for: a few arches, window cut-outs on a hero building, destructible walls (FragmentAsync). Avoid: hundreds of decorative unions, unions inside frequently cloned models — export to Blender and make a real mesh instead.
 
-### 8.3 Procedural models (Studio feature)
+### 8.3 Procedural models
 
-A `ProceduralModel` runs a **generator ModuleScript** (`Attributes` defaults + `OnGenerate(params, targetContainer)`) whenever its attributes or `Size` change, writing into a `GeneratedFolder`. Use it for parametric kit pieces (stairs, fences, shelves) that designers resize. Content generated around the origin; never touch the DataModel directly from `OnGenerate`. Creator Store procedural models are inserted with `Sandboxed = true` on the generator.
+A `ProceduralModel` reruns a generator ModuleScript (`Attributes` + `OnGenerate(params, targetContainer)`) whenever its attributes or `Size` change — ideal for resizable kit pieces (stairs, fences). See `parts/procedural-models.md`.
 
 ---
 
@@ -514,7 +507,7 @@ return Builders
 
 Usage: `B.House(CFrame.new(x, 0, z) * CFrame.Angles(0, yaw, 0), seed).Parent = folder`, and likewise `B.Tree(cf, seed, "lowpoly")`. Scatter trees with a seeded `Random` and a minimum spacing.
 
-Notes: verify roof slab orientation visually after the first run (signs on `pitch`/offset are the usual place for a mistake). Part count per house ≈ 25; per tree ≈ 6–10 — trivially cheap. If you need 500+ trees, convert one good tree to a single mesh (export via Studio *Export Selection* → Blender → decimate → re-import) and clone the MeshPart.
+Verify roof/gable orientation visually after the first run (signs on `pitch` are the usual mistake). A house is ~25 parts and a tree 6–10, which is very cheap. For 500+ trees, convert one good tree into a mesh and clone the MeshPart.
 
 **Offline with Lune:** the same builder runs under Lune's `@lune/roblox` (`Instance.new`, `CFrame`, `Color3`, `Vector3` exist; `Random` does not — substitute `math.random` with `math.randomseed(seed)`). Serialize with `roblox.serializeModel({model})` and write an `.rbxm`, then sync with Rojo or upload via Open Cloud as a Model.
 
@@ -685,20 +678,8 @@ bpy.ops.export_scene.fbx(
 print("[asset] exported", args.out)
 ```
 
-Why the palette trick looks good: shading is "painted" by face normal (light tops, dark undersides), so even under flat ambient light the tree reads well, and every asset made this way shares one 128² texture. On import, if the texture gets blurry at distance due to mip filtering, increase `CELL` (32 px) — the image is still tiny.
+Faces are shaded by their normal (light tops, dark undersides), so the tree reads well in flat light, and every asset shares one 128² texture. If cells blur at distance, raise `CELL` to 32.
 
-### 10.1 bpy recipes worth knowing
-
-| Goal | bpy |
-|---|---|
-| Bevel hard-surface edges | `obj.modifiers.new("Bevel","BEVEL"); mod.width=0.05; mod.segments=2` then apply |
-| Reduce tris | `DECIMATE` modifier (`ratio`, or `decimate_type='PLANAR'` for flat surfaces) |
-| Mirror symmetric models | `MIRROR` modifier, apply before export |
-| Auto UV | `bpy.ops.uv.smart_project(angle_limit=math.radians(66), island_margin=0.02)` in Edit mode |
-| Vertex colours instead of palette | `me.color_attributes.new("Col", 'BYTE_COLOR', 'CORNER')` and write per-loop colours |
-| Batch | loop seeds/args in one Blender process; reset with `read_factory_settings` between assets |
-| Check orientation | Build so the object's "front" faces Blender **−Y** |
-| Render a thumbnail | add camera + sun, `scene.render.filepath=...; bpy.ops.render.render(write_still=True)` (Eevee/Workbench headless) |
 
 
 ---
@@ -847,14 +828,14 @@ Character body textures: up to 1024² for a full humanoid (PBR budget table). Ri
 - For an R15-compatible custom character, keep R15 part names and joint names so default animations and `Animate` script work. Otherwise provide your own `Animate` LocalScript (copy from a play-test character under `StarterCharacterScripts`) with your animation IDs.
 - `StarterHumanoid` customizes default humanoid properties without replacing the body.
 - Set `Humanoid.HipHeight` correctly for custom rigs (distance from HRP bottom to ground) or characters float/sink.
-- Players' own avatars are **replaced** by StarterCharacter — consider whether your game needs that (it removes self-expression, a big part of Roblox's appeal). Middle ground: keep avatars, restrict scales/body types in Avatar settings, or apply themed outfits via `HumanoidDescription`.
+- StarterCharacter replaces players' own avatars and removes self-expression. Often it is better to keep avatars, clamp scales in Avatar settings, and apply themed outfits with `HumanoidDescription`.
 
 ### 12.4 Skinned meshes and rigging in Blender
 
 - Armature with bones; root bone at origin, zero rotation, scale 1; ≤ 4 influences per vertex; no weights on root.
 - Export FBX: Add Leaf Bones **off**, Apply Scalings FBX Unit Scale, Bake Animation off (unless including one animation).
 - Importer: *Rig Type* (R15 / Custom), *Rig Scale*. Imported skinned MeshParts show `HasSkinnedMesh = true`; bones appear as `Bone` instances animatable with the Animation Editor.
-- For R15 avatars, use the official Blender template rigs from the docs' project files rather than authoring a skeleton from scratch; Studio's **Avatar Setup** tool can auto-rig/skin/cage a single mesh body ("auto setup") — useful for an agent that can only produce an unrigged mesh. Check `avatar-setup/auto-setup-requirements.md` for its constraints (humanoid T/A-pose, watertight, budget).
+- For R15 avatars start from the official Blender template rigs (docs project files). Studio's **Avatar Setup** can auto-rig, skin and cage an unrigged humanoid mesh (`avatar-setup/auto-setup-requirements.md`).
 
 ### 12.5 Layered clothing and accessories
 
@@ -904,19 +885,11 @@ end)
 |---|---|---|
 | From description | `Players:CreateHumanoidModelFromDescriptionAsync(desc, Enum.HumanoidRigType.R15)` | Full avatar fidelity, wears catalog/your items, uses default animations once you add an Animate script |
 | From user | `Players:CreateHumanoidModelFromUserIdAsync(userId)` | Instant "real looking" NPC (only use IDs you have rights to show — e.g., your own or the player's) |
-| Rig Builder | Studio Avatar ▸ Rig Builder → block/mesh R15/R6 rig | Quick blank NPC to dress |
 | Custom mesh NPC | skinned FBX + `AnimationController` + `Animator` (no Humanoid) | Cheapest for crowds/monsters; Humanoid is expensive at scale |
 
 
 Performance: > ~30 Humanoid NPCs near a player gets expensive (state machine, physics). Anchor idle NPCs' HRP, disable unneeded `HumanoidStateType`s with `SetStateEnabled`, stream them, and play animations from the client where possible.
 
-### 12.8 Character customization systems (game-side)
-
-- Store choices as **data** (palette index, hair asset id, outfit preset) in DataStores — not instances.
-- Rebuild the look with one `ApplyDescriptionAsync` call per change; debounce rapid UI clicks.
-- Previews: `ViewportFrame` + `WorldModel` with a cloned rig, or `Players:CreateHumanoidModelFromDescriptionAsync` client-side for the preview.
-- Selling items: only your own uploaded or Marketplace items; `AvatarEditorService` can prompt saving outfits / purchasing catalog items with consent.
-- In-experience avatar creation (`AvatarCreationService`) lets players publish creations — advanced; see `avatar/in-experience-creation.md`.
 
 ---
 
@@ -932,8 +905,6 @@ Performance: > ~30 Humanoid NPCs near a player gets expensive (state machine, ph
 | **Material Generator** | Window ▸ 3D ▸ Material Generator, or Material widget ▸ Generate | `MaterialVariant` (tiling PBR) | Floors, walls, ground, fabrics — tiling surfaces | Specific patterns at exact scale, stylized flat looks (tends to photoreal) |
 | **Assistant quick styling** | Assistant prompt | Applies lightweight generated materials to parts | Fast mood exploration | Final art |
 | **Avatar auto setup** | Avatar Setup tool | Rigged/caged/skinned body from a mesh | Turning a bot-made humanoid mesh into an R15 body | Non-humanoid shapes; strict input requirements |
-
-Cube 3D is also released as open weights (GitHub/Hugging Face) for research/academic use; it can run locally on a GPU but outputs **untextured** meshes and is slow on small GPUs — not practical for the bot without a GPU.
 
 **Rules for generated assets:** (1) treat them as drafts; (2) immediately check tri count, `Size`, pivot, `CollisionFidelity` (set Box/Hull), `Anchored`; (3) recolour/retexture toward your palette (or desaturate + tint with `MeshPart.Color` under `AlphaMode.Overlay`); (4) never ship a set where half the props are generated photoreal and half are flat parts; (5) prompts are moderated — phrase plainly ("a wooden crate" rather than single words); (6) rename the outputs (`Mesh`, `MeshPart` are useless names).
 
@@ -998,7 +969,6 @@ local RULES = {
 	{ "getfenv", 8, "getfenv (environment tampering)", true },
 	{ "setfenv", 8, "setfenv (environment tampering)", true },
 	{ "string%.reverse", 4, "string.reverse (string hiding)" },
-	{ ":reverse%(%)", 3, "reversed string" },
 	{ "string%.char%s*%(%s*%d+%s*,%s*%d+%s*,%s*%d+", 6, "string.char byte list (encoded string)" },
 	{ "\\%d%d%d?\\%d%d%d?\\%d%d%d?", 6, "decimal escape sequence blob" },
 	{ "\\x%x%x\\x%x%x\\x%x%x", 6, "hex escape blob" },
@@ -1014,11 +984,8 @@ local RULES = {
 	{ "PromptProductPurchase", 3, "product purchase prompt", true },
 	{ "MarketplaceService.-GetProductInfo", 5, "GetProductInfo (payload hidden in asset description?)" },
 	{ "OnServerEvent.-loadstring", 10, "remote -> loadstring (remote code execution)" },
-	{ "_G%.", 2, "_G global table use" },
-	{ "shared%.", 2, "shared global table use" },
 	{ "Players%.PlayerAdded.-UserId%s*==", 3, "special-cases a specific UserId" },
 	{ "%.Disabled%s*=%s*false", 3, "enables disabled scripts" },
-	{ "Kick%(", 2, "kicks players", false },
 	{ "SetCore", 2, "SetCore (client UI manipulation)", true },
 }
 
@@ -1115,14 +1082,14 @@ else
 end
 ```
 
-**In Studio** (command bar or plugin — both can read `Source`): wrap the same `RULES`/`scanSource` logic in a loop over `game.Selection:Get()` or `workspace:GetDescendants()`, replace `process.exit` with prints, and optionally `inst:Destroy()` scripts in the selection after reviewing. Exit codes let the bot gate a pipeline: 0 clean, 1 needs review, 2 reject.
+**In Studio**, the command bar and plugins can read `Source`, so the same rules can loop over `game.Selection:Get()`. Exit codes: 0 clean, 1 review, 2 reject.
 
 False positives are expected (legit admin systems use `require`/`HttpService`). The rule for decorative assets is simple: **zero scripts allowed**.
 
 ### 14.4 Licensing and originality
 
 - Creator Store assets are usable in Roblox experiences per the Roblox Terms of Use, but that doesn't make them *yours* and doesn't clear third-party IP that an uploader stole. Branded content (franchise characters, logos, real car brands, music) can get assets and games taken down (see `production/publishing/ip-guidelines.md`).
-- Off-platform assets (Sketchfab, Kenney, Poly Haven, Quaternius, OpenGameArt): check the licence — **CC0** is safest; CC-BY requires attribution (put credits in-game); avoid NC (non-commercial) since Roblox games monetize; never use "ripped" game models.
+- Off-platform assets: **CC0** is safest. CC-BY needs in-game credits. Avoid NC licences (games monetize) and ripped models.
 - AI-generated assets from Roblox's tools are allowed on-platform; avoid prompting for trademarked characters.
 - **Original assets are the default for this bot**: code-built parts, bpy meshes, procedural textures. They avoid licensing issues and backdoors, and they look consistent.
 - **Asset privacy:** new Images, Decals and Meshes can be *Restricted* by default (only the owner and granted games/creators can load them). Upload under the **same owner (user or group) as the game**, or grant the game permission. Open Use is irreversible; game grants are permanent.
@@ -1176,8 +1143,6 @@ Naming: `Category_Name_Variant` (`Rock_Mossy_B`), PascalCase, no spaces. Store a
 | UI image | `ImageLabel` / `ImageButton` (`Image` / `ImageContent`) | PNG with alpha; `ImageColor3` tints (white source art tints best) |
 | Mesh texture | `MeshPart.TextureID` / `TextureContent` | No alpha needed unless cut-out |
 | Billboard/sprite | `BillboardGui` + `ImageLabel`, or `ParticleEmitter.Texture` | Premultiplied-looking edges: avoid dark fringes by bleeding edge colours into transparent pixels |
-| Game icon | 512×512 square | No borders/text-heavy designs; must pass moderation |
-| Thumbnails | 16:9, 1920×1080 recommended | Up to 10; first one is key for CTR |
 
 - **Transparent PNG:** 32-bit RGBA. Make the colour of fully transparent pixels match the neighbouring edge colour ("alpha bleeding") — otherwise bilinear filtering shows a dark/white halo on icons and leaves.
 - Image upload formats: `.png`, `.jpg`, `.tga`, `.bmp` (Importer also accepts `.gif`, static). Open Cloud images must be smaller than 8000×8000.
@@ -1216,11 +1181,6 @@ panel.Size = UDim2.fromOffset(400, 220)
 
 `ScaleType` options: `Stretch`, `Slice`, `Tile` (with `TileSize`), `Fit`, `Crop`. Many modern UIs skip images and use `UICorner` + `UIStroke` + `UIGradient` — cheaper and resolution-independent; use 9-slice when you need textured/painted frames.
 
-### 16.4 Generating 2D art by code
-
-- Pillow/Cairo/SVG→PNG (e.g., `cairosvg`) for icons: flat shapes, 2–3 palette colours, 2–4 px dark outline, soft drop shadow. Keep a consistent light direction (top-left) across all icons.
-- Render 3D icons from Blender headless (orthographic camera, transparent film: `scene.render.film_transparent = True`) so item icons match in-game meshes.
-- Or render in-game with a `ViewportFrame` (no upload needed, live 3D icon) — costs some performance; fine for inventories of ≤ ~30 visible items.
 
 ---
 
@@ -1252,7 +1212,7 @@ echo "timeout: $op" >&2; exit 1
 
 Notes:
 - **Decal vs Image id:** a Decal asset wraps an Image asset. `Decal`/`ImageLabel` properties need the *image* content. Studio auto-converts a pasted decal id; scripts don't. Check which id the operation returned (`assetType` in the response) and, if it is a decal, resolve the image id once in Studio and store that *(verify current behaviour)*.
-- Rate limits exist (HTTP 429): back off and retry. Batch uploads sequentially with small delays.
+- Back off on HTTP 429.
 - Record results in `art/manifest.json` and generate `Assets.lua` from it.
 - In-experience creation (players uploading their creations): `AssetService:CreateAssetAsync` with player consent — see `projects/assets/in-experience-asset-creation.md`.
 
@@ -1261,10 +1221,9 @@ Notes:
 ## 18. Moderation of uploaded assets
 
 - Every uploaded image/mesh/audio/video goes through automated + human moderation against Community Rules, ToS and IP guidelines. Until approved, players see nothing (blank texture / missing mesh) — the asset is visible to you in Studio, so **test in a live server** before launch.
-- Typical rejection causes: text in images (especially off-platform links, social handles, "free robux"), realistic weapons/gore beyond the experience's maturity label, brand logos, real people's faces, anything sexualized, hate symbols (including accidental ones from procedural patterns — review generated textures), QR codes.
+- Typical rejections: text in images (links, handles, "free robux"), brand logos, real faces, gore beyond the maturity label, sexual content, hate symbols (procedural patterns can create these by accident, so review them), QR codes.
 - Repeated rejections can lead to account/group warnings or bans — the bot should keep generated 2D art **text-free** (render text with UI `TextLabel`s instead, which also localizes).
 - Moderation state is returned by Open Cloud (`MODERATION_STATE_APPROVED`, `…_REVIEWING`, `…_REJECTED`); gate your pipeline on it.
-- Generative tools moderate prompts too; a rejected prompt returns an error ("Moderation failed").
 
 ---
 
@@ -1296,9 +1255,7 @@ Roblox runs on low-end phones (2–3 GB RAM). Art is usually the biggest memory 
 - `CastShadow = false` on small props, foliage cards, interior clutter.
 - Decoration: `CanCollide/CanTouch/CanQuery = false` so physics ignores it.
 - Large flat surfaces: one big Part, not many small ones; terrain for ground.
-- Prefer `SmoothPlastic` over heavy materials only when it suits the style — material choice has small render cost differences; texture count matters more.
 - Turn on **StreamingEnabled** and group the map into zones so clients only load nearby art.
-- Check with Studio's *Render ▸ Wireframe* and the stats overlay (Ctrl+Shift+F2/F5 equivalents in View ▸ Stats) for draw calls and triangles.
 
 ---
 
@@ -1328,18 +1285,6 @@ Roblox runs on low-end phones (2–3 GB RAM). Art is usually the biggest memory 
 - **Repeat with variation:** 3 variants of each prop (seed) is usually enough.
 - **Scale check:** a 5-stud avatar next to every new asset.
 
-### 20.3 Final checklist per asset
-
-- [ ] Name follows `Category_Name_Variant`
-- [ ] Pivot at base/hinge; `WorldPivot` set for Models
-- [ ] Tri count within budget; < 20k hard limit
-- [ ] Texture size appropriate; shared atlas/palette used
-- [ ] Colours from palette module only
-- [ ] `Anchored` for static; correct `CollisionFidelity`; decoration non-colliding/non-queryable
-- [ ] `CastShadow` off for small clutter
-- [ ] No scripts (or reviewed scripts) — scanner passes
-- [ ] Uploaded under the game's owning group; moderation approved
-- [ ] Source + generator script + asset id in manifest
 
 ---
 
