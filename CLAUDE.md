@@ -24,6 +24,8 @@ raw reference for exact APIs.
 | Testing, CI, playtests, MicroProfiler, performance budgets, analytics events | `knowledge/12-testing-qa-performance-analytics.md` |
 | Updates, events, daily rewards, codes, admin tools, community, translation, accessibility | `knowledge/13-liveops-community-localization-accessibility.md` |
 | Coming up with ideas, scoping an MVP, milestones, docs templates, postmortems | `knowledge/14-production-scope-and-idea-generation.md` |
+| Is this API/rule still current? Deprecations, forced migrations, policy timeline | `knowledge/15-platform-changes-and-deprecations.md` |
+| What reviewers praise/criticize in builds, UI, icons, thumbnails; self-critique checklist | `knowledge/16-devforum-art-building-feedback.md` |
 
 ## Start every new game from the template
 Copy `templates/starter-game/` (Rojo project: ProfileStore data, validated remotes, idempotent
@@ -42,7 +44,9 @@ scripts/kb_search.sh "hitbox" devforum     # local DevForum mirror (build it: py
 - Check code you write into guides: `scripts/check_guide_code.py <luau-compile>` (syntax) and
   `scripts/check_guide_api.py` (classes, services, enums, deprecated members vs the API dump).
 - Engine reference: `reference/creator-docs/content/en-us/reference/engine/classes/<Class>.yaml`
+- **Before using any API you're unsure about, check `reference/creator-docs-live/deprecated-api-inventory.md`** (Roblox's official list of 603 deprecated members with replacements).
 - Full API dump (every member, tags like Deprecated): `reference/api/API-Dump.txt`
+- What changed recently (2023 → now), upcoming forced changes: `knowledge/15-platform-changes-and-deprecations.md`; weekly release notes: `reference/creator-docs-live/releases/`
 - Luau type definitions for the engine: `reference/api/LuauTypes.d.luau`
 - Docs snapshot date: 2026-11-05. If something may have changed since, check the live docs.
 

@@ -7,8 +7,8 @@ cd "$(dirname "$0")/.."
 q="$1"; area="${2:-all}"
 case "$area" in
   knowledge) paths=(knowledge);;
-  docs) paths=(reference/creator-docs);;
-  api) paths=(reference/creator-docs/content/en-us/reference reference/api);;
+  docs) paths=(reference/creator-docs reference/creator-docs-live);;
+  api) paths=(reference/creator-docs/content/en-us/reference reference/api reference/creator-docs-live/deprecated-api-inventory.md);;
   luau) paths=(reference/luau);;
   libs) paths=(reference/libraries);;
   examples) paths=(reference/example-games);;
