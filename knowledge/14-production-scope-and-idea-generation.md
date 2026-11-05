@@ -252,15 +252,10 @@ These are the agent's planning defaults for a *first original game* with an agen
 Rules: (a) add 30–50% buffer to any estimate; (b) art and audio usually take longer than code once a quality bar is set; (c) FTUE and mobile controls always take longer than expected; budget them explicitly; (d) the last 10% (bugs, polish, store page) takes a lot of the time.
 
 ### 6.3 Sustainable cadence and burnout
-- The live phase is a marathon. Grow a Garden's team was known for weekly updates. In August 2025 Jandel publicly announced a shift away from weekly events toward deeper farming content. Press coverage reported the team felt that weekly events had become hard to keep fresh and had crowded out bug fixes and long-term depth. If a top studio finds weekly cadence costly, a solo human shouldn't promise it.
-- DevForum burnout threads repeat the same advice: take regular breaks, set goals that are meaningful but not overwhelming, and use a task tracker. Several developers have publicly left projects because constant updates and promotion were beyond their capacity.
-- Agent behaviors:
-  - Propose an update cadence based on the owner's stated hours (e.g., 6 hrs/week → a content drop every 2–3 weeks, small fixes in between).
-  - Batch work into *themed updates* with a changelog, rather than a stream of tiny pushes the owner has to review daily.
-  - Use Roblox's configs/experiments and data-driven content (item tables in ModuleScripts) so you can run events by changing data, not rewriting code. See `production/configs.md`.
-  - Flag scope creep and late-night "just one more feature" requests. Point back to the milestone plan.
-  - Never schedule launches right before the owner's known busy periods (exams, holidays) unless they choose to.
-- Studio-scale cautionary tale: Player Driven's podcast with Wonder Works' Zach Letter describes the studio scaling from six people to ninety after early hits, burning roughly $600K a month while drifting into work-for-hire, then cutting back to twelve before a later licensed hit. Growth commitments (headcount, cadence) can outrun the product. Size commitments to proven revenue.
+- Grow a Garden's team was known for weekly updates. In August 2025 Jandel announced a shift away from weekly events toward deeper farming content. Press coverage reported that weekly events had become hard to keep fresh and had crowded out bug fixes and long-term depth. If a top studio finds a weekly cadence costly, a solo human shouldn't promise one.
+- DevForum burnout threads repeat the same advice: take regular breaks, set meaningful but not overwhelming goals, and use a task tracker. Several developers have publicly quit projects because constant updates and promotion were beyond their capacity.
+- Agent behaviors: propose a cadence based on the owner's hours (e.g., 6 hrs/week means a content drop every 2–3 weeks); batch work into themed updates with a changelog; drive events through data and configs (`production/configs.md`) rather than code rewrites; flag "just one more feature" requests against the milestone plan; avoid launches during the owner's known busy periods.
+- Studio-scale warning: Player Driven's podcast with Wonder Works' Zach Letter describes the studio growing from six to ninety people after early hits, burning roughly $600K a month in work-for-hire, then cutting to twelve before a later licensed hit. Size commitments to proven revenue.
 
 ---
 
@@ -301,13 +296,11 @@ Store in the repo under `docs/`:
 - `postmortems/` (template 9.7).
 
 ### 8.2 Git + Rojo workflow
-- **Rojo** syncs files on disk into Studio, so code lives in Git. Two modes (Rojo docs): **fully managed** (Rojo owns every instance and `rojo build` can rebuild the whole place, which gives reproducible builds and full version control, but models must be saved to files and some instance types are hard to manage), and **partially managed** (Rojo owns scripts and some folders, the rest, usually Workspace/terrain/builds, lives in the place file or Team Create). The Rojo v7 docs say best practice for partial management is still evolving and generally recommend a separate place per programmer.
-- **Agent default:** partially managed. Rojo owns `ServerScriptService`, `ReplicatedStorage` (shared modules, data tables), `StarterPlayer` scripts, and `StarterGui` code-built UI. Builders work in Studio on the map.
-- **Branching:** `main` = what's live (or ready to publish). `dev` = integration. `feature/<name>` branches for each spec. Merge to `dev` after test, `dev` → `main` at milestone/publish. Tag releases (`v0.3.0-beta`). Small teams can skip `dev` and use short-lived feature branches off `main`.
-- **Commits:** reference the spec or bug ("feat(shop): add daily rotation per specs/shop.md").
-- **Place-file backups:** at every milestone and before every risky change, (1) "Save to Roblox with Notes" in Studio (Version History lets you restore earlier versions and filter by collaborator and notes), and (2) export a local `.rbxl` copy to a backups folder or a Git LFS store, named `game_vX.Y_YYYY-MM-DD.rbxl`. Some teams commit the place file alongside Rojo code. Others avoid it because it can go stale. If you commit it, use Git LFS and treat it as a snapshot, not a merge target.
-- Studio also writes **auto-recovery files** when saving to Roblox fails (`projects/place-files.md`). Don't rely on them as backups.
-- **Separate places for dev and live:** keep a "Dev" place (or a separate dev game) and the "Live" place. Publish to live only from a tagged commit, after a test pass.
+- **Rojo** syncs files on disk into Studio, so code lives in Git. In **fully managed** mode, Rojo owns every instance and `rojo build` reproduces the place, but models must be saved as files. In **partially managed** mode, Rojo owns scripts and selected folders, and the map stays in the place file or Team Create. The Rojo v7 docs say best practice for partial management is still evolving and recommend a separate place per programmer.
+- **Agent default:** partially managed. Rojo owns `ServerScriptService`, `ReplicatedStorage` (modules, data tables), `StarterPlayer` scripts and code-built UI. Builders work in Studio.
+- **Branching:** `main` = live/ready; short-lived `feature/<spec>` branches; optional `dev` integration branch for teams; tag releases (`v0.3.0-beta`). Commit messages reference the spec or bug.
+- **Place backups:** at every milestone and before risky changes, use "Save to Roblox with Notes" (Version History can restore and filter by notes/collaborator), *and* export a local `game_vX.Y_YYYY-MM-DD.rbxl` to a backups folder or Git LFS. A committed place file is a snapshot, not a merge target. Studio's auto-recovery files (`projects/place-files.md`) aren't backups.
+- **Separate Dev and Live places.** Publish to Live only from a tagged commit after a test pass.
 
 ### 8.3 Working with collaborators in Studio
 - **Team Create / collaboration:** official docs (`projects/collaboration.md`) say that collaborating with other creators requires the owner (and collaborators) to complete an **age check**, and that collaboration between age groups is limited by default (with parental and trusted-friend exceptions). Permission levels are Owner, Edit, Play, No Access. For **user-owned** games, Edit can only be granted to Roblox friends. For **group-owned** games, Edit is managed through group roles (all group games, or per game).
