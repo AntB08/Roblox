@@ -956,3 +956,468 @@ Performance: > ~30 Humanoid NPCs near a player gets expensive (state machine, ph
 - Previews: `ViewportFrame` + `WorldModel` with a cloned rig, or `Players:CreateHumanoidModelFromDescriptionAsync` client-side for the preview.
 - Selling items: only your own uploaded or Marketplace items; `AvatarEditorService` can prompt saving outfits / purchasing catalog items with consent.
 - In-experience avatar creation (`AvatarCreationService`) lets players publish creations — advanced; see `avatar/in-experience-creation.md`.
+
+---
+
+## 13. Generative AI tools: what they're good and bad at
+
+| Tool | Entry point | Output | Good at | Bad at |
+|---|---|---|---|---|
+| **Assistant `/generate_mesh`** (Cube 3D) | Studio Assistant; text **or** image prompt (not both); optional bounding-box Part; optional max tri count (default **10,000**) | Textured MeshPart | Fast filler props, organic one-offs (rocks, statues, food, creatures for background) | Style consistency across a set, exact dimensions, clean topology/UVs, hard-surface precision, readable text/logos, symmetry, thin parts |
+| **`GenerationService:GenerateMeshAsync`** | Server script, `inputs = {Prompt=…}`, `options.SuggestedSize`; then `LoadGeneratedMeshAsync` | Mesh (intermediate untextured result via callback) | Player-driven creation games | Rate-limited per minute, moderated prompts, latency; you need fallbacks |
+| **`GenerationService:GenerateModelAsync`** | Schema: `Car5` (body + 4 wheels) or `Body1` (single MeshPart) | Multi-mesh Model | Functional generated vehicles with retargetable scripts | Only fixed schemas |
+| **Assistant `/generate_procedural_model`** | Assistant / Studio MCP | `ProceduralModel` + generator module | Parametric furniture, stairs, structures | 50 generations per rolling 24h; review generated code |
+| **Texture Generator** | Model tab ▸ Texture (mesh selected), Assistant `/generate_texture`, Studio MCP | **Fast**: 1K diffuse into `TextureID`; **Quality**: 4K PBR in a `SurfaceAppearance` | Texturing *your own* bot-made mesh in context; quick believable surfaces | Seams on bad UVs, baked lighting, inconsistent style between props; tiled surfaces (use Material Generator); fails if you edit the mesh during generation |
+| **Material Generator** | Window ▸ 3D ▸ Material Generator, or Material widget ▸ Generate | `MaterialVariant` (tiling PBR) | Floors, walls, ground, fabrics — tiling surfaces | Specific patterns at exact scale, stylized flat looks (tends to photoreal) |
+| **Assistant quick styling** | Assistant prompt | Applies lightweight generated materials to parts | Fast mood exploration | Final art |
+| **Avatar auto setup** | Avatar Setup tool | Rigged/caged/skinned body from a mesh | Turning a bot-made humanoid mesh into an R15 body | Non-humanoid shapes; strict input requirements |
+
+Cube 3D is also released as open weights (GitHub/Hugging Face) for research/academic use; it can run locally on a GPU but outputs **untextured** meshes and is slow on small GPUs — not practical for the bot without a GPU.
+
+**Rules for generated assets:** (1) treat them as drafts; (2) immediately check tri count, `Size`, pivot, `CollisionFidelity` (set Box/Hull), `Anchored`; (3) recolour/retexture toward your palette (or desaturate + tint with `MeshPart.Color` under `AlphaMode.Overlay`); (4) never ship a set where half the props are generated photoreal and half are flat parts; (5) prompts are moderated — phrase plainly ("a wooden crate" rather than single words); (6) rename the outputs (`Mesh`, `MeshPart` are useless names).
+
+---
+
+## 14. Asset sourcing, safety and licensing
+
+### 14.1 Creator Store / Toolbox risks
+
+Free models are the #1 source of **backdoors**: scripts that give their author server-side control (admin commands, `require` of remote modules, data theft, inappropriate content injection that can get your game moderated). Roblox moderates reactively and proactively but "not guaranteed to remove all such scripts". The Toolbox shows an indicator when a model contains scripts.
+
+Common backdoor techniques:
+
+| Technique | Looks like |
+|---|---|
+| Remote module require | `require(4829172398)`, `require(tonumber("48".."29..."))`, `require(game:GetService("MarketplaceService"):GetProductInfo(...).Description)` |
+| Code execution | `loadstring(...)`, `getfenv()`/`setfenv`, `string.reverse`d / `string.char`-encoded strings, huge base64 or `\x` escape blobs |
+| Hidden from view | code pushed off-screen with hundreds of spaces/tabs on one line; script named `Weld`, `Smoke`, `ThumbnailCamera`, `Vaccine`, `Anti-Lag`, `Script` deep inside a mesh; `Disabled` scripts re-enabled by another script |
+| Network | `HttpService:GetAsync/PostAsync` to webhooks/pastebins, Discord webhooks |
+| Asset loading | `InsertService:LoadAsset`, `game:GetObjects` (studio), `AssetService` package loads |
+| Social engineering | "Credits" GUI, MarketplaceService purchase prompts, TeleportService to another game |
+| Privilege | Creating `RemoteEvent`s that run arbitrary code (`RemoteEvent.OnServerEvent:Connect(function(_, src) loadstring(src)() end)`) |
+| Plugins | malicious Studio plugins that inject scripts into every place you open — only install plugins from trusted creators |
+
+### 14.2 Audit procedure (every third-party asset)
+
+1. **Save/publish a checkpoint first** so you can revert.
+2. Insert into an **empty test place**, not your game.
+3. Run the scanner below; open every flagged script; scroll horizontally.
+4. **Delete every script you don't need.** A tree needs zero scripts. Prefer deleting over understanding.
+5. Search the whole place (`Ctrl+Shift+F`) for `require(`, `getfenv`, `loadstring`, `HttpService`.
+6. For assets that must keep scripts, use **Sandboxing**: Workspace `SandboxedInstance = Experimental`, set the model's `Sandboxed = true`, grant only needed `Capabilities` — never Network, DataStore, AssetRequire, LoadString, CapabilityControl for untrusted code.
+7. Keep `ServerScriptService.LoadStringEnabled = false` and `HttpService.HttpEnabled` off unless you need it.
+8. Check mesh/texture content for policy issues (hidden offensive decals inside a model, inappropriate textures).
+
+### 14.3 Backdoor scanner (Lune, offline, works on `.rbxm/.rbxmx/.rbxl`)
+
+```lua
+-- scan_backdoors.luau — usage: lune run scan_backdoors.luau <file.rbxm|.rbxmx|.rbxl|.rbxlx> [--strict]
+local fs = require("@lune/fs")
+local process = require("@lune/process")
+local roblox = require("@lune/roblox")
+
+local path = process.args[1]
+assert(path, "usage: lune run scan_backdoors.luau <file> [--strict]")
+local strict = table.find(process.args, "--strict") ~= nil
+
+local bytes = fs.readFile(path)
+local roots
+if path:match("%.rbxlx?$") then
+	roots = { roblox.deserializePlace(bytes) }
+else
+	roots = roblox.deserializeModel(bytes)
+end
+
+-- { pattern, score, label, plain? }
+local RULES = {
+	{ "require%s*%(%s*%d%d%d%d%d+%s*%)", 10, "require() of a numeric asset id (remote module)" },
+	{ "require%s*%(%s*tonumber", 10, "require(tonumber(...)) obfuscated id" },
+	{ "require%s*%(%s*[%w_%.]+%s*%*", 8, "require of computed number" },
+	{ "loadstring", 9, "loadstring (arbitrary code execution)", true },
+	{ "getfenv", 8, "getfenv (environment tampering)", true },
+	{ "setfenv", 8, "setfenv (environment tampering)", true },
+	{ "string%.reverse", 4, "string.reverse (string hiding)" },
+	{ ":reverse%(%)", 3, "reversed string" },
+	{ "string%.char%s*%(%s*%d+%s*,%s*%d+%s*,%s*%d+", 6, "string.char byte list (encoded string)" },
+	{ "\\%d%d%d?\\%d%d%d?\\%d%d%d?", 6, "decimal escape sequence blob" },
+	{ "\\x%x%x\\x%x%x\\x%x%x", 6, "hex escape blob" },
+	{ "[%w%+/=][%w%+/=][%w%+/=]" .. string.rep("[%w%+/=]", 77), 5, "long base64-like blob (80+ chars)" },
+	{ "GetObjects", 7, "game:GetObjects (asset load)", true },
+	{ "LoadAsset", 6, "InsertService:LoadAsset (asset load)", true },
+	{ "HttpService", 4, "HttpService usage", true },
+	{ "PostAsync", 5, "HTTP POST (data exfiltration?)", true },
+	{ "discord%.com/api/webhooks", 8, "Discord webhook" },
+	{ "pastebin", 6, "pastebin reference", true },
+	{ "TeleportService", 3, "TeleportService (redirect players?)", true },
+	{ "PromptPurchase", 3, "purchase prompt", true },
+	{ "PromptProductPurchase", 3, "product purchase prompt", true },
+	{ "MarketplaceService.-GetProductInfo", 5, "GetProductInfo (payload hidden in asset description?)" },
+	{ "OnServerEvent.-loadstring", 10, "remote -> loadstring (remote code execution)" },
+	{ "_G%.", 2, "_G global table use" },
+	{ "shared%.", 2, "shared global table use" },
+	{ "Players%.PlayerAdded.-UserId%s*==", 3, "special-cases a specific UserId" },
+	{ "%.Disabled%s*=%s*false", 3, "enables disabled scripts" },
+	{ "Kick%(", 2, "kicks players", false },
+	{ "SetCore", 2, "SetCore (client UI manipulation)", true },
+}
+
+local SUSPICIOUS_NAMES = {
+	"vaccine", "antivirus", "anti%-virus", "anti%-lag", "antilag", "fix", "lag", "weld", "smoke",
+	"thumbnailcamera", "credit", "loader", "mainmodule", "spread", "infect", "virus", "backdoor",
+}
+
+local findings = {}
+local scripts, total = 0, 0
+
+local function add(inst, score, msg)
+	total += score
+	table.insert(findings, { path = inst:GetFullName(), class = inst.ClassName, score = score, msg = msg })
+end
+
+local function scanSource(inst, src)
+	for _, rule in RULES do
+		local pat, score, label, plain = rule[1], rule[2], rule[3], rule[4]
+		local ok, s = pcall(string.find, src, pat, 1, plain == true)
+		if ok and s then
+			add(inst, score, label)
+		end
+	end
+	-- Off-screen code: very long lines or lines with huge leading/inner whitespace runs
+	local lineNo = 0
+	for line in (src .. "\n"):gmatch("(.-)\n") do
+		lineNo += 1
+		if #line > 300 then
+			add(inst, 5, ("line %d is %d chars long (hidden code?)"):format(lineNo, #line))
+			break
+		end
+		if line:find("%S%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%S") then
+			add(inst, 6, ("line %d has a 40+ whitespace gap followed by code"):format(lineNo))
+			break
+		end
+	end
+	-- Entropy-ish heuristic: very few newlines relative to size = minified/obfuscated
+	local _, newlines = src:gsub("\n", "")
+	if #src > 2000 and newlines < #src / 400 then
+		add(inst, 5, "large script with almost no line breaks (minified/obfuscated)")
+	end
+end
+
+for _, root in roots do
+	local all = root:GetDescendants()
+	table.insert(all, 1, root)
+	for _, inst in all do
+		if inst:IsA("LuaSourceContainer") then
+			scripts += 1
+			total += 0
+			local lname = inst.Name:lower()
+			for _, n in SUSPICIOUS_NAMES do
+				if lname:find(n) then
+					add(inst, 3, ("suspicious script name '%s'"):format(inst.Name))
+					break
+				end
+			end
+			local parent = inst.Parent
+			if parent and parent:IsA("BasePart") and not inst:IsA("ModuleScript") then
+				add(inst, 1, "script hidden inside a part")
+			end
+			local ok, src = pcall(function()
+				return inst.Source
+			end)
+			if ok and type(src) == "string" then
+				scanSource(inst, src)
+				if strict then
+					add(inst, 1, ("script present (%d chars) - delete unless needed"):format(#src))
+				end
+			end
+		elseif inst:IsA("RemoteEvent") or inst:IsA("RemoteFunction") then
+			add(inst, 2, "model ships its own remote")
+		end
+	end
+end
+
+table.sort(findings, function(a, b)
+	return a.score > b.score
+end)
+
+print(("Scanned %s: %d scripts, risk score %d"):format(path, scripts, total))
+for _, f in findings do
+	print(("[%2d] %-14s %s\n      -> %s"):format(f.score, f.class, f.path, f.msg))
+end
+if total >= 10 then
+	print("VERDICT: HIGH RISK - do not use; delete scripts or discard asset")
+	process.exit(2)
+elseif scripts > 0 then
+	print("VERDICT: contains scripts - review manually, delete any you do not need")
+	process.exit(1)
+else
+	print("VERDICT: no scripts found")
+end
+```
+
+**In Studio** (command bar or plugin — both can read `Source`): wrap the same `RULES`/`scanSource` logic in a loop over `game.Selection:Get()` or `workspace:GetDescendants()`, replace `process.exit` with prints, and optionally `inst:Destroy()` scripts in the selection after reviewing. Exit codes let the bot gate a pipeline: 0 clean, 1 needs review, 2 reject.
+
+False positives are expected (legit admin systems use `require`/`HttpService`). The rule for decorative assets is simple: **zero scripts allowed**.
+
+### 14.4 Licensing and originality
+
+- Creator Store assets are usable in Roblox experiences per the Roblox Terms of Use, but that doesn't make them *yours* and doesn't clear third-party IP that an uploader stole. Branded content (franchise characters, logos, real car brands, music) can get assets and games taken down (see `production/publishing/ip-guidelines.md`).
+- Off-platform assets (Sketchfab, Kenney, Poly Haven, Quaternius, OpenGameArt): check the licence — **CC0** is safest; CC-BY requires attribution (put credits in-game); avoid NC (non-commercial) since Roblox games monetize; never use "ripped" game models.
+- AI-generated assets from Roblox's tools are allowed on-platform; avoid prompting for trademarked characters.
+- **Original assets are the default for this bot**: code-built parts, bpy meshes, procedural textures. They avoid licensing issues and backdoors, and they look consistent.
+- **Asset privacy:** new Images, Decals and Meshes can be *Restricted* by default (only the owner and granted games/creators can load them). Upload under the **same owner (user or group) as the game**, or grant the game permission. Open Use is irreversible; game grants are permanent.
+
+---
+
+## 15. Packages and asset organization
+
+### 15.1 Packages
+
+A **Package** is a reusable, versioned asset (Model/hierarchy) that can **auto-update** everywhere it is used. Use for: kit pieces used across places (lamp posts, doors with scripts), shared UI, NPC templates.
+
+- Create: right-click ▸ *Convert to Package*, or Importer *Import as Package*. Open Cloud **Model uploads become packages**.
+- Edit any copy → publish changes → other copies update (if `AutoUpdate` is enabled in the PackageLink).
+- Modifying a package copy disables auto-update until you publish or revert.
+- Packages owned by a group are shared with group devs; keep game and packages under one group.
+- Don't nest packages too deeply; keep scripts in packages minimal and server-authoritative.
+
+### 15.2 Organization conventions
+
+```
+ReplicatedStorage
+  Art
+    Palette (ModuleScript)          -- single colour source of truth
+    StylizedBuilders (ModuleScript) -- code-built assets
+    Props (Folder)                  -- MeshPart/Model templates, cloned at runtime
+      Nature/ Tree_Pine_A, Rock_01 ...
+      Village/ House_Small, Fence_Seg ...
+    Materials (Folder)              -- spare SurfaceAppearances for swapping
+ServerStorage
+  NPCTemplates
+MaterialService
+  MaterialVariants (named "Grass_Stylized", ...)
+Workspace
+  Map
+    Zone_Village / Zone_Forest      -- streaming-friendly grouping
+```
+
+Naming: `Category_Name_Variant` (`Rock_Mossy_B`), PascalCase, no spaces. Store asset IDs in one ModuleScript (`Assets.lua`: `Assets.Icons.Coin = "rbxassetid://…"`) so swapping art never touches gameplay code. Keep sources (`.blend`, `.py`, PSD/PNG) in the repo under `art/` with the generator scripts, and record the uploaded asset id next to each source in a manifest (`art/manifest.json`).
+
+---
+
+## 16. 2D art: icons, thumbnails, decals, UI images
+
+### 16.1 Formats and rules
+
+| Use | Object/property | Format notes |
+|---|---|---|
+| Part-face image | `Decal` (`ColorMapContent` / `Texture`), stretched to face | Transparent PNG for shapes; `Decal.Color3` tints |
+| Tiled face image | `Texture` (`StudsPerTileU/V`, `OffsetStudsU/V`) | Seamless PNG/JPG |
+| UI image | `ImageLabel` / `ImageButton` (`Image` / `ImageContent`) | PNG with alpha; `ImageColor3` tints (white source art tints best) |
+| Mesh texture | `MeshPart.TextureID` / `TextureContent` | No alpha needed unless cut-out |
+| Billboard/sprite | `BillboardGui` + `ImageLabel`, or `ParticleEmitter.Texture` | Premultiplied-looking edges: avoid dark fringes by bleeding edge colours into transparent pixels |
+| Game icon | 512×512 square | No borders/text-heavy designs; must pass moderation |
+| Thumbnails | 16:9, 1920×1080 recommended | Up to 10; first one is key for CTR |
+
+- **Transparent PNG:** 32-bit RGBA. Make the colour of fully transparent pixels match the neighbouring edge colour ("alpha bleeding") — otherwise bilinear filtering shows a dark/white halo on icons and leaves.
+- Image upload formats: `.png`, `.jpg`, `.tga`, `.bmp` (Importer also accepts `.gif`, static). Open Cloud images must be smaller than 8000×8000.
+- Design icons at 2× display size (a 64-px on-screen icon → 128-px source), with power-of-two dimensions.
+- For pixel art set `ResampleMode = Pixelated` on ImageLabels (and on SurfaceAppearance) to avoid blur.
+
+### 16.2 Sprite sheets
+
+Put many icons into one image (e.g. 1024×1024 holding a 8×8 grid of 128-px icons) — one download, one texture:
+
+```lua
+local SHEET = "rbxassetid://0000000000" -- your uploaded sheet
+local CELL = 128
+local function setIcon(label: ImageLabel, index: number) -- 0-based
+	label.Image = SHEET
+	label.ImageRectSize = Vector2.new(CELL, CELL)
+	label.ImageRectOffset = Vector2.new((index % 8) * CELL, math.floor(index / 8) * CELL)
+end
+```
+
+Flipbook animation: step `ImageRectOffset` on a timer (or use `ParticleEmitter.FlipbookLayout` for particles). Leave 2–4 px padding between cells to avoid bleeding at lower mips.
+
+### 16.3 9-slice (SliceCenter)
+
+For panels/buttons that stretch without distorting corners:
+
+```lua
+local panel = Instance.new("ImageLabel")
+panel.Image = "rbxassetid://0000000000"      -- e.g. 96x96 rounded panel, 24 px corners
+panel.ScaleType = Enum.ScaleType.Slice
+panel.SliceCenter = Rect.new(24, 24, 72, 72)  -- (left, top, right, bottom) of the stretchable centre, in source pixels
+panel.SliceScale = 1                          -- scale corners (e.g. 0.5 on small screens)
+panel.BackgroundTransparency = 1
+panel.Size = UDim2.fromOffset(400, 220)
+```
+
+`ScaleType` options: `Stretch`, `Slice`, `Tile` (with `TileSize`), `Fit`, `Crop`. Many modern UIs skip images and use `UICorner` + `UIStroke` + `UIGradient` — cheaper and resolution-independent; use 9-slice when you need textured/painted frames.
+
+### 16.4 Generating 2D art by code
+
+- Pillow/Cairo/SVG→PNG (e.g., `cairosvg`) for icons: flat shapes, 2–3 palette colours, 2–4 px dark outline, soft drop shadow. Keep a consistent light direction (top-left) across all icons.
+- Render 3D icons from Blender headless (orthographic camera, transparent film: `scene.render.film_transparent = True`) so item icons match in-game meshes.
+- Or render in-game with a `ViewportFrame` (no upload needed, live 3D icon) — costs some performance; fine for inventories of ≤ ~30 visible items.
+
+---
+
+## 17. Uploading assets with the Open Cloud Assets API
+
+- Endpoint: `POST https://apis.roblox.com/assets/v1/assets` (multipart: `request` JSON + `fileContent`). Header `x-api-key`. API key needs **assets** permission with Read/Write (OAuth scopes `asset:read`, `asset:write`). One asset per call, ≤ 20 MB.
+- Supported content uploads: **Decal/Image** (png/jpeg/bmp/tga, < 8000×8000, not updatable), **Model** (fbx/gltf/glb/rbxm/rbxmx — uploaded as **packages**; only fbx content can be updated), Audio (≤ 7 min, monthly quotas), Video (ID-verified, limits), Animation (rbxm), Mesh (only re-uploads of Asset Delivery mesh data).
+- Response is an operation: poll `GET https://apis.roblox.com/assets/v1/operations/{operationId}` until `done`; the `response` contains `assetId` and `moderationResult.moderationState`.
+- Update: `PATCH /assets/v1/assets/{assetId}` (content for fbx = new version; metadata via `updateMask`).
+
+```python
+# upload_asset.py — python3 upload_asset.py Grass_Color.png Decal "Grass Color"
+import json, os, sys, time, mimetypes, requests
+
+API = "https://apis.roblox.com/assets/v1"
+KEY = os.environ["ROBLOX_API_KEY"]           # never hard-code or commit keys
+CREATOR = {"groupId": os.environ["ROBLOX_GROUP_ID"]} if os.environ.get("ROBLOX_GROUP_ID") \
+          else {"userId": os.environ["ROBLOX_USER_ID"]}
+CTYPES = {".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".bmp": "image/bmp",
+          ".tga": "image/tga", ".fbx": "model/fbx", ".glb": "model/gltf-binary",
+          ".gltf": "model/gltf+json", ".rbxm": "model/x-rbxm"}
+
+def upload(path, asset_type, name, description="Generated by build pipeline"):
+    req = {"assetType": asset_type, "displayName": name[:50], "description": description,
+           "creationContext": {"creator": CREATOR}}
+    ext = os.path.splitext(path)[1].lower()
+    with open(path, "rb") as f:
+        r = requests.post(f"{API}/assets", headers={"x-api-key": KEY},
+                          files={"request": (None, json.dumps(req), "application/json"),
+                                 "fileContent": (os.path.basename(path), f, CTYPES[ext])})
+    r.raise_for_status()
+    op = r.json()["path"]                    # "operations/<id>"
+    for attempt in range(30):
+        time.sleep(min(2 ** attempt, 10))
+        s = requests.get(f"{API}/{op}", headers={"x-api-key": KEY})
+        s.raise_for_status()
+        body = s.json()
+        if body.get("done"):
+            resp = body.get("response") or {}
+            state = resp.get("moderationResult", {}).get("moderationState")
+            return resp.get("assetId"), state, body
+    raise TimeoutError(op)
+
+if __name__ == "__main__":
+    asset_id, state, raw = upload(sys.argv[1], sys.argv[2], sys.argv[3])
+    print(json.dumps({"file": sys.argv[1], "assetId": asset_id, "moderation": state}))
+```
+
+Notes:
+- **Decal vs Image id:** a Decal asset wraps an Image asset. `Decal`/`ImageLabel` properties need the *image* content. Studio auto-converts a pasted decal id; scripts don't. Check which id the operation returned (`assetType` in the response) and, if it is a decal, resolve the image id once in Studio and store that *(verify current behaviour)*.
+- Rate limits exist (HTTP 429): back off and retry. Batch uploads sequentially with small delays.
+- Record results in `art/manifest.json` and generate `Assets.lua` from it.
+- In-experience creation (players uploading their creations): `AssetService:CreateAssetAsync` with player consent — see `projects/assets/in-experience-asset-creation.md`.
+
+---
+
+## 18. Moderation of uploaded assets
+
+- Every uploaded image/mesh/audio/video goes through automated + human moderation against Community Rules, ToS and IP guidelines. Until approved, players see nothing (blank texture / missing mesh) — the asset is visible to you in Studio, so **test in a live server** before launch.
+- Typical rejection causes: text in images (especially off-platform links, social handles, "free robux"), realistic weapons/gore beyond the experience's maturity label, brand logos, real people's faces, anything sexualized, hate symbols (including accidental ones from procedural patterns — review generated textures), QR codes.
+- Repeated rejections can lead to account/group warnings or bans — the bot should keep generated 2D art **text-free** (render text with UI `TextLabel`s instead, which also localizes).
+- Moderation state is returned by Open Cloud (`MODERATION_STATE_APPROVED`, `…_REVIEWING`, `…_REJECTED`); gate your pipeline on it.
+- Generative tools moderate prompts too; a rejected prompt returns an error ("Moderation failed").
+
+---
+
+## 19. Performance budgets for art
+
+Roblox runs on low-end phones (2–3 GB RAM). Art is usually the biggest memory consumer. Use the Developer Console (F9) ▸ **Memory** (`GraphicsTexture`, `GraphicsMeshParts`, `GraphicsParts`) and MicroProfiler, and test on a real phone or the Studio device emulator.
+
+### 19.1 Suggested budgets (per place / per streamed area; mobile-first)
+
+| Resource | Comfortable target | Danger zone |
+|---|---|---|
+| Unique meshes | 100–300 | 1,000+ (each = download + memory + physics data) |
+| Unique textures | 50–150, mostly ≤ 512² | many 2K/4K unique textures |
+| Texture memory (client) | < 250–400 MB on mobile | > 600 MB → crashes on low-end iOS |
+| Tris per prop | 50–1,500 (hero ≤ 5k) | 20k meshes everywhere |
+| Parts visible | 5k–15k anchored, simple | 50k+ with shadows and transparency |
+| Transparent/glass surfaces | few, small | large overlapping transparent planes (overdraw) |
+| Humanoid NPCs active | ≤ 20–30 near player | 100+ |
+| Unions | dozens | thousands |
+
+(Targets are practical community guidance, not official limits — measure.)
+
+### 19.2 Memory math and tips
+
+- Texture memory ≈ width × height × 4 bytes × 1.33 (mips) uncompressed; GPU compression reduces it, but **resolution scales quadratically**: one 2048² costs as much as sixteen 512² images.
+- 4K support relies on texture streaming — low-end devices receive lower mips automatically, but bandwidth and storage still grow. Use 4K only for a few big hero surfaces.
+- **Reuse beats optimize:** 200 copies of one tree mesh ≈ the cost of one tree + instancing; 200 *different* tree meshes = 200× memory.
+- Share textures via atlases, trim sheets, palettes. A `SurfaceAppearance` with 4 maps = 4 textures; use only the maps you need (stylized often needs just ColorMap + NormalMap).
+- `CastShadow = false` on small props, foliage cards, interior clutter.
+- Decoration: `CanCollide/CanTouch/CanQuery = false` so physics ignores it.
+- Large flat surfaces: one big Part, not many small ones; terrain for ground.
+- Prefer `SmoothPlastic` over heavy materials only when it suits the style — material choice has small render cost differences; texture count matters more.
+- Turn on **StreamingEnabled** and group the map into zones so clients only load nearby art.
+- Check with Studio's *Render ▸ Wireframe* and the stats overlay (Ctrl+Shift+F2/F5 equivalents in View ▸ Stats) for draw calls and triangles.
+
+---
+
+## 20. Recommended workflow for the AI agent
+
+### 20.1 Pipeline
+
+1. **Art bible first** (write it into the repo): style (e.g. "flat low-poly, SmoothPlastic, palette v1"), palette hex list, scale references, texel density, tri budgets, naming.
+2. **Greybox** with parts (gameplay first).
+3. **Kit list:** enumerate needed props (≤ 30 unique for a small game) with dimensions and counts.
+4. **Generate:** parts-built Luau builders for architecture/nature; bpy for organic or bevelled props; Pillow for textures/icons. Everything parameterised by seed.
+5. **Validate automatically:** tri counts (bpy prints), dimensions, pivot, file names; scan all third-party content.
+6. **Upload** via Open Cloud; write `manifest.json` → generate `Assets.lua`.
+7. **Place** with code using pivots (`PivotTo`), scatter with seeded noise + minimum-distance rules (Poisson disk) to avoid grid patterns.
+8. **Review:** take Studio screenshots from player height (if tooling allows), check silhouettes, palette, density; adjust generator parameters rather than hand-editing.
+9. **Performance pass** on mobile emulator: memory, part count, shadows.
+
+### 20.2 "Decent-looking" heuristics for code-built art
+
+- **Silhouette > detail.** Exaggerate proportions (big roofs, thick trunks, chunky railings).
+- **Never perfectly straight.** Rotate copies 0–360° in Y, tilt 2–6°, scale ±10–20%.
+- **Clusters, not grids.** Place props in groups of 3–7 with a large/medium/small hierarchy.
+- **Value contrast:** dark bases (plinths, trunks), light tops (roofs catch light) — shapes read from far away.
+- **Edge detail:** trim beams, plinths, window frames 0.1–0.3 studs proud of walls (and avoid z-fighting: never coplanar faces).
+- **Ground contact:** sink props 0.1–0.3 studs into the ground or add a rock/grass skirt; floating props look fake.
+- **Limit palette** to the art bible; give each zone one accent colour.
+- **Repeat with variation:** 3 variants of each prop (seed) is usually enough.
+- **Scale check:** a 5-stud avatar next to every new asset.
+
+### 20.3 Final checklist per asset
+
+- [ ] Name follows `Category_Name_Variant`
+- [ ] Pivot at base/hinge; `WorldPivot` set for Models
+- [ ] Tri count within budget; < 20k hard limit
+- [ ] Texture size appropriate; shared atlas/palette used
+- [ ] Colours from palette module only
+- [ ] `Anchored` for static; correct `CollisionFidelity`; decoration non-colliding/non-queryable
+- [ ] `CastShadow` off for small clutter
+- [ ] No scripts (or reviewed scripts) — scanner passes
+- [ ] Uploaded under the game's owning group; moderation approved
+- [ ] Source + generator script + asset id in manifest
+
+---
+
+## Sources
+
+Local official docs (`/home/user/Roblox/reference/creator-docs/content/en-us/`):
+- `art/blender.md` (units, import/export axes, FBX scale table)
+- `art/modeling/specifications.md`, `export-requirements.md`, `texture-specifications.md`, `surface-appearance.md`, `assign-textures.md`, `reimport.md`, `rigging.md`, `roblox-blender-plugin.md`
+- `parts/meshes.md` (importer naming conventions, RenderFidelity distances, CollisionFidelity), `parts/solid-modeling.md`, `parts/procedural-models.md`, `parts/model-generation.md`, `parts/models.md`, `parts/textures-decals.md`, `parts/materials.md`
+- `studio/importer.md`, `studio/texture-generator.md`, `studio/material-generator.md`, `assistant/guide.md`
+- `avatar/character-bodies/specifications.md`, `avatar/rigid-accessories/specifications.md`, `avatar/layered-accessories/*`, `avatar-setup/auto-setup-requirements.md`, `characters/appearance.md`
+- `projects/assets/index.md` (moderation), `projects/assets/privacy.md`, `projects/assets/packages.md`, `projects/assets/manager.md`, `cloud/guides/usage-assets.md`
+- `scripting/security/third-party-vulnerabilities.md`
+- Engine reference YAML: `SurfaceAppearance`, `MeshPart`, `EditableMesh` (60k verts / 20k tris), `EditableImage` (max 1024×1024), `AssetService` (CreateEditableMesh/Image, CreateMeshPartAsync, CreateSurfaceAppearanceAsync), `GenerationService`, `Humanoid` (ApplyDescription deprecated → ApplyDescriptionAsync), `Players` (CreateHumanoidModelFromDescriptionAsync), `ImageLabel` (ScaleType, SliceCenter, SliceScale, ImageRectOffset/Size, ResampleMode), `Texture`, `Decal`, `GeometryService`
+
+Web:
+- [DevForum — 4k Texture Rendering (live in published experiences)](https://devforum.roblox.com/t/4k-texture-rendering/4316229)
+- [DevForum — [Studio Beta] 4k Texture rendering (uploads up to 8K, transcoded to 4K)](https://devforum.roblox.com/t/studio-beta-4k-texture-rendering/4144950)
+- [Creator Hub — Texture specifications](https://create.roblox.com/docs/art/modeling/texture-specifications)
+- [DevForum — [Beta] Cube 3D Generation Tools and APIs for Creators](https://devforum.roblox.com/t/beta-cube-3d-generation-tools-and-apis-for-creators/3558947)
+- [DevForum — [Beta] Cube 3D Model Updates: Better Quality and Bounding Box Control](https://devforum.roblox.com/t/beta-cube-3d-model-updates-better-quality-and-bounding-box-control/3828156)
+- Blender Python API manual (`bpy.ops.export_scene.gltf`, `bpy.ops.export_scene.fbx`, `bpy.ops.object.bake`) — docs.blender.org/api/current
+- Lune `@lune/roblox` docs (`deserializeModel`, `deserializePlace`, `serializeModel`) — lune-org.github.io/docs

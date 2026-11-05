@@ -275,10 +275,6 @@ end
 
 Default to the classic layout (Script in ServerScriptService, LocalScript in StarterPlayerScripts). Use `RunContext = Client` for self-contained client behavior inside packages or streamed models.
 
-### 2.4 Script capabilities and security
-
-`scripting/capabilities.md` describes sandboxing scripts with **capabilities** (for example, running untrusted or UGC code in a container with limited permissions). It's rarely needed in normal games. Note that the reference YAML lists `capabilities` on each API (e.g. `DataStore`, `Monetization`).
-
 ---
 
 ## 3. Architecture: single-script + ModuleScripts
@@ -497,23 +493,6 @@ end
 function Guard.optional(check: Check): Check
 	return function(v)
 		return v == nil or check(v)
-	end
-end
-
--- Array of `check`, at most maxCount items, no holes, no extra keys.
-function Guard.array(check: Check, maxCount: number): Check
-	return function(v)
-		if typeof(v) ~= "table" or getmetatable(v :: any) ~= nil then return false end
-		local n = #v
-		if n > maxCount then return false end
-		local count = 0
-		for k, item in v do
-			count += 1
-			if typeof(k) ~= "number" or k < 1 or k > n or k % 1 ~= 0 or not check(item) then
-				return false
-			end
-		end
-		return count == n
 	end
 end
 
@@ -1418,9 +1397,10 @@ local function listServers(): { any }
 end
 
 -- Atomic update (transform may run multiple times; return nil to cancel)
+local eventScores = MemoryStoreService:GetSortedMap("EventScores")
 local function bumpEventScore(teamId: string, delta: number)
 	pcall(function()
-		servers:UpdateAsync(`team_{teamId}`, function(old: any, sortKey: any)
+		eventScores:UpdateAsync(`team_{teamId}`, function(old: any, sortKey: any)
 			local new = (old or 0) + delta
 			return new, new
 		end, 3600)
@@ -1617,7 +1597,7 @@ Don't use `BindableEvent` for module-to-module events. It deep-copies tables and
 
 ### 6.5 Promises (optional)
 
-`evaera/promise` v4 gives you composable async code: `Promise.new`, `Promise.try`, `:andThen`, `:catch`, `:finally`, `Promise.all`, `Promise.race`, `:timeout(s)`, `Promise.retryWithDelay(fn, times, seconds)`, and cancellation. It's useful for complex async UIs and flows. Plain `pcall` with retries is fine for most server code. Don't mix styles chaotically within one module.
+`evaera/promise` v4 (`Promise.new`, `:andThen`, `:catch`, `Promise.all`, `:timeout`, `Promise.retryWithDelay`, cancellation) is useful for complex async flows. Plain `pcall` with retries (§15) covers most server code.
 
 ---
 
@@ -1707,7 +1687,7 @@ inv.Changed:Connect(function(id, n) print(id, n) end)
 inv:add("apple", 3)        -- method call works; autocomplete knows `inv: Inventory`
 ```
 
-**Inheritance:** prefer **composition** (an `Enemy` *has* a `Health` component) over metatable inheritance chains. If you must inherit, set `setmetatable(Derived, { __index = Base })` and keep it to one level.
+Prefer **composition** over metatable inheritance chains.
 
 ### 7.2 State machines
 
@@ -2366,8 +2346,8 @@ end
 
 TeleportService.TeleportInitFailed:Connect(function(player, result, message, placeId, options)
 	warn(`Teleport failed for {player.Name}: {result.Name} {message}`)
-	-- retry once after a delay for transient failures (Flooded, Unknown)
-	if result == Enum.TeleportResult.Flooded or result == Enum.TeleportResult.Unknown then
+	-- retry once after a delay for transient failures (Flooded, Failure)
+	if result == Enum.TeleportResult.Flooded or result == Enum.TeleportResult.Failure then
 		task.delay(3, function()
 			pcall(TeleportService.TeleportAsync, TeleportService, placeId, { player }, options)
 		end)
@@ -2555,22 +2535,6 @@ my-game/
 }
 ```
 
-```toml
-# wally.toml
-[package]
-name = "studio/my-game"
-version = "0.1.0"
-realm = "shared"
-registry = "https://github.com/UpliftGames/wally-index"
-
-[dependencies]
-Trove = "sleitnick/trove@1.8.0"
-Signal = "sleitnick/signal@2.0.3"
-Promise = "evaera/promise@4.0.0"
-
-[server-dependencies]
-ProfileStore = "lm-loleris/profilestore@1.0.3"
-```
 
 ---
 

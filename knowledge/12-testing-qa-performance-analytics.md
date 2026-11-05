@@ -143,13 +143,9 @@ Standard test profiles **[heuristic]**:
 
 What to watch: buttons that give no feedback until the server answers, double purchases from repeated taps, rubber-banding, hit registration, and UI that assumes remote events arrive in order.
 
-### 2.3 Other Studio tools you will use during QA
+### 2.3 Other Studio tools
 
-- **Output** window: filter by context (client/server) and severity.
-- **Script debugger**: breakpoints, watch, call stack (see `studio/debugging.md`).
-- **Command Bar**: run Luau in edit mode or during a playtest. Useful for spawning test currency in the test universe.
-- **Scene Analysis** (Studio): compares client and server resource use. Modes are Script memory, Unparented instances (a leak signal), Instance composition, Audio memory, Animation memory and Triangle composition.
-- **Studio Settings → Network → Print Join Size Breakdown**: prints the top 20 instances by size at join. Use it to find what bloats load time.
+The **Output** window (filter by client or server), the **script debugger** (breakpoints, watches), the **Command Bar** (grant test currency in the test universe), **Scene Analysis** (script memory, unparented instances, instance, audio, animation and triangle composition), and *Studio Settings → Network → Print Join Size Breakdown* (top 20 instances by join size).
 
 ---
 
@@ -274,7 +270,6 @@ describe("Wallet", function()
 		expect(function() wallet:add(0 / 0) end).toThrow()
 		expect(function() wallet:trySpend(-5) end).toThrow("positive")
 	end)
-
 end)
 end)
 ```
@@ -486,9 +481,10 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  static:
-    name: Lint, format, build
+  test:
+    name: Lint, build, Jest via Open Cloud
     runs-on: ubuntu-latest
+    environment: test-universe
     steps:
       - uses: actions/checkout@v4
 
@@ -517,31 +513,13 @@ jobs:
       - name: Static place checks (Lune)
         run: lune run scripts/check-place.luau game.rbxl
 
-  cloud-tests:
-    name: Jest via Open Cloud Luau Execution
-    needs: static
-    runs-on: ubuntu-latest
-    # Secrets are not exposed to PRs from forks; skip there.
-    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
-    environment: test-universe
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install Rokit
-        run: |
-          curl -sSf https://raw.githubusercontent.com/rojo-rbx/rokit/main/scripts/install.sh | bash
-          echo "$HOME/.rokit/bin" >> "$GITHUB_PATH"
-
-      - run: rokit install --no-trust-check
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - run: wally install
-
+      # Cloud tests need secrets, which PRs from forks don't get; skip there.
       - name: Build test place (code + specs + dev packages)
+        if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
         run: rojo build test.project.json -o test.rbxl
 
       - name: Upload as saved version of TEST place
+        if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
         id: upload
         env:
           ROBLOX_API_KEY: ${{ secrets.ROBLOX_TEST_API_KEY }}
@@ -557,6 +535,7 @@ jobs:
           echo "version=$(echo "$resp" | jq -r .versionNumber)" >> "$GITHUB_OUTPUT"
 
       - name: Run Jest in Roblox cloud
+        if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
         env:
           ROBLOX_API_KEY: ${{ secrets.ROBLOX_TEST_API_KEY }}
           TEST_UNIVERSE_ID: ${{ vars.TEST_UNIVERSE_ID }}
@@ -611,14 +590,10 @@ Automated tests prove the game *works*. Playtests show whether it is *understand
 
 ### 5.2 Running a moderated playtest
 
-1. **Do not explain the game.** Say only "Play as you normally would, and think out loud."
-2. Observe silently and note timestamps:
-   - **Time to first fun** (first reward or core action). The target is under 60 s **[heuristic]**.
-   - **Confusion points**: hesitation over 5 s, wandering, opening and closing the same menu, asking "what do I do?".
-   - **Missed affordances**: buttons never pressed, NPCs never talked to.
-   - **Rage or quit moments**: deaths, paywalls, long waits.
-3. After the session, ask: "What was the game about?", "What was the most fun moment?", "When did you feel lost?", "Would you play again tomorrow? Why?" Children answer what they think adults want to hear, so trust behavior over answers.
-4. Count, do not anecdote: "5 of 8 testers never found the Rebirth button" is actionable.
+1. Don't explain the game. Say only "play as you normally would and think out loud."
+2. Note timestamps for: **time to first fun** (target under 60 s **[heuristic]**); **confusion points** (hesitating more than 5 s, wandering, opening and closing menus, asking "what do I do?"); **missed affordances**; **rage or quit moments**.
+3. Afterwards, ask what the game was about, what the best moment was, when they felt lost, and whether they would play again tomorrow. Trust behavior over answers, especially with kids.
+4. Count, don't anecdote: "5 of 8 never found Rebirth" is actionable.
 
 ### 5.3 In-game feedback form
 
@@ -652,9 +627,9 @@ Notes:  Server handler lacks per-player purchase lock; client does not disable b
 
 Rules: one bug per report, include the **place version** (shown in the F9 console header and in the Error Report "First seen version" column), reproduction frequency, and network conditions. Every fixed bug gets a regression line (§1.3) and, ideally, a unit test.
 
-### 6.2 Reporting engine bugs to Roblox
+### 6.2 Engine bugs
 
-If the cause is an engine bug (crash, platform regression, a spike in **platform crashes** on the Crashes page), file it on the DevForum bug report category with a minimal reproduction place. Do not file engine bugs for your own script errors.
+If Roblox itself is at fault (an engine crash, or a spike in **platform crashes**), file a DevForum bug report with a minimal reproduction place.
 
 ---
 
@@ -805,19 +780,12 @@ Common scopes to know (from the docs' tag reference):
 - **Leftover animation data** inside rigs (the `AnimSaves` objects from Animation Editor plugins) replicates every time the rig is cloned. Delete it before publishing.
 - **Server-only VFX**: the server should only tell clients "explosion at X". Clients create the visuals.
 
-### 9.6 Content hygiene
+### 9.6 Content hygiene and part counts [heuristic]
 
-- **Free models** may contain hidden scripts that spawn thousands of instances or backdoors. Check load time and instance count after inserting any. Scan for unexpected `Script`s and `require(<number>)`.
-- Use the **Explorer property filter** (for example `CollisionFidelity=PreciseConvexDecomposition`) to count offending parts quickly.
-
-### 9.7 Instance and part count guidelines [heuristic]
-
-| Situation | Guideline |
-|---|---|
-| Small arena or obby without streaming | ≤ 10–20k BaseParts total in Workspace |
-| Large map | StreamingEnabled **on**; total parts can reach 100k+, but keep ≤ 10–25k streamed in near the player on phones |
-| Instances replicated at join | Keep ReplicatedStorage lean. Store templates in ServerStorage and clone them to clients on demand |
-| Scripts | Prefer a few systems over thousands of per-object scripts (one `CoinSystem` script, not one script in every coin) |
+- Free models can hide scripts that spawn thousands of instances, or backdoors (`require(<assetId>)`). Check instance count and load time after inserting one.
+- Use Explorer property filters (e.g. `CollisionFidelity=PreciseConvexDecomposition`) to count offending parts.
+- Small arena without streaming: ≤ 10–20k BaseParts. Large maps: StreamingEnabled on, so totals can reach 100k+, but keep ≤ 10–25k streamed in near the player on phones.
+- Keep templates in ServerStorage, not ReplicatedStorage, which replicates at join. Prefer one system script over one script per object.
 
 ---
 
@@ -1178,39 +1146,27 @@ How the KPIs relate:
 
 ## 17. Interpreting data and iterating
 
-1. **Define the question** ("Why did D1 drop from 14% to 11% on Nov 3?").
-2. **Segment**: platform → country → new vs. returning → acquisition source → place version.
-3. **Correlate with changes**: turn on place-version annotations in the Performance and Error Report dashboards. Most drops coincide with an update (a performance regression, an error spike, a broken tutorial), or with a change in **traffic mix** (a burst of sponsored or ad traffic, or new countries, usually retains worse; that is not a game regression).
-4. **Find the funnel step** that changed.
-5. **Form a hypothesis, change one thing, measure** (an experiment if traffic allows; otherwise a before/after comparison over at least 7 days, comparing weekdays to weekdays).
-6. **Record the decision** in a changelog (`docs/decisions.md`): what changed, why, the result.
+1. Define the question ("Why did D1 drop from 14% to 11% on Nov 3?").
+2. Segment by platform → country → new vs. returning → acquisition source → place version.
+3. Correlate with changes using place-version annotations. Most drops line up with an update or a **traffic-mix** shift. Ad or sponsored bursts and new countries retain worse, and that isn't a game regression.
+4. Find the funnel step that changed. Form a hypothesis and change **one** thing. Measure it with an experiment, or over at least 7 days comparing like weekdays.
+5. Log the decision in `docs/decisions.md`.
 
-Pitfalls:
-- **Small numbers**: below about 1,000 new users per day, D1 swings of ±2 points are noise.
-- **Weekends and holidays**: compare the same weekday, and expect school holidays to raise DAU.
-- **Survivorship**: returning-player metrics look great while new-player retention collapses.
-- **Vanity metrics**: visits are not retention.
-- **Goodhart**: optimizing session length with forced waiting harms D7.
+Pitfalls: below about 1,000 new users a day, D1 swings of ±2 points are noise. Holidays and weekends shift DAU. Visits are a vanity metric. Padding session length with forced waits hurts D7.
 
 ---
 
 ## 18. Live ops calendar
 
-Live games need a predictable rhythm. Example cadence for a small team:
-
 | Cadence | Activity |
 |---|---|
-| **Daily** | Check the Error Report and Crashes (5 min); read the Feedback page and community channels; check that yesterday's CCU curve is normal |
-| **Weekly** | A small update (balance tweaks, bug fixes, one new item). Review KPIs against the benchmark. Plan the next week. Publish on the same weekday (many top games update Friday or Saturday for weekend traffic, which makes the weekly cycle predictable for players) |
-| **Bi-weekly / monthly** | A content update (new zone, pet set, mode). Run a limited-time event. Rotate thumbnails. Review experiment results |
-| **Seasonal** | Holiday events (Halloween, winter holidays, summer, Lunar New Year), aligned with Roblox platform events where relevant. Battle pass seasons (4–8 weeks) |
-| **Quarterly** | A major update. Revisit the economy (inflation check via the economy dashboard: sources vs. sinks). Deep performance pass on the baseline device |
+| **Daily** | Error Report and Crashes (5 min), Feedback page and community channels, sanity-check the CCU curve |
+| **Weekly** | A small update (fixes, balance, one item) on a consistent weekday, often before the weekend. KPI review against the benchmark |
+| **Bi-weekly / monthly** | A content update (zone, pet set, mode) or a limited-time event. Thumbnail rotation. Experiment readouts |
+| **Seasonal** | Holiday events (Halloween, winter, summer, Lunar New Year). Battle-pass seasons of 4–8 weeks |
+| **Quarterly** | A major update. Economy inflation review (sources vs. sinks). Deep performance pass on the baseline device |
 
-Live-event checklist:
-- Event content behind a **Config flag or a server-time check** (UTC), so it switches on without a publish, and so you can roll it back.
-- Announce it in game (update log UI), in the game description and in update thumbnails.
-- Log event participation with custom events (`EventJoined`, `EventRewardClaimed`) so you can measure its impact.
-- Avoid server restarts during event peaks. Use **"Migrate to latest update"** (soft shutdown) rather than a hard shutdown when publishing.
+Events: gate content behind a **Config flag or a UTC server-time check**, so it switches on and rolls back without a publish. Log participation with custom events. Announce in game and in the description. Publish with **"Migrate to latest update"** (soft shutdown), not a hard restart during peaks.
 
 ---
 
@@ -1392,29 +1348,16 @@ POST-RELEASE (first hour, then 24 h)
 
 ## Sources
 
-Local creator-docs snapshot (`/home/user/Roblox/reference/creator-docs/content/en-us/`):
-- `studio/testing-modes.md`, `includes/studio/playtest-modes.md`: Test, Test Here, Run, Server & Clients (up to 8), Team Test, Party Simulator, client/server toggle, pause and step.
-- `studio/device-simulator.md`, `studio/network-simulator.md`: Device and Network Simulator (beta), inbound and outbound latency, jitter, loss.
-- `studio/developer-console.md`: Log, Memory, Luau heap, Network, Script Profiler tabs.
-- `performance-optimization/identify.md`, `design.md`, `improve.md`, `test-on-hardware.md`, `scene-analysis.md`, `monitor.md`, `microprofiler/index.md`, `microprofiler/use-microprofiler.md`: 60 Hz heartbeat cap, server memory formula `6.25 GiB + 100 MiB × players`, < 50% guidance, 2–3% crash guidance, draw-call and triangle baseline example, Android and RAM statistics, MicroProfiler bar colors and scopes, physics, Humanoid, rendering and network mitigations.
-- `workspace/streaming/index.md`: streaming properties and recommendations.
-- `cloud-services/data-stores/index.md`: Studio access warning and separate test version.
-- `production/publishing/publish-games-and-places.md`: invite early testers (up to 10).
-- `production/analytics/analytics-dashboard.md`, `retention.md`, `engagement.md`, `monetization.md`, `acquisition.md`, `performance.md`, `error-report.md`, `crashes.md`, `alerts.md`, `custom-events.md`, `funnel-events.md`, `economy-events.md`, `custom-fields.md`, `event-types.md` (rate limit `120 + 20 × CCU`, cardinality limits).
-- `reference/engine/classes/AnalyticsService.yaml`: verified signatures for LogCustomEvent, LogEconomyEvent, LogFunnelStepEvent, LogOnboardingFunnelStepEvent, LogProgressionEvent (not charted), LogJourneyEvent; deprecated Fire* methods.
-- `reference/engine/classes/ScriptContext.yaml` (Error event parameters, watchdog exclusion) and `LogService.yaml` (structured logging, GetLogger, MessageOut with context).
-- `production/experiments.md`, `production/configs.md`: Experiments (14–60 days, up to 2 variants, metric sets, early harm), ConfigService.
-- `production/publishing/thumbnails.md`: thumbnail personalization (2+ thumbnails, +8.5% average qualified play-through rate).
-- `cloud/guides/usage-place-publishing.md` (versions endpoint, `versionType`), `cloud/guides/error-reporting/index.md`, `cloud/guides/analytics/benchmarks.md`, `cloud-services/http-service.md` (Luau Execution operation names), `studio/mcp-open-cloud.md` (scope `universe.place.luau-execution-session:*`).
+Local creator-docs (`/home/user/Roblox/reference/creator-docs/content/en-us/`):
+- Studio: `studio/testing-modes.md`, `includes/studio/playtest-modes.md`, `studio/device-simulator.md`, `studio/network-simulator.md`, `studio/developer-console.md`.
+- Performance: `performance-optimization/identify.md`, `design.md`, `improve.md`, `test-on-hardware.md`, `scene-analysis.md`, `microprofiler/index.md`, `microprofiler/use-microprofiler.md`; `workspace/streaming/index.md`.
+- Data and publishing: `cloud-services/data-stores/index.md`, `production/publishing/publish-games-and-places.md` (early testers), `production/publishing/thumbnails.md` (personalization).
+- Analytics: `production/analytics/analytics-dashboard.md`, `retention.md`, `engagement.md`, `monetization.md`, `acquisition.md`, `performance.md`, `error-report.md`, `crashes.md`, `alerts.md`, `custom-events.md`, `funnel-events.md`, `economy-events.md`, `custom-fields.md`, `event-types.md` (limits); `production/experiments.md`, `production/configs.md`.
+- Engine API: `reference/engine/classes/AnalyticsService.yaml`, `ScriptContext.yaml`, `LogService.yaml`.
+- Open Cloud: `cloud/guides/usage-place-publishing.md`, `cloud/guides/error-reporting/index.md`, `cloud/guides/analytics/benchmarks.md`, `cloud-services/http-service.md` (Luau Execution operations), `studio/mcp-open-cloud.md` (scope `universe.place.luau-execution-session:*`).
 
-Libraries:
-- `/home/user/Roblox/reference/libraries/Roblox_jest-roblox/docs/docs/GettingStarted.md`, `CLI.md`, `MockFunctions.md`, `JestBenchmarkAPI.md`, `scripts/run-tests.luau`: Wally packages `roblox/jest@^3.20.0` and `roblox/jest-globals`, runCLI usage, runs in Studio or Open Cloud Luau Execution.
-- `/home/user/Roblox/reference/libraries/lune-org_lune/crates/*/types.d.luau`: `@lune/roblox` (serialize and deserialize places), `@lune/net`, `@lune/fs`, `@lune/process`, `@lune/serde`, `@lune/task`.
+Libraries: `/home/user/Roblox/reference/libraries/Roblox_jest-roblox/docs/docs/` (GettingStarted, CLI, MockFunctions, JestBenchmarkAPI) and `scripts/run-tests.luau`; `/home/user/Roblox/reference/libraries/lune-org_lune/crates/*/types.d.luau`.
 
-Web (treated as data):
-- Roblox DevForum, "[Beta] Open Cloud Engine API for Executing Luau": https://devforum.roblox.com/t/beta-open-cloud-engine-api-for-executing-luau/3172185 (timeout 1–300 s, a new server per task, `place-ci-cd-demo` reference project).
-- rbxcloud Luau execution source: https://docs.rs/crate/rbxcloud/latest/source/src/rbx/v2/luau_execution.rs (endpoint shape; search snippet only).
-- rocale-cli: https://github.com/fitzpr/rocale-cli (polling pattern, required permissions).
-- Official Luau Execution reference: https://create.roblox.com/docs/cloud/reference/features/luau-execution (could not be fetched from this environment because the host is not allowed; exact field names are marked [verify]).
+Web (treated as data): [DevForum, Open Cloud Engine API for Executing Luau](https://devforum.roblox.com/t/beta-open-cloud-engine-api-for-executing-luau/3172185); [rbxcloud luau_execution.rs](https://docs.rs/crate/rbxcloud/latest/source/src/rbx/v2/luau_execution.rs) (search snippet only); [rocale-cli](https://github.com/fitzpr/rocale-cli). The official Luau Execution reference (create.roblox.com) could not be fetched from this environment, so its fields are marked [verify].
 
 KPI ranges, the per-tier budget table, the bandwidth budgets and the part-count guidelines are marked [heuristic]. They are synthesized studio rules of thumb, not Roblox-published figures.
