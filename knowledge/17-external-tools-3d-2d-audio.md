@@ -342,17 +342,21 @@ bpy.ops.export_scene.fbx(
 Headless AO + normal bake into images (Cycles), after the low-poly has a UV map and a material:
 
 ```python
-import bpy
+import bpy, os
 scene = bpy.context.scene
 scene.render.engine = "CYCLES"
 scene.cycles.samples = 64
 low, high = bpy.data.objects["Crate_low"], bpy.data.objects["Crate_high"]
+os.makedirs(bpy.path.abspath("//textures"), exist_ok=True)   # needs a saved .blend for "//"
 
 def target_image(obj, name, size=1024, non_color=False):
     img = bpy.data.images.new(name, size, size, alpha=False)
     if non_color:
         img.colorspace_settings.name = "Non-Color"
     mat = obj.active_material
+    if mat is None:                            # bake needs a material with an image node
+        mat = bpy.data.materials.new(obj.name + "_Bake")
+        obj.data.materials.append(mat)
     node = mat.node_tree.nodes.new("ShaderNodeTexImage")
     node.image = img
     mat.node_tree.nodes.active = node          # bake writes into the ACTIVE image node
@@ -590,6 +594,11 @@ import sys
 from PIL import Image
 im = Image.open(sys.argv[1])
 assert im.size == (512, 512), f"icon is {im.size}, expected 512x512"
+if im.mode in ("RGBA", "LA"):
+    lo, hi = im.getchannel("A").getextrema()
+    assert hi > 0, "icon is fully transparent"
+    if lo < 255:
+        print("note: icon has transparency; game icons are shown on varied backgrounds, prefer opaque")
 small = im.convert("RGB").resize((150, 150), Image.LANCZOS)
 small.save(sys.argv[1].replace(".png", "_150preview.png"))   # look at this before uploading
 if "--circle" in sys.argv:                                   # badges/passes are cropped to a circle

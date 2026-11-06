@@ -581,6 +581,10 @@ nt.links.new(tex.outputs["Color"], bsdf.inputs["Base Color"])
 def paint(obj, color_index_fn):
     """Collapse each face's UVs onto one palette cell; flat shade."""
     me = obj.data
+    # Primitives already have a "UVMap" layer; a second layer would be ignored by the
+    # exporter (it uses the active/first one), so remove existing layers first.
+    while me.uv_layers:
+        me.uv_layers.remove(me.uv_layers[0])
     uv = me.uv_layers.new(name="UVMap")
     for poly in me.polygons:
         poly.use_smooth = False
