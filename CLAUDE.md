@@ -29,6 +29,7 @@ raw reference for exact APIs.
 | Outside tools: Blender, Blockbench, Substance, Photoshop/Photopea/Krita/GIMP, Aseprite, Figma, Audacity/LMMS/BandLab, sfxr | `knowledge/17-external-tools-3d-2d-audio.md` (+ Blender manual in `reference/tools/blender-manual/`) |
 | Symptom → cause → fix for common scripting bugs; code-review critiques; debugging playbook | `knowledge/19-devforum-scripting-problems-and-solutions.md` |
 | Game-design Q&A from developers; best tutorials and community resources catalogs | `knowledge/20-devforum-game-design-tutorials-resources.md` (+ `reference/devforum-index/`) |
+| Deep dives: Photoshop/Photopea, Krita, GIMP, Aseprite, Inkscape, Figma, Substance, Blockbench, MagicaVoxel, Audacity, LMMS/Reaper, sfxr, ffmpeg; asset pipeline | `knowledge/21-2d-texturing-audio-tools-deep-dive.md` (+ manuals in `reference/tools/`: Blender, Krita, GIMP) |
 | Best YouTube lessons per topic (summarized), Studio plugins, dev tools | `knowledge/18-video-lessons-plugins-and-dev-tools.md` (+ full catalog `reference/video-library/`) |
 
 ## Start every new game from the template
