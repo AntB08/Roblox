@@ -1,0 +1,33 @@
+## Multibrush Tool 
+
+[img: toolmultibrush] 
+
+The Multibrush tool allows you to draw using multiple instances of a freehand brush stroke at once, it can be accessed from the Toolbox docker or with the default shortcut Q. Using the Multibrush is similar to toggling the [Mirror Tools](../../user_manual/mirror_tools.xhtml#mirror-tools), but the Multibrush is more sophisticated, for example it can mirror freehand brush strokes along a rotated axis. 
+
+The settings for the tool will be found in the tool options dock. 
+
+The multibrush tool has a few modes and the settings for each can be found in the tool options dock. Symmetry and mirror reflect over an axis which can be set in the tool options dock. The default axis is the center of the canvas. [img: ../../_images/Krita-multibrush.png] 
+
+The available modes are:  Symmetry
+
+Symmetry will reflect your brush around the axis at even intervals. The slider determines the number of instances which will be drawn on the canvas.  Mirror
+
+Mirror will reflect the brush across the X axis, the Y axis, or both.  Translate
+
+Translate will paint the set number of instances around the cursor at the radius distance.  Snowflake
+
+This works as a mirrored symmetry, but is a bit slower than symmetry+toolbar mirror mode.  Copy Translate
+
+This allows you to set the position of the copies relative to your own cursor. To set the position of the copies, first toggle Add, and then [img: mouseleft] the canvas to place copies relative to the multibrush origin. Finally, press Add again, and start drawing to see the copy translate in action.  Copy Translate at Interval
+
+This allows for brushes to be applied at an orthogonal interval. The max amount of brushes allowed is 50, so you will need to set the interval high enough to allow for less than 50 brushes to appear over the whole document.  Interval X
+
+The interval in the horizontal direction.  Interval Y
+
+The interval in the vertical direction.   
+
+ 
+
+Added in version 5.3.    
+
+The assistant and smoothing options work the same as in the [Freehand Brush Tool](freehand_brush.xhtml#freehand-brush-tool), though only on the real brush and not its copies.

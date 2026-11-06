@@ -1,0 +1,32 @@
+## Brushes 
+
+One of the most important parts of a painting program, Krita has a very extensive brush system. 
+
+  
+- [Brush Engines](brushes/brush_engines.xhtml) 
+- [Bristle Brush Engine](brushes/brush_engines/bristle_engine.xhtml) 
+- [Chalk Brush Engine](brushes/brush_engines/chalk_engine.xhtml) 
+- [Clone Brush Engine](brushes/brush_engines/clone_engine.xhtml) 
+- [Color Smudge Brush Engine](brushes/brush_engines/color_smudge_engine.xhtml) 
+- [Curve Brush Engine](brushes/brush_engines/curve_engine.xhtml) 
+- [Deform Brush Engine](brushes/brush_engines/deform_brush_engine.xhtml) 
+- [Dyna Brush Engine](brushes/brush_engines/dyna_brush_engine.xhtml) 
+- [Filter Brush Engine](brushes/brush_engines/filter_brush_engine.xhtml) 
+- [Grid Brush Engine](brushes/brush_engines/grid_brush_engine.xhtml) 
+- [Hatching Brush Engine](brushes/brush_engines/hatching_brush_engine.xhtml) 
+- [MyPaint Brush Engine](brushes/brush_engines/mypaint_engine.xhtml) 
+- [Particle Brush Engine](brushes/brush_engines/particle_brush_engine.xhtml) 
+- [Pixel Brush Engine](brushes/brush_engines/pixel_brush_engine.xhtml) 
+- [Quick Brush Engine](brushes/brush_engines/quick_brush_engine.xhtml) 
+- [Shape Brush Engine](brushes/brush_engines/shape_brush_engine.xhtml) 
+- [Sketch Brush Engine](brushes/brush_engines/sketch_brush_engine.xhtml) 
+- [Spray Brush Engine](brushes/brush_engines/spray_brush_engine.xhtml) 
+- [Tangent Normal Brush Engine](brushes/brush_engines/tangen_normal_brush_engine.xhtml)   
+- [Brush Settings](brushes/brush_settings.xhtml) 
+- [Brush Tips](brushes/brush_settings/brush_tips.xhtml) 
+- [Locked Brush Settings](brushes/brush_settings/locked_brush_settings.xhtml) 
+- [Masked Brush](brushes/brush_settings/masked_brush.xhtml) 
+- [Opacity and Flow](brushes/brush_settings/opacity_and_flow.xhtml) 
+- [Options](brushes/brush_settings/options.xhtml) 
+- [Sensors](brushes/brush_settings/tablet_sensors.xhtml) 
+- [Texture](brushes/brush_settings/texture.xhtml)

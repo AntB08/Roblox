@@ -1,0 +1,1053 @@
+f.. meta:: description: 
+
+Releasing Krita      
+
+## [Making a release](#id3)  
+
+Contents  
+- 
+
+[Making a release](#making-a-release)  
+- 
+
+[Krita releases and update channels](#krita-releases-and-update-channels) 
+- 
+
+[On branching out a stable branch](#on-branching-out-a-stable-branch) 
+- 
+
+[Before the release](#before-the-release) 
+- 
+
+[Two days before branching-out](#two-days-before-branching-out) 
+- 
+
+[On the branching-out day](#on-the-branching-out-day) 
+- 
+
+[Create the tarball](#create-the-tarball)  
+- 
+
+[Create and push the tag](#create-and-push-the-tag) 
+- 
+
+[Create the tarball](#id2) 
+- 
+
+[Make Windows, Linux, macOS and Android packages](#make-windows-linux-macos-and-android-packages) 
+- 
+
+[Release](#release) 
+- 
+
+[Release coordination](#release-coordination)   
+- 
+
+[PR and Communications](#pr-and-communications)  
+- 
+
+[Pre-release](#pre-release) 
+- 
+
+[Post-release](#post-release)  
+- 
+
+[Notes](#notes)          
+
+### [Krita releases and update channels](#id4) 
+
+At any point of time Krita users have access to four(!) versions of Krita. We calls these versions “channels”, since they are “channels through which the users can get updates of the software”.  
+- 
+
+**Krita Stable** is the latest stable version of Krita that has been released to the users 
+
+>  
+
+ 
+- 
+
+the user can manually download it from the official side 
+- 
+
+packages are stored at the “stable” prefix on dko: [https://download.kde.org/stable/krita/](https://download.kde.org/stable/krita/) 
+- 
+
+AppImage updater will suggest an update **only** from one stable version to another, e.g. “Krita 5.2.2 -> Krita 5.2.3” or “Krita 5.2.2 -> Krita 5.3.0” 
+- 
+
+AppImage updater uses link at address: [https://download.kde.org/stable/krita/updates/Krita-Stable-x86_64.appimage.zsync](https://download.kde.org/stable/krita/updates/Krita-Stable-x86_64.appimage.zsync)    
+- 
+
+**Krita Beta** is the latest alpha or beta version of Krita 
+
+>  
+
+ 
+- 
+
+these packages are supposed to be used for pre-release testing 
+- 
+
+we usually make beta-release announcements with direct links to these packages 
+- 
+
+packages are stored at the “unstable” prefix on dko: [https://download.kde.org/unstable/krita/](https://download.kde.org/unstable/krita/) 
+- 
+
+AppImage updater will suggest updates if 
+
+>  
+
+ 
+- 
+
+the next beta or release candidate version has been released; 
+- 
+
+the final release is published (update to final)    
+- 
+
+AppImage updater uses link at address: [https://download.kde.org/unstable/krita/updates/Krita-Beta-x86_64.appimage.zsync](https://download.kde.org/unstable/krita/updates/Krita-Beta-x86_64.appimage.zsync)    
+- 
+
+**Krita Plus** is the latest stable release with all backported patches, built nightly 
+
+>  
+
+ 
+- 
+
+this channel is basically the nightly build of the current stable branch 
+- 
+
+packages are stored at the gitlab’s CDN server: [https://cdn.kde.org/ci-builds/graphics/krita/krita-5.2/](https://cdn.kde.org/ci-builds/graphics/krita/krita-5.2/) 
+- 
+
+AppImage updater will suggest updates if 
+
+>  
+
+ 
+- 
+
+a new nightly with the same minor version has been published, e.g. 
+
+>  
+
+ 
+- 
+
+krita/5.2 will update to the new version of krita/5.2 
+- 
+
+krita/5.3 will update to the new version of krita/5.3 
+- 
+
+they will not cross-update, unless the next point…    
+- 
+
+a stable version of the next minor branch has been officially released 
+
+>  
+
+ 
+- 
+
+krita/5.2 will update to krita/5.3 **after** the first official stable release of krita/5.3 has been made       
+- 
+
+AppImage updater uses link at the corresponding branch on CDN via redirects from [https://autoconfig.kde.org](https://autoconfig.kde.org): 
+
+>  
+
+ 
+- 
+
+[https://autoconfig.kde.org/krita/updates/plus/linux/Krita-Plus-x86_64.appimage.zsync](https://autoconfig.kde.org/krita/updates/plus/linux/Krita-Plus-x86_64.appimage.zsync) links to the corresponding active “stable” branch on CDN site 
+- 
+
+after every stable branch change, the redirect on [https://autoconfig.kde.org](https://autoconfig.kde.org) should be manually changed       
+- 
+
+**Krita Next** is the nightly build of the development (`master`) branch of Krita 
+
+>  
+
+ 
+- 
+
+packages are stored at the gitlab’s CDN server: [https://cdn.kde.org/ci-builds/graphics/krita/master/](https://cdn.kde.org/ci-builds/graphics/krita/master/) 
+- 
+
+AppImage updater will suggest updates every time development branch gets a new nightly build 
+- 
+
+AppImage updater uses link to the master branch on CDN via redirects from [https://autoconfig.kde.org](https://autoconfig.kde.org): 
+
+>  
+
+ 
+- 
+
+[https://autoconfig.kde.org/krita/updates/next/linux/Krita-Next-x86_64.appimage.zsync](https://autoconfig.kde.org/krita/updates/next/linux/Krita-Next-x86_64.appimage.zsync) links to the master branch on CDN site        
+
+ 
+
+Note 
+
+Krita’s main CMakeLists.txt file has a special code to detect the current channel based on the version switches. It sets variable `BRANDING`, which is later used to change application’s icon and splashscreen. Branding can be one of: “default”, “Beta”, “Plus” or “Next”.  
+
+ 
+
+Note 
+
+Please take into account that we use non-standard filename extension for the zsync files: 
+
+>  
+
+ 
+- 
+
+zsync file extension is all-lower-case: `.appimage.zsync` 
+- 
+
+appimage file extension is camel-case: `.AppImage`   
+
+The standard approach is to use camel-case for both the extensions, but we don’t do that. Our older releases have the links to download.kde.org baked into the binary, so it is not worth the trouble to switch them. 
+
+We still had to switch the case of the package itself, since it broke desktop integrations. See [bug 447445](https://bugs.kde.org/show_bug.cgi?id=447445) [https://bugs.kde.org/show_bug.cgi?id=447445]    
+
+### [On branching out a stable branch](#id5) 
+
+When we change the stable branch name, e.g. when changing krita/5.2 into krita/5.3 we should update its name in several places to keep CI infrastructure working properly:  
+- 
+
+APK signer: [https://invent.kde.org/sysadmin/ci-utilities/-/blob/master/signing/apksigner-projects.yaml](https://invent.kde.org/sysadmin/ci-utilities/-/blob/master/signing/apksigner-projects.yaml) 
+- 
+
+Windows signer: [https://invent.kde.org/sysadmin/ci-utilities/-/blob/master/signing/windowsbinariessigner-projects.yaml](https://invent.kde.org/sysadmin/ci-utilities/-/blob/master/signing/windowsbinariessigner-projects.yaml) 
+- 
+
+MacOS signer: [https://invent.kde.org/sysadmin/ci-utilities/-/blob/master/signing/macappsigner-projects.yaml](https://invent.kde.org/sysadmin/ci-utilities/-/blob/master/signing/macappsigner-projects.yaml) 
+- 
+
+MacOS notarizer: [https://invent.kde.org/sysadmin/ci-utilities/-/blob/master/signing/macappnotarizer-projects.yaml](https://invent.kde.org/sysadmin/ci-utilities/-/blob/master/signing/macappnotarizer-projects.yaml) 
+- 
+
+Nightly builds publisher: [https://invent.kde.org/sysadmin/ci-utilities/-/blob/master/signing/buildpublisher-projects.yaml](https://invent.kde.org/sysadmin/ci-utilities/-/blob/master/signing/buildpublisher-projects.yaml) 
+- 
+
+Translations’ “stable” branch: [https://invent.kde.org/sysadmin/repo-metadata/-/blob/master/projects-invent/graphics/krita/i18n.json](https://invent.kde.org/sysadmin/repo-metadata/-/blob/master/projects-invent/graphics/krita/i18n.json) 
+- 
+
+Updates redirect link: [https://invent.kde.org/websites/autoconfig-kde-org/-/blob/master/krita/.htaccess?ref_type=heads](https://invent.kde.org/websites/autoconfig-kde-org/-/blob/master/krita/.htaccess?ref_type=heads) 
+- 
+
+Documentation branch (discuss with the documentation team first!): [https://invent.kde.org/documentation/docs-krita-org](https://invent.kde.org/documentation/docs-krita-org) 
+- 
+
+Notify translators about the translations branch switch! 
+- 
+
+Update the link to “Krita Plus” ZSync channel in `build-tools/ci-scripts/show-updates-status.py` script 
+
+>  
+
+ 
+- 
+
+make sure you keep the old link in the script as well, until the branch is fully deprecated and removed from the CDN server (we need to keep the link up for some time to let people update to the new version)    
+- 
+
+Update Krita version in `master` branch to be higher than in stable. 
+- 
+
+In the stable branch, remove `<artifacts>` and `<bundle>` sections from `org.kde.krita.appdata.xml` file. We don’t link to artifacts in the stable branch, because our platform names are not standard and are used only by [apps.kde.org store](https://apps.kde.org/krita) [https://apps.kde.org/krita]. Otherwise the appdata-file should be exactly the same as in `master` branch.    
+
+### [Before the release](#id6)  
+- 
+
+Coordinate with #kde-promo 
+- 
+
+Notify translators of string freeze! ([mailto:kde-i18n-doc@kde.org](mailto:kde-i18n-doc%40kde.org)) 
+- 
+
+Change string freeze status in `README.md` file in the stable branch into “freeze, all new strings must go through [mailto:kde-i18n-doc@kde.org](mailto:kde-i18n-doc%40kde.org)” 
+- 
+
+Verify that the release notes page is done, like [https://krita.org/en/krita-4-2-release-notes/](https://krita.org/en/krita-4-2-release-notes/) 
+- 
+
+Verify that all dependency builds are up to date. 
+
+>  
+
+**TODO:** write actual steps on how to verify the deps are up-to-date      
+
+### [Two days before branching-out](#id7) 
+
+Create a merge request for the signer’s config repository to add the proposed branch into the list of authorized branches. You need to add the branch into all singer files for all the available platforms: 
+
+Repository: [https://invent.kde.org/sysadmin/ci-utilities](https://invent.kde.org/sysadmin/ci-utilities) 
+
+>  
+
+ 
+- 
+
+APK signer: `signing/apksigner-projects.yaml` ([link to apk-signer](https://invent.kde.org/sysadmin/ci-utilities/-/blob/master/signing/apksigner-projects.yaml) [https://invent.kde.org/sysadmin/ci-utilities/-/blob/master/signing/apksigner-projects.yaml]) 
+- 
+
+Windows signer: `signing/windowsbinariessigner-projects.yaml` ([link to windows-signer](https://invent.kde.org/sysadmin/ci-utilities/-/blob/master/signing/windowsbinariessigner-projects.yaml) [https://invent.kde.org/sysadmin/ci-utilities/-/blob/master/signing/windowsbinariessigner-projects.yaml]) 
+- 
+
+MacOS signer: `signing/macappsigner-projects.yaml` ([link to MacOS-signer](https://invent.kde.org/sysadmin/ci-utilities/-/blob/master/signing/macappsigner-projects.yaml) [https://invent.kde.org/sysadmin/ci-utilities/-/blob/master/signing/macappsigner-projects.yaml]) 
+- 
+
+MacOS notarizer: `signing/macappnotarizer-projects.yaml` ([link to MacOS-notarizer](https://invent.kde.org/sysadmin/ci-utilities/-/blob/master/signing/macappnotarizer-projects.yaml) [https://invent.kde.org/sysadmin/ci-utilities/-/blob/master/signing/macappnotarizer-projects.yaml])   
+
+The branch name should be in a form `release/5.1.0-beta1`. Add that to each platform so that the config would look like that: 
+
+```
+graphics/krita:
+  branches:
+    master:
+    krita/5.2:
+    release/5.1.0-beta1:
+
+```
+    
+
+### [On the branching-out day](#id8)  
+- 
+
+Create a new release branch: 
+
+>  
+
+```
+git checkout -b release/5.1.0-beta1
+
+```
+    
+- 
+
+Update versions in `release/5.1.0-beta1` branch 
+
+>  
+
+ 
+- 
+
+(TODO: really needed?) update the version of krita5.xmlgui 
+- 
+
+update the CMakeLists.txt version 
+- 
+
+update the snapcraft.yaml file 
+- 
+
+add a new release into `org.kde.krita.appdata.xml` file, the section should contain the following elements: 
+
+>  
+
+ 
+- 
+
+`<release>` entry should have the planned release date set 
+- 
+
+`<description>` should have a short version of release announcement 
+- 
+
+`<url>` should point to (not yet published) release announcement 
+
+ 
+
+Warning 
+
+The release announcement URL should follow this pattern: 
+
+`https://krita.org/en/posts/$YEAR/krita-$VERSION_TRIPLET-released/` 
+
+For example: 
+
+`https://krita.org/en/posts/2026/krita-5.2.15-released/`   
+- 
+
+the stable and release branches should NOT have `<artifacts>` and `<bundle>` sections    
+- 
+
+update Android version (keep in mind that *all* Krita releases on Android are marked as Beta at the moment): packaging/android/apk/build.gradle 
+- 
+
+When releasing beta-version double-check that you updated to “beta1”, not just plain “beta”. Only “alpha” versions can be made without a number, because they are built nightly.    
+- 
+
+Update versions in the stable branch (`krita/5.2`) to avoid XMLGUI conflicts 
+
+>  
+
+ 
+- 
+
+stable branch is always marked as “prealpha” (without a number in the end) 
+- 
+
+(TODO: really needed?) update the version of krita.xmlgui; it should be `$(( $VERSION_IN_RELEASE_BRANCH + 1 ))` 
+- 
+
+update the CMakeLists.txt version 
+- 
+
+Copy the `org.kde.krita.appdata.xml` file from the release branch. They should be exactly the same.      
+- 
+
+Update versions in the unstable branch (`master`) if necessary 
+
+>  
+
+ 
+- 
+
+unstable branch is always marked as “prealpha” (without a number in the end) 
+- 
+
+(TODO: really needed?) update the version of krita.xmlgui; it should be `$(( $VERSION_IN_STABLE_BRANCH + 1 ))` 
+- 
+
+update the CMakeLists.txt version 
+- 
+
+update `org.kde.krita.appdata.xml` file  
+- 
+
+copy the already added release section from the stable branch 
+- 
+
+add `<artifacts>` section pointing to all the artifacts of the release 
+- 
+
+add or modify `<bundle type="appimage">` section 
+- 
+
+only the latest release should keep the artifacts section 
+- 
+
+the appstream screenshots are stored here, update if necessary: [https://invent.kde.org/websites/product-screenshots](https://invent.kde.org/websites/product-screenshots)  
+
+ 
+
+Note 
+
+AppStream file format is a bit complicated and not very strictly followed, here are some notes on its usage in Krita:  
+- 
+
+official specification is [at freedesktop.org](https://www.freedesktop.org/software/appstream/docs/index.html) [https://www.freedesktop.org/software/appstream/docs/index.html] 
+- 
+
+KDE’s manual on the usage is [at the kde community wiki](https://community.kde.org/Guidelines_and_HOWTOs/AppStream) [https://community.kde.org/Guidelines_and_HOWTOs/AppStream] 
+- 
+
+artifacts in our appdata file use non-standard names for platforms, it is limited by the names understood by [apps.kde.org store](https://apps.kde.org/krita) [https://apps.kde.org/krita] 
+
+>  
+
+ 
+- 
+
+win32 
+- 
+
+win64 
+- 
+
+macOS 
+- 
+
+android-x86_64 
+- 
+
+android-arm64-v8a 
+- 
+
+android-armeabi-v7a    
+- 
+
+to validate the file use the official tool: 
+
+```
+appstreamcli validate krita/org.kde.krita.appdata.xml
+
+```
+            
+
+### [Create the tarball](#id9)  
+
+#### [Create and push the tag](#id10)  
+- 
+
+Set the tag: 
+
+>  
+
+```
+git tag -a v5.1.0-beta1 -m "Krita 5.1.0 Beta1"
+
+```
+    
+- 
+
+Push the tag: 
+
+>  
+
+```
+git push origin refs/tags/v5.1.0-beta1:refs/tags/v5.1.0-beta1
+
+```
+    
+- 
+
+If you need to change the tag position (not recommended): 
+
+>  
+
+```
+# remove the previous tag
+
+git push origin :refs/tags/v5.1.0-beta1
+
+# make a new tag locally
+git tag -a v5.1.0-beta1 -m "Krita 5.1.0 Beta1"
+
+# push the new tag
+git push origin refs/tags/v5.1.0-beta1:refs/tags/v5.1.0-beta1
+
+# all Krita developers now have to refetch tags to
+# get the updated tag position
+git fetch origin --tags
+
+```
+       
+
+#### [Create the tarball](#id11)  
+- 
+
+Get the tarball from gitlab: [https://invent.kde.org/graphics/krita/-/tags](https://invent.kde.org/graphics/krita/-/tags) 
+- 
+
+Unpack the tarball 
+- 
+
+Rename folder from krita-v5.1.0-beta1 into krita-5.1.0-beta1 (without ‘v’ prefix in the version string) 
+- 
+
+Package the tarball as .gz and .xz 
+- 
+
+Sign both tarballs: 
+
+>  
+
+```
+gpg --output krita-5.1.0-beta1.tar.gz.sig --detach-sign krita-5.1.0-beta1.tar.gz
+gpg --output krita-5.1.0-beta1.tar.xz.sig --detach-sign krita-5.1.0-beta1.tar.xz
+
+```
+       
+
+#### [Make Windows, Linux, macOS and Android packages](#id12)  
+- 
+
+Request four release builds on GitLat’s CI 
+
+>  
+
+ 
+- 
+
+Go to “Tags” page in Krita repository: [https://invent.kde.org/graphics/krita/-/tags](https://invent.kde.org/graphics/krita/-/tags) 
+- 
+
+Click the pipeline icon next to the just pushed tag 
+- 
+
+Start all the jobs at the “build” stage: 
+
+>  
+
+ 
+- 
+
+android-build-arm64-v8a-release 
+- 
+
+android-build-armeabi-v7a-release 
+- 
+
+android-build-x86_64-release 
+- 
+
+linux-release 
+- 
+
+macos-release 
+- 
+
+windows-release    
+- 
+
+When the three Android builds are finished, start the AppBundle job from the “deploy” stage: 
+
+>  
+
+ 
+- 
+
+android-build-appbundle-release       
+- 
+
+Download all built artifacts using “Krita Atrifacts Download” script ([https://invent.kde.org/dkazakov/krita-artifacts-download](https://invent.kde.org/dkazakov/krita-artifacts-download)) 
+
+>  
+
+```
+python3 kad.py artifacts -d release-v5.1.0-beta1 -t v5.1.0-beta1 -p
+
+```
+    
+- 
+
+For each build check: 
+
+>  
+
+ 
+- 
+
+Krita starts 
+- 
+
+Localization works 
+- 
+
+Python plugins are available 
+- 
+
+Basic painting and most recently fixed bugs are fixed    
+- 
+
+Sign the AppImage: 
+
+>  
+
+```
+gpg --detach-sign --output krita-5.1.0-beta-x86_64.appimage.sig krita-5.1.0-beta-x86_64.appimage
+
+```
+    
+- 
+
+Sign four Android packages (or send them to Halla for signing) 
+
+>  
+
+Note: there is a useful script for signing them…  
+- 
+
+krita-arm64-5.1.0-beta1-unsigned.apk 
+- 
+
+krita-x86-5.1.0-beta1-unsigned.apk 
+- 
+
+krita-x86_64-5.1.0-beta1-unsigned.apk  
+
+After signing, remove “-unsigned” suffix, so the signed packages would look like that:  
+- 
+
+krita-arm64-5.1.0-beta1.apk 
+- 
+
+krita-x86-5.1.0-beta1.apk 
+- 
+
+krita-x86_64-5.1.0-beta1.apk    
+- 
+
+Now you should have 18 files in your release folder 
+- 
+
+Verify that the filesize of .zsync blob is different from the one stored on [https://download.kde.org](https://download.kde.org) 
+
+>  
+
+ 
+- 
+
+for stable releases: [https://download.kde.org/stable/krita/updates/Krita-Stable-x86_64.appimage.zsync](https://download.kde.org/stable/krita/updates/Krita-Stable-x86_64.appimage.zsync) 
+- 
+
+for unstable releases: [https://download.kde.org/unstable/krita/updates/Krita-Beta-x86_64.appimage.zsync](https://download.kde.org/unstable/krita/updates/Krita-Beta-x86_64.appimage.zsync)  
+
+The filesize must be different, otherwise KDE’s mirroring system will not propagate the change automatically. If you see that the filesize is the same, notify sysadmins to update the mirrors manually. 
+
+Please take it into account that “unstable” releases should have “Beta” in the zsync file name, **not** “Unstable” as you could guess. This word comes from $CHANNEL variable in build_image.sh script.   
+- 
+
+Upload all files to download.kde.org (or ask sysadmins to do that using this manual [ftp://upload.kde.org/README](ftp://upload.kde.org/README)): 
+
+>  
+
+ 
+- 
+
+to [https://download.kde.org/unstable/krita/5.1.0-beta1/](https://download.kde.org/unstable/krita/5.1.0-beta1/) 
+
+>  
+
+ 
+- 
+
+krita-5.1.0-beta1.tar.gz 
+- 
+
+krita-5.1.0-beta1.tar.gz.sig 
+- 
+
+krita-5.1.0-beta1.tar.xz 
+- 
+
+krita-5.1.0-beta1.tar.xz.sig 
+- 
+
+krita-5.1.0-beta1-x86_64.appimage 
+- 
+
+krita-5.1.0-beta1-x86_64.appimage.sig 
+- 
+
+krita-x64-5.1.0-beta1-dbg.zip 
+- 
+
+krita-x64-5.1.0-beta1-setup.exe 
+- 
+
+krita-x64-5.1.0-beta1.zip 
+- 
+
+krita-5.1.0-beta1.dmg 
+- 
+
+krita-arm64-5.1.0-beta1.apk 
+- 
+
+krita-arm32-5.1.0-beta1.apk 
+- 
+
+krita-x86_64-5.1.0-beta1.apk    
+- 
+
+to [https://download.kde.org/unstable/krita/updates/](https://download.kde.org/unstable/krita/updates/) 
+
+>  
+
+ 
+- 
+
+Krita-Beta-x86_64.appimage.zsync     
+
+ 
+
+Warning 
+
+Please don’t forget to replace “unstable” to “stable” for stable release builds. It should be replaced for both, packages themselves and zsync file  
+
+ 
+
+Note 
+
+Note that the msix file is only for uploading to the Windows Store, it doesn’t need to be uploaded to download.kde.org.  
+
+ 
+
+Note 
+
+Please note that we do **not** generate MD5 sums anymore, since they are now autogenerated by the mirroring system. Just add “.md5” or “.sha1” or “.sha256” at the end of any link or enter the folder with the browser and click “Details” link.    
+- 
+
+Template ticket for sysadmins for “Beta” releases (no store uploads): 
+
+>  
+
+```
+Hi, sysadmins!
+
+Could you please do the final steps for publishing Krita release?
+
+There are three tasks:
+
+1) Upload release artifacts (20 files) to download.kde.org:
+
+    * Source link: https://files.kde.org/krita/release-5.1.0-beta1/
+    * Destination link: https://download.kde.org/unstable/krita/5.1.0-beta1/
+
+2) Upload updates ZSync artifacts (1 file) to download.kde.org:
+    * Source link: https://files.kde.org/krita/release-5.1.0-beta1-updates/
+    * Destination link: https://download.kde.org/unstable/krita/updates/
+
+3) Add `Krita 5.1.0 Beta1` bugzilla version
+
+```
+    
+- 
+
+Template ticket for Halla for a “Stable” release (with all store updates) 
+
+>  
+
+```
+Hi, Halla, Ivan and Emmet!
+
+Could you please do the final steps for publishing Krita release?
+
+#) (@rempt) Sign all .apk packages
+#) (@rempt) Upload .aab package to Google Play
+#) (@rempt) Upload .msix package to Microsoft Store
+#) (@vanyossi) Sign .dmg package
+#) (@vanyossi) Upload .dmg package to Apple Store
+#) (@rempt) Upload Windows packages to Epic Store
+#) (@emmetoneill) Upload Windows and Linux packages to Steam
+#) (@rempt) Upload release artifacts to download.kde.org:
+    * Source link: https://files.kde.org/krita/.release/5.2.6/
+    * Destination link: https://download.kde.org/stable/krita/5.2.6/
+#) (@rempt) Upload Stable ZSync file to download.kde.org:
+    * Source link: https://files.kde.org/krita/.release/5.2.6/Krita-Stable-x86_64.appimage.zsync
+    * Destination link: https://download.kde.org/stable/krita/updates/
+#) (@rempt) Upload Beta ZSync file to download.kde.org (to point to Stable as well):
+    * Source link: https://files.kde.org/krita/.release/5.2.6/Krita-Beta-x86_64.appimage.zsync
+    * Destination link: https://download.kde.org/unstable/krita/updates/
+#) (@rempt) Add Krita 5.2.6 bugzilla version
+
+```
+    
+- 
+
+Now the folder on download.kde.org should have 21(!) files. Check if you missed something (and you surely did! :) ). 
+- 
+
+Verify consistency of all ZSync AppImage update links using the special script: 
+
+>  
+
+```
+cd krita/
+python build-tools/ci-scripts/show-updates-status.py
+
+```
+  
+
+It should show information like this: 
+
+```
+== Channel: Stable FAILED ==
+ZSync URL: https://download.kde.org/stable/krita/updates/Krita-Stable-x86_64.appimage.zsync
+ZSync exists: True
+AppImage exists: False
+    MTime:  Wed, 06 Dec 2023 13:28:16 +0000
+    Filename:  krita-5.2.2-x86_64.appimage
+    URL:  https://binary-factory.kde.org/job/Krita_Release_Appimage_Build/124//artifact/krita-5.2.2-x86_64.appimage
+    SHA-1:  16a1a640084446b45ea078d8b81cffc075144a02
+
+== Channel: Beta (unstable) FAILED ==
+ZSync URL: https://download.kde.org/unstable/krita/updates/Krita-Beta-x86_64.appimage.zsync
+ZSync exists: True
+AppImage exists: False
+    MTime:  Thu, 14 Sep 2023 09:26:05 +0000
+    Filename:  krita-5.2.0-rc1-x86_64.appimage
+    URL:  https://binary-factory.kde.org/job/Krita_Release_Appimage_Build/121//artifact/krita-5.2.0-rc1-x86_64.appimage
+    SHA-1:  4bd0f522c22f41e504bf1e9ced540fa11ed5ec53
+
+== Channel: Plus FAILED ==
+ZSync URL: https://cdn.kde.org/ci-builds/graphics/krita/krita/5.2/linux/Krita-Plus-x86_64.appimage.zsync
+ZSync exists: False
+AppImage exists: False
+
+== Channel: Next ==
+ZSync URL: https://cdn.kde.org/ci-builds/graphics/krita/master/linux/Krita-Next-x86_64.appimage.zsync
+ZSync exists: True
+AppImage exists: True
+    MTime:  Tue, 02 Apr 2024 22:30:57 +0000
+    Filename:  krita-5.3.0-prealpha-64b33ed808-x86_64.appimage
+    URL:  https://cdn.kde.org/ci-builds/graphics/krita/master/linux/krita-5.3.0-prealpha-64b33ed808-x86_64.appimage
+    SHA-1:  e360127c3c956499ed0266ad8eb9bcdad3789956
+
+```
+  
+
+Check the following: 
+
+>  
+
+ 
+- 
+
+none of the channels are marked with **FAILED** 
+- 
+
+AppImage’s filename is set to the one you just uploaded 
+- 
+
+Appimage’s URL is a full URL pointing to a seemingly correct location (see the definition of the “channels” above) 
+- 
+
+`AppImage exists: True` will tell you if the AppImage URL in downloadable, so you don’t have to recheck it yourself   
+
+If you want to test ZSync manually, don’t use the system-provided package. Use this cli-tool provided by AppImage team: [https://appimage.github.io/zsync2/](https://appimage.github.io/zsync2/)   
+- 
+
+If you are doing **the first stable release** after branching-out, e.g. the first release of “Krita 5.3.0”, then make sure ask sysadmins to relink “Krita Plus krita/5.2” zsync file to “Krita Plus krita/5.3” 
+- 
+
+If you are doing **any stable release**, manually switch zsync file of Krita Beta to the Krita Stable, to make sure users will get updates. 
+- 
+
+If you are doing **Beta_N or RC_N release from a stable branch**, then… **<FIXME>**. 
+- 
+
+If you are doing **any release from a stable branch**, manually update the version to the next one with suffix “prealpha” to make sure that Krita Plus packages correctly show it to the user. You need to do that in `CMakeLists.txt` and `build.gradle`. 
+- 
+
+Manually verify that the previous version of Krita AppImage can update to the new one from the GUI. It should use the .zsync file uploaded above.  
+
+ 
+
+Warning 
+
+Make sure that the release on the official site appears at the same moment as it appears in all the stores!    
+
+#### [Release](#id13)  
+- 
+
+Publish the announcement and release notes 
+- 
+
+Update `data/releases.yaml` file for the new links at the “Download” page 
+- 
+
+Merge the MR you made for `org.kde.krita.appdata.xml` to publish on [https://apps.kde.org](https://apps.kde.org) 
+- 
+
+(for every release, including betas) Send announcement to the mailing lists to notify packagers 
+
+>  
+
+ 
+- 
+
+to [kimageshop@kde.org](mailto:kimageshop%40kde.org) 
+- 
+
+to [kde-announce-apps@kde.org](mailto:kde-announce-apps%40kde.org)  
+
+Make sure that you include the fingerprint of the GPG key used to sing the tarball. It is highly important for the packagers. 
+
+Here is the draft-mail: 
+
+```
+Hi, all!
+
+We have released Krita <krita-version>
+
+Official announcement:
+<link-to-announcement>
+
+Download from:
+https://download.kde.org/stable/krita/<krita-version>/
+
+# if signed by Dmitry
+Signed with GPG key:
+E9FB29E74ADEACC5E3035B8AB69EB4CF7468332F
+Get from: https://files.kde.org/krita/dmitry_kazakov.gpg
+Public link: http://keyserver.ubuntu.com:11371/pks/lookup?search=E9FB29E74ADEACC5E3035B8AB69EB4CF7468332F&fingerprint=on&op=index
+
+# if signed by Halla
+Signed with GPG key:
+064182440C674D9F8D0F6F8B4DA79EDA231C852B
+Get from: https://files.kde.org/krita/4DA79EDA231C852B
+Public link: http://keyserver.ubuntu.com:11371/pks/lookup?search=064182440C674D9F8D0F6F8B4DA79EDA231C852B&fingerprint=on&op=index
+
+```
+    
+- 
+
+Add release links to Release History section of the site: [https://krita.org/en/about/krita-releases-overview/](https://krita.org/en/about/krita-releases-overview/) 
+- 
+
+Add the release to the org.krita.org.appdata.xml file in MASTER.    
+
+#### [Release coordination](#id14)  
+- 
+
+Mail KDE release coordination <[release-team@kde.org](mailto:release-team%40kde.org)> 
+- 
+
+Send release notes for future Krita versions to [news@publisher.ch](mailto:news%40publisher.ch) 
+- 
+
+Create bugzilla version: [https://bugs.kde.org/editversions.cgi?product=krita](https://bugs.kde.org/editversions.cgi?product=krita) Or file a sysadmin ticket for that. 
+- 
+
+[only for a major release] Warn kde sysadmins that we’re going to release and that krita.org is going to take load. Just file a ticket on phabricator.     
+
+### [PR and Communications](#id15)  
+
+#### [Pre-release](#id16)  
+- 
+
+Update Kiki page 
+- 
+
+Update press pack and page 
+- 
+
+Verify if manual pages are updated, if not annoy @woltherav and add undocumented features to Krita: Manual 
+- 
+
+Notify people that they can start making release demonstrations.    
+
+#### [Post-release](#id17)  
+- 
+
+tumblr (wolthera) 
+- 
+
+BlenderArtists (wolthera) 
+- 
+
+deviantart (wolthera) 
+- 
+
+VK (dmitry) 
+- 
+
+blendernation (halla) 
+- 
+
+twitter (halla) 
+- 
+
+facebook (halla) 
+- 
+
+3dpro (halla) 
+- 
+
+reddit (raghukamath)   
+
+##### [Notes](#id18) 
+
+Additional info can be found here: [https://phabricator.kde.org/T10762](https://phabricator.kde.org/T10762)

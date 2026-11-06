@@ -1,0 +1,79 @@
+## Enclose and Fill Tool 
+
+[img: toolenclosefill] 
+
+The Enclose and Fill Tool is a different method of filling large colored areas. Instead of [selecting each area you want to fill](fill.xhtml#fill-tool), or [drawing the associated color of each area](colorize_mask.xhtml#colorize-mask), this tool allows you to select an area, and it will fill everything inside said area.  [img: ../../_images/enclose_and_fill_basic_usage.png]  
+
+Simple usage of the enclose and fill. Draw a rectangle around everything you wish to fill and **Krita** will try to find all possible areas inside that rectangle that can be filled.    
+
+### Tool Options  
+
+#### Enclosing Method 
+
+What kind of method to use for the enclosing area. Different images call for different methods.  Rectangle
+
+Use a rectangle to draw the enclosing area.  Ellipse
+
+Use an ellipse, much like the elliptical selection to draw the enclosing area.  Bezier Curve
+
+Use a bezier curve to draw the enclosing area.  Lasso
+
+Use a freehand selection to draw out the enclosing area.  Brush
+
+Use a brush with the current brush size to draw out an enclosing area. The brush size is determined by the size of the active brush, and can be resized with Shift + [img: mouseleft].     
+
+#### What to fill 
+
+Besides choosing how to create an enclosing area, it is also possible to choose which found regions will be filled. Krita can differentiate between the color (or lack thereof) of a region as well as the colors it is surrounded by. For some of these options a specific color needs to be selected, and thus a color selection button is shown. The Region Extent options control how precise a given color should match this selected color.  [img: ../../_images/enclose_and_fill_potential_areas.png]  
+
+An image illustrating the different areas that can be found by this tool within this image. Each area has a different outline to indicate it’s a separate area. The following examples all show these outlines to demonstrate which areas are selected, but note that they are for demonstration only and would not show in a real situation.   
+
+ 
+
+Note 
+
+When Reference is set to All Layers only areas of the canvas that show the transparency checkers are considered transparent.  
+
+All these options have a toggle for invert, which inverts which regions are filled.  [img: ../../_images/enclose_and_fill_potential_areas_fill_all.png]  
+
+Demonstration of which areas will be filled when using All Regions and the given enclosing area. Blue areas are the selected areas.    All Regions.
+
+Any regions found will be filled. Most basic option.   
+
+The following options have an option for Include Contour Regions, which will also fill everything that follows the chosen conditions, but isn’t completely enclosed by the enclosing area.  [img: ../../_images/enclose_and_fill_potential_areas_fill_area.png]  
+
+Topleft: Regions of a Specific Color set to cream white, topright: Transparent Regions, bottom: Regions of a specific color or transparent.    Regions of a Specific Color.
+
+Only regions that are a specific color will be filled. If you have a complex image where separate figures have their whole silhouette in a separate color, this can be used to only affect the silhouette of a single figure.  Transparent Regions.
+
+Only regions that are transparent will be filled. Useful for filling a line art.  Regions of a specific color or transparent.
+
+Combines the transparent and specific color options.    [img: ../../_images/enclose_and_fill_potential_areas_fill_all_except.png]  
+
+Topleft: All regions except those of a specific color set to cream white, topright: All regions except transparent ones, bottomleft: All regions except those of a specific color or transparent, and bottomright: All regions except transparent ones with Include Contour Regions turned on, limited to a small area.    All regions except those of a specific color.
+
+Fill all regions except ones with the selected color. If you set the selected color to red and the Threshold to say, 50, then not just red, but also colors close to red, like pink and orange will be avoided.  All regions except transparent ones.
+
+Fill all regions except transparent ones. This is useful when you’ve first filled out a silhouette, so only select areas that are within that silhouette.  All regions except those of a specific color or transparent.
+
+Fill neither transparent nor the specific color.    [img: ../../_images/enclose_and_fill_potential_areas_fill_surrounded.png]  
+
+Topleft: To demonstrate the following features the sample image got some adjustments: The outlines were colored and some red silhouettes of strawberries were added. Topright Regions surrounded by a specific color set to grey, bottomleft: Regions surrounded by transparent, and bottomright: Regions surrounded by a specific color or transparent.    Regions surrounded by a specific color.
+
+Fill all regions surrounded by a specific color. This is useful when you have line art that uses different colored outlines for different features.  Regions surrounded by transparent.
+
+Fill regions that are surrounded by transparent. If you set the blending mode to Erase, this can be used to clean up tiny dots and other noise in a transparent area without affecting the main drawing.  Regions surrounded by a specific color or transparent.
+
+Combines the previous two.     
+
+#### Features shared with the fill tool 
+
+Beyond these, a number of features are shared with the fill tool, amongst which Region Extent, Adjustments and Reference. These function much the same as the ones documented on the [Fill Tool page](fill.xhtml#fill-tool), with exception of Region Extent, which affects the color selected for region selection.  Close Gap
+
+ 
+
+Added in version 5.3.  
+
+This option is essentially the same as in the [Fill Tool](fill.xhtml#fill-tool) and sets the minimum gap size that the enclose and fill tool will be able to propagate into for some modes.  [img: ../../_images/enclose_and_fill_tool_close_gap.png]  
+
+Left: The original image (black over white) and an enclosing region that restricts the fill operation. Center: The image after an enclose and fill operation using a gap size of 0 pixels. Right: The image after an enclose and fill operation using a gap size of 8 pixels. The target regions option was set to All.

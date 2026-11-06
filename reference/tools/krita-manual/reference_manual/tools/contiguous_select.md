@@ -1,0 +1,73 @@
+## Contiguous Selection Tool 
+
+[img: toolselectcontiguous] 
+
+This tool, represented by a magic wand, allows you to make [Selections](../../user_manual/selections.xhtml#selections-basics) by selecting a point of color. It will select any contiguous areas of a similar color to the one you selected. You can adjust the “fuzziness” of the tool in the tool options dock. A lower number will select colors closer to the color that you chose in the first place.  
+
+### Hotkeys and Sticky keys  
+- 
+
+Shift + [img: mouseleft] sets the subsequent selection to ‘add’. You can release the Shift key while dragging, but it will still be set to ‘add’. Same for the others. 
+- 
+
+Alt + [img: mouseleft] sets the subsequent selection to ‘subtract’. 
+- 
+
+Ctrl + [img: mouseleft] sets the subsequent selection to ‘replace’. 
+- 
+
+Shift + Alt + [img: mouseleft] sets the subsequent selection to ‘intersect’.  
+
+ 
+
+Added in version 4.2:   
+- 
+
+Hovering over a selection allows you to move it. 
+- 
+
+[img: mouseright] will open up a selection quick menu with amongst others the ability to edit the selection.   
+
+ 
+
+Note 
+
+You can switch the behavior of the Alt key to use the Ctrl key instead by toggling the switch in the [General Settings](../preferences/general_settings.xhtml#general-settings).    
+
+### Tool Options  Selection Extent Threshold
+
+This controls whether or not the contiguous selection sees another color as a border.  Spread
+
+ 
+
+Added in version 5.1.  
+
+Set how far the fully opaque portion of the selection should extend. See [Fill Tool](fill.xhtml#fill-tool) for extra explanation.  Close Gap
+
+ 
+
+Added in version 5.3.  
+
+This option sets the minimum gap size that the contiguous fill will be able to propagate into.  [img: ../../_images/contiguous_selection_close_gap.gif]  
+
+Left: The original image (black over white) and a green dot marking where the contiguous selection will be initiated. Center: The selection marquee after a selection operation using a gap size of 0 pixels. Right: The selection marquee after a selection operation using a gap size of 8 pixels. Note that the selected regions are emphasized with a light pink color for clarity sake.      Adjustments Anti-alias
+
+This will smooth the jagged edges present in the selection. It differs from feathering in that this will smooth in the direction of the edge instead of all directions, and only if the edge is jagged (high contrast).  Grow Selection
+
+This value extends (positive values) or contracts (negative values) the selection.  Feathering Radius
+
+This value will add a soft border to the selection.    Reference
+
+ 
+
+Added in version 4.3.  
+
+Select which layers to use as a reference for the contiguous select tool. The options are:  Current Layer
+
+Only use the currently selected layer.  All layers
+
+Use all visible layers.  Color Labeled Layers
+
+Use only the layers specified with a certain color label. This is useful for complex images, where you might have multiple lineart layers. Label them with the appropriate color label and use these labels to mark which layers to use as a reference.  Labels Used
+
+Select the color labels of the layers that should be used as reference.

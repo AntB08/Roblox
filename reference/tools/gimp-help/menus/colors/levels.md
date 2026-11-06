@@ -1,0 +1,315 @@
+## Levels
+
+ Tools
+ Levels
+
+ Color
+ Adjust level colors
+
+ Levels tool
+
+ Values
+
+ Gamma
+
+ Black point
+
+ White point
+
+ The Level tool provides features similar to the
+ Histogram dialog but can also
+ change the intensity range of the active layer or selection in every
+ channel. This tool is used to make an image lighter or darker, to change
+ contrast or to correct a predominant color cast.
+
+## Activating the Command
+
+ You can access this command from the main menu through
+
+ Colors
+ Levels…
+ .
+
+ You can also access it by clicking the tool icon
+
+ in the Toolbox if this tool has been installed there. For this, please
+ refer to .
+
+## Options
+
+## Level tool options
+
+ Presets
+ Blending Options
+ Preview
+ Merge filter
+ Split view
+
+ Channel
+
+ You can select the specific channel which will be modified by the
+ tool:
+
+ Value makes changes to the value of
+ all RGB channels in the image: the image becomes darker or
+ lighter.
+
+ Red, Green and
+ Blue work on a particular color
+ channel: the image gets more or less color. Remember that
+ adding or removing a color results in removing or adding
+ the complementary color.
+
+ Alpha works on semi-transparent layers
+ or selections: here, dark means more transparency, and
+ white is fully opaque. Your image must have an Alpha
+ Channel, otherwise this option is disabled.
+
+ Reset channel restores the original 
+ setting for the selected channel.
+
+ Linear
+
+ Non-Linear
+
+ Perceptual
+
+ These three buttons determine whether the tone reproduction (TRC)
+ will be displayed using a linear, non-linear, or perceptual X axis.
+
+ Linear histogram
+
+ Logarithmic histogram
+
+ These two buttons determine whether the histogram will be displayed
+ using a linear or logarithmic Y axis. For images taken from
+ photographs, the linear mode is most commonly useful. For images
+ that contain substantial areas of constant color, though, a linear
+ histogram will often be dominated by a single bar, and a
+ logarithmic histogram will often be more useful.
+
+ Input Levels
+
+ The main area is a graphic representation of the active layer or
+ selection dark (Shadows), mid and light (Highlight) tones content
+ (the Histogram). They are on the abscissa from level 0 (black) to
+ level 255 (white). Pixel number for a level is
+ on the ordinate axis. The curve surface represents all the pixels of
+ the image for the selected channel. A well balanced image is an
+ image with levels (tones) distributed all over the whole range.
+ An image with a blue predominant color, for example, will produce
+ a histogram shifted to the left in Green and Red channels,
+ signified by green and red lacking on highlights.
+
+ Level ranges can be modified in three ways:
+
+ Three triangles as sliders: one black for dark tones
+ (Shadows), one gray for midtones (Gamma), one white for light
+ (Highlights) tones.
+
+ The black slider determines the black point:
+ all pixels with this value or less
+ will be black (no color with a color channel selected /
+ transparent with the Alpha channel selected).
+
+ The white slider determines the white point:
+ all pixels with this value or
+ higher, will be white (fully colored with a color channel
+ selected / fully opaque with the Alpha channel selected).
+
+ The gray slider determines the mid point.
+ Going to the left, to the black, makes the image lighter
+ (more colored / more opaque). Going to the right, to the
+ white, makes the image darker (less colored / more
+ transparent).
+
+ Two eye-droppers: when you click them, the mouse pointer
+ becomes an eye-dropper. Then clicking on the image determines
+ the black or the white point according to the chosen
+ eye-dropper. Use the left, dark one
+
+ to determine the black-point; use the right, white one
+
+ to determine the white point.
+
+ Three numeric text boxes to enter values directly.
+
+ Input Levels are used to lighten highlights (bright tones),
+ darken shadows (dark tones), change the balance of bright and
+ dark tones. Move sliders to the left to increase lightness
+ (increase the chosen color / increase opacity). Move the sliders
+ to the right to lessen lightness (lessen the chosen color /
+ lessen opacity).
+
+## Examples for Input Levels
+
+ The original image is a grayscale image with three stripes:
+ Shadows (64), Mid Tones (127), Highlights (192). The histogram
+ shows three peaks, one for each of the three tones.
+
+Original image
+
+ The Value channel is selected. The black slider (Shadows) has
+ been moved up to the Shadows peak. The 64 value became 0 and
+ the Shadows stripe became black (0). The Gamma (mid tones)
+ slider is automatically moved to the middle of the tone range.
+ Mid tones are made darker to 84 and Highlights to 171.
+
+Black slider has been moved
+
+ Resulting image
+
+ The white slider (highlights) has been moved up to the
+ highlight peak. The 192 value became 255 and the highlight
+ stripe became white. The Gamma (mid tones) slider is
+ automatically moved to the middle of the tone range. Mid tones
+ are made lighter to 169 and Shadows to 84.
+
+White slider has been moved
+
+ Resulting image
+
+ Output Levels
+
+ Output levels allow manual selection of a constrained output
+ level range. There are also numeric text boxes with
+ + and - buttons
+ located here that can be used to interactively change the Output
+ Levels.
+
+ Output levels force the tone range to fit the new limits you have
+ set.
+
+ Working with Value: values are compressed and look more
+ alike; so contrast is reduced. Shadows are made lighter:
+ new details can show up but contrast is less; a compromise
+ is necessary. Highlights are made darker.
+
+ Working with Color channels: if you the use the green
+ channel for example and set the output levels between 100
+ and 140, all pixels with some green, even a low value, will
+ have their green channel value shifted between 100 and 140.
+
+ Working with Alpha channel: all Alpha values are
+ shifted to the range you have set.
+
+## Example for Output Levels
+
+ The original image is a RGB gradient from black (0;0;0) to
+ white (255;255;255). Output Levels has no histogram; here, we
+ used
+
+ Windows
+ Dockable Dialogs
+ Histogram
+ .
+
+Original image (a gradient)
+
+ Value channel selected. The black slider has been moved to 63
+ and the white slider to 189. The Histogram shows the
+ compression of pixels. No pixel is less than 63, and no pixel
+ is more than 189. In the image, Shadows are lighter and
+ Highlights are darker: contrast is reduced.
+
+Black slider has been moved
+
+ All Channels
+
+ Auto Input Levels: Performs an automatic
+ setting of the levels.
+
+## 
+ Three eyedroppers
+
+ ,
+
+ ,
+
+ .
+
+ These three buttons
+ respectively represent a white, a gray and a black eye-dropper.
+ When you click one of these buttons, the mouse pointer takes the
+ form of the eye-dropper it represents. Then, when clicking the
+ image, the clicked pixel determines the
+ white point, the
+ black point or the
+ mid point according to the eye-dropper you
+ chose. Works on all channels, even if a particular channel is
+ selected.
+
+## Example for Levels eye-droppers
+
+ Above is original gradient from black to white. Below is the
+ result after clicking with the white eye-dropper: all
+ pixels with a value higher than that of the clicked pixel
+ turned to white.
+
+## Example for Levels eye-droppers
+
+ The original image is a gradient from black to white.
+
+Original image
+
+ The result after clicking with the white eye-dropper: all
+ pixels with a value higher than that of the clicked pixel
+ turned to white.
+
+After clicking with the eye-dropper
+
+ -->
+
+ Edit these settings as Curves
+
+ To make your work easier, this button lets you turn to the
+ Curves tool with the same
+ settings.
+
+## Tool Options dialog
+
+## Levels tool options
+
+ Although this tool is not present in the Toolbox by default (please
+ refer to if you want to add it),
+ nevertheless it has a Tool Option Dialog under the Toolbox. 
+
+ Sample average
+
+ This slider sets the radius of the color-picking
+ area to get the averaged color value from nearby pixels. This area 
+ appears as a more or less enlarged square when you maintain the 
+ click on a pixel.
+
+ Sample merged
+
+ If you enable this option, sampling is not calculated only
+ from the values of the active layer, but from all visible layers.
+
+ For more information, see the
+ Glossary entry.
+
+## Actual practice
+
+## A very under-exposed image
+
+Original image
+
+ The histogram shows a predominance of Shadows and missing
+ Highlights.
+
+## Setting the white point
+
+ The white slider has been moved to the start of well marked
+ Highlights. The image lightens up.
+
+ The resulting histogram (down) shows Highlights now, but Shadows
+ are still predominant.
+
+## Setting the balance between Shadows and Highlights
+
+ The mid slider has been moved to the left. This results in
+ reducing the proportion of Shadows and increasing the proportion
+ of Highlights.
+
+ The resulting histogram (down) confirms the reduction of Shadows.
