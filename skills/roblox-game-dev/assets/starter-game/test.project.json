@@ -1,0 +1,313 @@
+{
+  "name": "starter-game-test",
+  "emitLegacyScripts": true,
+  "globIgnorePaths": [],
+  "servePlaceIds": [],
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "Shared": {
+        "$path": "src/shared"
+      },
+      "DevPackages": {
+        "$path": {
+          "optional": "DevPackages"
+        }
+      }
+    },
+    "ServerScriptService": {
+      "Server": {
+        "$path": "src/server"
+      },
+      "Tests": {
+        "$path": "tests/specs"
+      }
+    },
+    "StarterPlayer": {
+      "$properties": {
+        "CharacterWalkSpeed": 16,
+        "CharacterJumpHeight": 7.2,
+        "CameraMaxZoomDistance": 64
+      },
+      "StarterPlayerScripts": {
+        "Client": {
+          "$path": "src/client"
+        }
+      }
+    },
+    "StarterGui": {
+      "HUD": {
+        "$path": "src/gui/HUD.model.json"
+      }
+    },
+    "Workspace": {
+      "$properties": {
+        "StreamingEnabled": true,
+        "Gravity": 196.2
+      },
+      "Map": {
+        "$className": "Folder",
+        "SpawnLocation": {
+          "$className": "SpawnLocation",
+          "$properties": {
+            "Anchored": true,
+            "Size": [
+              12,
+              1,
+              12
+            ],
+            "CFrame": [
+              0,
+              0.5,
+              0,
+              1,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              1
+            ],
+            "Material": "SmoothPlastic",
+            "Color": [
+              0.85,
+              0.87,
+              0.9
+            ],
+            "Duration": 0
+          }
+        },
+        "Ground": {
+          "$className": "Part",
+          "$properties": {
+            "Anchored": true,
+            "Locked": true,
+            "Size": [
+              512,
+              4,
+              512
+            ],
+            "CFrame": [
+              0,
+              -2,
+              0,
+              1,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              1
+            ],
+            "Material": "Grass",
+            "Color": [
+              0.36,
+              0.55,
+              0.32
+            ]
+          }
+        },
+        "CollectNodes": {
+          "$className": "Folder",
+          "CrystalA": {
+            "$className": "Part",
+            "$properties": {
+              "Anchored": true,
+              "CanCollide": false,
+              "CastShadow": false,
+              "Shape": "Ball",
+              "Size": [
+                3,
+                3,
+                3
+              ],
+              "CFrame": [
+                14,
+                2.5,
+                0,
+                1,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                1
+              ],
+              "Material": "Neon",
+              "Color": [
+                0.3,
+                0.85,
+                0.78
+              ],
+              "Tags": [
+                "CollectNode"
+              ]
+            }
+          },
+          "CrystalB": {
+            "$className": "Part",
+            "$properties": {
+              "Anchored": true,
+              "CanCollide": false,
+              "CastShadow": false,
+              "Shape": "Ball",
+              "Size": [
+                3,
+                3,
+                3
+              ],
+              "CFrame": [
+                -12,
+                2.5,
+                10,
+                1,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                1
+              ],
+              "Material": "Neon",
+              "Color": [
+                0.3,
+                0.85,
+                0.78
+              ],
+              "Tags": [
+                "CollectNode"
+              ]
+            }
+          },
+          "CrystalC": {
+            "$className": "Part",
+            "$properties": {
+              "Anchored": true,
+              "CanCollide": false,
+              "CastShadow": false,
+              "Shape": "Ball",
+              "Size": [
+                3,
+                3,
+                3
+              ],
+              "CFrame": [
+                0,
+                2.5,
+                -18,
+                1,
+                0,
+                0,
+                0,
+                1,
+                0,
+                0,
+                0,
+                1
+              ],
+              "Material": "Neon",
+              "Color": [
+                0.3,
+                0.85,
+                0.78
+              ],
+              "Tags": [
+                "CollectNode"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "Lighting": {
+      "$properties": {
+        "LightingStyle": "Soft",
+        "PrioritizeLightingQuality": true,
+        "Brightness": 2.5,
+        "ExposureCompensation": 0,
+        "ClockTime": 14,
+        "GeographicLatitude": 35,
+        "GlobalShadows": true,
+        "ShadowSoftness": 0.25,
+        "EnvironmentDiffuseScale": 0.5,
+        "EnvironmentSpecularScale": 0.5,
+        "Ambient": [
+          0.275,
+          0.29,
+          0.337
+        ],
+        "OutdoorAmbient": [
+          0.529,
+          0.549,
+          0.608
+        ],
+        "ColorShift_Top": [
+          1,
+          0.973,
+          0.922
+        ],
+        "ColorShift_Bottom": [
+          0,
+          0,
+          0
+        ]
+      },
+      "Atmosphere": {
+        "$className": "Atmosphere",
+        "$properties": {
+          "Density": 0.28,
+          "Offset": 0.2,
+          "Haze": 1,
+          "Glare": 0.2,
+          "Color": [
+            0.804,
+            0.843,
+            0.902
+          ],
+          "Decay": [
+            0.471,
+            0.51,
+            0.588
+          ]
+        }
+      },
+      "Sky": {
+        "$className": "Sky"
+      },
+      "ColorCorrection": {
+        "$className": "ColorCorrectionEffect",
+        "$properties": {
+          "Brightness": 0,
+          "Contrast": 0.05,
+          "Saturation": 0.08,
+          "TintColor": [
+            1,
+            0.988,
+            0.965
+          ]
+        }
+      },
+      "Bloom": {
+        "$className": "BloomEffect",
+        "$properties": {
+          "Intensity": 0.35,
+          "Size": 24,
+          "Threshold": 1.2
+        }
+      }
+    },
+    "SoundService": {
+      "$properties": {
+        "RespectFilteringEnabled": true
+      }
+    }
+  }
+}

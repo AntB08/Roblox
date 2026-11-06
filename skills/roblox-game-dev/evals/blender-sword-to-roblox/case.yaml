@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: blender-sword-to-roblox
+expected_outcome: |
+  A Blender→Roblox walkthrough with correct scale, transforms, limits, export and Tool setup.

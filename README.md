@@ -3,6 +3,21 @@
 A reference library for an AI coding agent (Claude Code) that designs and builds original Roblox
 games. Start with [`CLAUDE.md`](CLAUDE.md), then [`knowledge/00-master-checklist.md`](knowledge/00-master-checklist.md).
 
+## Install as a Claude skill
+
+**Claude Code (recommended, includes the full reference library):**
+```
+/plugin marketplace add AntB08/Roblox
+/plugin install roblox-game-dev@antb08-roblox
+```
+Claude then uses the `roblox-game-dev` skill automatically whenever you work on a Roblox game.
+
+**claude.ai / Claude desktop app:** upload `dist/roblox-game-dev.skill` (or a zip of
+`skills/roblox-game-dev/`) under Settings → Capabilities → Skills. That version carries the 21
+guides, the starter project and the API index; for the full docs it uses Roblox's live docs.
+
+Rebuild the skill after editing guides: `scripts/build_skill.sh`.
+
 ## Contents
 
 | Folder | What it is |

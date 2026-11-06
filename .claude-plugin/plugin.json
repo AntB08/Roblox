@@ -1,0 +1,10 @@
+{
+  "name": "roblox-game-dev",
+  "version": "1.0.0",
+  "description": "Roblox game development knowledge: design, Luau, building, lighting, UI, VFX/audio, monetization, policy, publishing, and outside tools (Blender, Photoshop, Krita, GIMP, Aseprite, Figma, Substance, Audacity). Includes 21 guides, a Rojo starter project, the engine API index, the full Creator Docs and open-source library references.",
+  "author": { "name": "AntB08" },
+  "homepage": "https://github.com/AntB08/Roblox",
+  "repository": "https://github.com/AntB08/Roblox",
+  "license": "SEE LICENSE IN README.md",
+  "keywords": ["roblox", "luau", "game-development", "rojo", "blender"]
+}

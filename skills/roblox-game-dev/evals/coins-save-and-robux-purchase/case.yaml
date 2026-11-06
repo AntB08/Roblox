@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: coins-save-and-robux-purchase
+expected_outcome: |
+  Server-side Luau that saves coins with session locking and grants a developer product idempotently.

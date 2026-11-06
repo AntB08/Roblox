@@ -1,0 +1,32 @@
+--!strict
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local JestGlobals = require(ReplicatedStorage.DevPackages.JestGlobals)
+local describe, it, expect = JestGlobals.describe, JestGlobals.it, JestGlobals.expect
+
+local Format = require(ReplicatedStorage.Shared.Util.Format)
+
+describe("Format", function()
+	it("adds thousands separators", function()
+		expect(Format.commas(0)).toBe("0")
+		expect(Format.commas(999)).toBe("999")
+		expect(Format.commas(1000)).toBe("1,000")
+		expect(Format.commas(123456)).toBe("123,456")
+		expect(Format.commas(1234567)).toBe("1,234,567")
+		expect(Format.commas(-1234)).toBe("-1,234")
+	end)
+	it("abbreviates large numbers without rounding up", function()
+		expect(Format.abbreviate(999)).toBe("999")
+		expect(Format.abbreviate(1000)).toBe("1K")
+		expect(Format.abbreviate(1530)).toBe("1.5K")
+		expect(Format.abbreviate(1999)).toBe("1.9K")
+		expect(Format.abbreviate(150000)).toBe("150K")
+		expect(Format.abbreviate(2500000)).toBe("2.5M")
+	end)
+	it("formats durations", function()
+		expect(Format.duration(5)).toBe("0:05")
+		expect(Format.duration(125)).toBe("2:05")
+		expect(Format.duration(3725)).toBe("1:02:05")
+		expect(Format.duration(-3)).toBe("0:00")
+	end)
+end)

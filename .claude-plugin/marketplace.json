@@ -1,0 +1,13 @@
+{
+  "name": "antb08-roblox",
+  "owner": { "name": "AntB08" },
+  "metadata": { "description": "Roblox game development knowledge base for Claude" },
+  "plugins": [
+    {
+      "name": "roblox-game-dev",
+      "source": "./",
+      "description": "Roblox game development knowledge base: guides, starter project, API index and references.",
+      "version": "1.0.0"
+    }
+  ]
+}

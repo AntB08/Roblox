@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: cozy-cartoon-lighting
+expected_outcome: |
+  Concrete Lighting/Atmosphere/post-processing settings for a stylized look that are current and mobile-aware.
