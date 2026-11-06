@@ -11,7 +11,7 @@
 ## 0. TL;DR rules for the bot
 
 1. **Pick the art style and palette before placing a single part.** Fill in the Visual Style Spec (§17) first. Consistency across the whole game counts for more than how detailed any one asset is.
-2. **`Lighting.Technology` is deprecated [official].** Lighting is now set by `Lighting.LightingStyle` (`Realistic` | `Soft`) and `Lighting.PrioritizeLightingQuality` (bool). The old modes map like this: Future ≈ Realistic + Prioritize=true, ShadowMap ≈ Soft + Prioritize=true, Voxel ≈ Soft + Prioritize=false [community, from the Unified Lighting announcement]. Both properties can be set by script.
+2. **`Lighting.Technology` is deprecated [official].** Lighting is now set by `Lighting.LightingStyle` (`Realistic` | `Soft`) and `Lighting.PrioritizeLightingQuality` (bool). The old modes map like this: Future ≈ Realistic + Prioritize=true, ShadowMap ≈ Soft + Prioritize=true, Voxel ≈ Soft + Prioritize=false [community, from the Unified Lighting announcement]. Neither can be set by game scripts: both are `PluginOrOpenCloud`-writable only (API dump), so set them in Studio's Properties, the Command Bar, a plugin, Open Cloud, or the Rojo project file. Runtime scripts can change everything else.
 3. **Defaults:** use `Realistic` for anything moody, interior-heavy, neon, horror or realistic. Use `Soft` for bright cartoon, simulator, obby, or the "classic Roblox" look. In both cases the engine scales quality down on weak devices by itself. Shadows switch off entirely below graphics quality level 4 [official].
 4. **Never ship default lighting.** At minimum, set ClockTime, Ambient/OutdoorAmbient tint, an Atmosphere, a ColorCorrection grade and a Bloom. That takes 5 minutes and moves a scene from "baseplate" to "intentional".
 5. **Keep Ambient ≤ OutdoorAmbient in every channel [official].** Tint them both. Pure grey ambient is the No. 1 "default look" tell. Cool shadows plus warm light is the safe fallback.
@@ -378,7 +378,15 @@ function LightingPresets.apply(name: string, duration: number?)
 	local preset = PRESETS[name]
 	assert(preset, `Unknown lighting preset "{name}"`)
 
-	applyProps(Lighting, preset.lighting, duration)
+	-- LightingStyle and PrioritizeLightingQuality are writable only by plugins, the Command Bar
+	-- and Open Cloud (API dump: PluginOrOpenCloud). Skip them in game scripts; set them in Studio
+	-- or the Rojo project file. The Command Bar version below can set them.
+	local props = table.clone(preset.lighting)
+	if game:GetService("RunService"):IsRunning() then
+		props.LightingStyle = nil
+		props.PrioritizeLightingQuality = nil
+	end
+	applyProps(Lighting, props, duration)
 	if preset.atmosphere then
 		applyProps(getOrCreate("Atmosphere", "Atmosphere", Lighting), preset.atmosphere, duration)
 	end
