@@ -1,0 +1,8436 @@
+{
+ "className": "Folder",
+ "children": [
+  {
+   "name": "House",
+   "className": "Model",
+   "properties": {
+    "ModelStreamingMode": "Persistent"
+   },
+   "children": [
+    {
+     "name": "Structure",
+     "className": "Folder",
+     "children": [
+      {
+       "name": "HallFloor",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         16,
+         1.0,
+         60
+        ],
+        "CFrame": [
+         0.0,
+         -0.5,
+         -10.0,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         0.33,
+         0.23,
+         0.16
+        ],
+        "Material": "WoodPlanks",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+       }
+      },
+      {
+       "name": "KitchenFloor",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         32,
+         1.0,
+         30
+        ],
+        "CFrame": [
+         -24.0,
+         -0.5,
+         -25.0,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         0.5,
+         0.49,
+         0.45
+        ],
+        "Material": "Slate",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+       }
+      },
+      {
+       "name": "StairsFloor",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         24,
+         1.0,
+         30
+        ],
+        "CFrame": [
+         -20.0,
+         -0.5,
+         5.0,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         0.33,
+         0.23,
+         0.16
+        ],
+        "Material": "WoodPlanks",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+       }
+      },
+      {
+       "name": "StairsFloorTop",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         8,
+         1.0,
+         4
+        ],
+        "CFrame": [
+         -36.0,
+         -0.5,
+         18.0,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         0.33,
+         0.23,
+         0.16
+        ],
+        "Material": "WoodPlanks",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+       }
+      },
+      {
+       "name": "StudyFloor",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         32,
+         1.0,
+         60
+        ],
+        "CFrame": [
+         24.0,
+         -0.5,
+         -10.0,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         0.33,
+         0.23,
+         0.16
+        ],
+        "Material": "WoodPlanks",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+       }
+      },
+      {
+       "name": "Ceiling",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         81.0,
+         1.0,
+         61.0
+        ],
+        "CFrame": [
+         0.0,
+         12.5,
+         -10.0,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         0.18,
+         0.18,
+         0.17
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+       }
+      },
+      {
+       "name": "BasementFloor",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         32,
+         1.0,
+         60
+        ],
+        "CFrame": [
+         -24.0,
+         -14.5,
+         -10.0,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         0.24,
+         0.24,
+         0.26
+        ],
+        "Material": "Concrete",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+       }
+      },
+      {
+       "name": "OuterSouth",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         81.0,
+         12.0,
+         1.0
+        ],
+        "CFrame": [
+         0.0,
+         6.0,
+         20,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         0.33,
+         0.36,
+         0.31
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+       }
+      },
+      {
+       "name": "OuterNorth",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         36.5,
+         12.0,
+         1.0
+        ],
+        "CFrame": [
+         -22.25,
+         6.0,
+         -40,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         0.33,
+         0.36,
+         0.31
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+       }
+      },
+      {
+       "name": "OuterNorthLintel",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         8,
+         3.0,
+         1.0
+        ],
+        "CFrame": [
+         0,
+         10.5,
+         -40,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         0.33,
+         0.36,
+         0.31
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+       }
+      },
+      {
+       "name": "OuterNorth2",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         36.5,
+         12.0,
+         1.0
+        ],
+        "CFrame": [
+         22.25,
+         6.0,
+         -40,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         0.33,
+         0.36,
+         0.31
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+       }
+      },
+      {
+       "name": "OuterWest",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1.0,
+         12.0,
+         60
+        ],
+        "CFrame": [
+         -40,
+         6.0,
+         -10.0,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         0.33,
+         0.36,
+         0.31
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+       }
+      },
+      {
+       "name": "OuterEast",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1.0,
+         12.0,
+         60
+        ],
+        "CFrame": [
+         40,
+         6.0,
+         -10.0,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         0.33,
+         0.36,
+         0.31
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+       }
+      },
+      {
+       "name": "HallWest",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1.0,
+         12.0,
+         12.0
+        ],
+        "CFrame": [
+         -8,
+         6.0,
+         -34.0,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         0.33,
+         0.36,
+         0.31
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+       }
+      },
+      {
+       "name": "HallWestLintel",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1.0,
+         3.0,
+         6.0
+        ],
+        "CFrame": [
+         -8,
+         10.5,
+         -25,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         0.33,
+         0.36,
+         0.31
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+       }
+      },
+      {
+       "name": "HallWest2",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1.0,
+         12.0,
+         24.0
+        ],
+        "CFrame": [
+         -8,
+         6.0,
+         -10.0,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         0.33,
+         0.36,
+         0.31
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+       }
+      },
+      {
+       "name": "HallWestLintel2",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1.0,
+         3.0,
+         6.0
+        ],
+        "CFrame": [
+         -8,
+         10.5,
+         5,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         0.33,
+         0.36,
+         0.31
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+       }
+      },
+      {
+       "name": "HallWest3",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1.0,
+         12.0,
+         12.0
+        ],
+        "CFrame": [
+         -8,
+         6.0,
+         14.0,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         0.33,
+         0.36,
+         0.31
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+       }
+      },
+      {
+       "name": "HallEast",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1.0,
+         12.0,
+         12.0
+        ],
+        "CFrame": [
+         8,
+         6.0,
+         -34.0,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         0.33,
+         0.36,
+         0.31
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+       }
+      },
+      {
+       "name": "HallEastLintel",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1.0,
+         3.0,
+         6.0
+        ],
+        "CFrame": [
+         8,
+         10.5,
+         -25,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         0.33,
+         0.36,
+         0.31
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+       }
+      },
+      {
+       "name": "HallEast2",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1.0,
+         12.0,
+         24.0
+        ],
+        "CFrame": [
+         8,
+         6.0,
+         -10.0,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         0.33,
+         0.36,
+         0.31
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+       }
+      },
+      {
+       "name": "HallEastLintel2",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1.0,
+         3.0,
+         6.0
+        ],
+        "CFrame": [
+         8,
+         10.5,
+         5,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         0.33,
+         0.36,
+         0.31
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+       }
+      },
+      {
+       "name": "HallEast3",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1.0,
+         12.0,
+         12.0
+        ],
+        "CFrame": [
+         8,
+         6.0,
+         14.0,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         0.33,
+         0.36,
+         0.31
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+       }
+      },
+      {
+       "name": "KitchenStairs",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         17.0,
+         12.0,
+         1.0
+        ],
+        "CFrame": [
+         -31.5,
+         6.0,
+         -10,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         0.33,
+         0.36,
+         0.31
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+       }
+      },
+      {
+       "name": "KitchenStairsLintel",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         6.0,
+         3.0,
+         1.0
+        ],
+        "CFrame": [
+         -20,
+         10.5,
+         -10,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         0.33,
+         0.36,
+         0.31
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+       }
+      },
+      {
+       "name": "KitchenStairs2",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         9.0,
+         12.0,
+         1.0
+        ],
+        "CFrame": [
+         -12.5,
+         6.0,
+         -10,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         0.33,
+         0.36,
+         0.31
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+       }
+      },
+      {
+       "name": "StudyDivider",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         20,
+         12.0,
+         1.0
+        ],
+        "CFrame": [
+         18.0,
+         6.0,
+         -10,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         0.33,
+         0.36,
+         0.31
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+       }
+      },
+      {
+       "name": "BaseSouth",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         33.0,
+         13.0,
+         1.0
+        ],
+        "CFrame": [
+         -24.0,
+         -7.5,
+         20,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         0.27,
+         0.27,
+         0.29
+        ],
+        "Material": "Concrete",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+       }
+      },
+      {
+       "name": "BaseNorth",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         33.0,
+         13.0,
+         1.0
+        ],
+        "CFrame": [
+         -24.0,
+         -7.5,
+         -40,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         0.27,
+         0.27,
+         0.29
+        ],
+        "Material": "Concrete",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+       }
+      },
+      {
+       "name": "BaseWest",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1.0,
+         13.0,
+         60
+        ],
+        "CFrame": [
+         -40,
+         -7.5,
+         -10.0,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         0.27,
+         0.27,
+         0.29
+        ],
+        "Material": "Concrete",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+       }
+      },
+      {
+       "name": "BaseEast",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1.0,
+         13.0,
+         60
+        ],
+        "CFrame": [
+         -8,
+         -7.5,
+         -10.0,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         0.27,
+         0.27,
+         0.29
+        ],
+        "Material": "Concrete",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+       }
+      },
+      {
+       "name": "Ramp",
+       "className": "WedgePart",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         8,
+         14,
+         28
+        ],
+        "CFrame": [
+         -36,
+         -7,
+         2,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         0.33,
+         0.23,
+         0.16
+        ],
+        "Material": "WoodPlanks",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+       }
+      },
+      {
+       "name": "Railing",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         0.5,
+         3,
+         26
+        ],
+        "CFrame": [
+         -32,
+         1.5,
+         3,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         0.2,
+         0.14,
+         0.1
+        ],
+        "Material": "Wood",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+       }
+      },
+      {
+       "name": "RailingPost",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         0.8,
+         3.6,
+         0.8
+        ],
+        "CFrame": [
+         -32,
+         1.8,
+         16,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         0.2,
+         0.14,
+         0.1
+        ],
+        "Material": "Wood",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+       }
+      },
+      {
+       "name": "ExitGate",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         8,
+         9.0,
+         1
+        ],
+        "CFrame": [
+         0,
+         4.5,
+         -40,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         0.32,
+         0.3,
+         0.28
+        ],
+        "Material": "DiamondPlate",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth",
+        "Tags": [
+         "ExitGate"
+        ]
+       }
+      },
+      {
+       "name": "ExitSign",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         3,
+         0.8,
+         0.3
+        ],
+        "CFrame": [
+         0,
+         10.2,
+         -39.3,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         0.9,
+         0.1,
+         0.08
+        ],
+        "Material": "Neon",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth",
+        "CanCollide": false,
+        "CastShadow": false,
+        "Tags": [
+         "ExitSign"
+        ]
+       }
+      },
+      {
+       "name": "Generator",
+       "className": "Model",
+       "children": [
+        {
+         "name": "Body",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           3,
+           5,
+           4
+          ],
+          "CFrame": [
+           6,
+           2.5,
+           -12,
+           1.0,
+           0,
+           0.0,
+           0,
+           1,
+           0,
+           -0.0,
+           0,
+           1.0
+          ],
+          "Color": [
+           0.32,
+           0.3,
+           0.28
+          ],
+          "Material": "CorrodedMetal",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth",
+          "Tags": [
+           "Generator"
+          ]
+         }
+        },
+        {
+         "name": "Pipe",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           0.6,
+           6,
+           0.6
+          ],
+          "CFrame": [
+           7,
+           8,
+           -13.2,
+           1.0,
+           0,
+           0.0,
+           0,
+           1,
+           0,
+           -0.0,
+           0,
+           1.0
+          ],
+          "Color": [
+           0.32,
+           0.3,
+           0.28
+          ],
+          "Material": "Metal",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth"
+         }
+        },
+        {
+         "name": "Slot",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           0.2,
+           0.9,
+           0.6
+          ],
+          "CFrame": [
+           4.45,
+           3.6,
+           -13.2,
+           1.0,
+           0,
+           0.0,
+           0,
+           1,
+           0,
+           -0.0,
+           0,
+           1.0
+          ],
+          "Color": [
+           0.15,
+           0.15,
+           0.15
+          ],
+          "Material": "Neon",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth",
+          "CanCollide": false,
+          "CastShadow": false,
+          "Tags": [
+           "FuseSlot"
+          ]
+         },
+         "attributes": {
+          "Index": 1
+         }
+        },
+        {
+         "name": "Slot2",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           0.2,
+           0.9,
+           0.6
+          ],
+          "CFrame": [
+           4.45,
+           3.6,
+           -12,
+           1.0,
+           0,
+           0.0,
+           0,
+           1,
+           0,
+           -0.0,
+           0,
+           1.0
+          ],
+          "Color": [
+           0.15,
+           0.15,
+           0.15
+          ],
+          "Material": "Neon",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth",
+          "CanCollide": false,
+          "CastShadow": false,
+          "Tags": [
+           "FuseSlot"
+          ]
+         },
+         "attributes": {
+          "Index": 2
+         }
+        },
+        {
+         "name": "Slot3",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           0.2,
+           0.9,
+           0.6
+          ],
+          "CFrame": [
+           4.45,
+           3.6,
+           -10.8,
+           1.0,
+           0,
+           0.0,
+           0,
+           1,
+           0,
+           -0.0,
+           0,
+           1.0
+          ],
+          "Color": [
+           0.15,
+           0.15,
+           0.15
+          ],
+          "Material": "Neon",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth",
+          "CanCollide": false,
+          "CastShadow": false,
+          "Tags": [
+           "FuseSlot"
+          ]
+         },
+         "attributes": {
+          "Index": 3
+         }
+        }
+       ]
+      },
+      {
+       "name": "Cage",
+       "className": "Model",
+       "children": [
+        {
+         "name": "CageFloor",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           8.0,
+           0.4,
+           8.0
+          ],
+          "CFrame": [
+           -34.0,
+           -13.8,
+           -34.0,
+           1.0,
+           0,
+           0.0,
+           0,
+           1,
+           0,
+           -0.0,
+           0,
+           1.0
+          ],
+          "Color": [
+           0.32,
+           0.3,
+           0.28
+          ],
+          "Material": "DiamondPlate",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth"
+         }
+        },
+        {
+         "name": "CageTop",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           8.0,
+           0.4,
+           8.0
+          ],
+          "CFrame": [
+           -34.0,
+           -4.8,
+           -34.0,
+           1.0,
+           0,
+           0.0,
+           0,
+           1,
+           0,
+           -0.0,
+           0,
+           1.0
+          ],
+          "Color": [
+           0.32,
+           0.3,
+           0.28
+          ],
+          "Material": "DiamondPlate",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth"
+         }
+        },
+        {
+         "name": "Bar",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           0.3,
+           9,
+           0.3
+          ],
+          "CFrame": [
+           -37.333,
+           -9.5,
+           -38.0,
+           1.0,
+           0,
+           0.0,
+           0,
+           1,
+           0,
+           -0.0,
+           0,
+           1.0
+          ],
+          "Color": [
+           0.32,
+           0.3,
+           0.28
+          ],
+          "Material": "Metal",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth"
+         }
+        },
+        {
+         "name": "Bar2",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           0.3,
+           9,
+           0.3
+          ],
+          "CFrame": [
+           -37.333,
+           -9.5,
+           -30.0,
+           1.0,
+           0,
+           0.0,
+           0,
+           1,
+           0,
+           -0.0,
+           0,
+           1.0
+          ],
+          "Color": [
+           0.32,
+           0.3,
+           0.28
+          ],
+          "Material": "Metal",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth"
+         }
+        },
+        {
+         "name": "Bar3",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           0.3,
+           9,
+           0.3
+          ],
+          "CFrame": [
+           -38.0,
+           -9.5,
+           -37.333,
+           1.0,
+           0,
+           0.0,
+           0,
+           1,
+           0,
+           -0.0,
+           0,
+           1.0
+          ],
+          "Color": [
+           0.32,
+           0.3,
+           0.28
+          ],
+          "Material": "Metal",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth"
+         }
+        },
+        {
+         "name": "Bar4",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           0.3,
+           9,
+           0.3
+          ],
+          "CFrame": [
+           -30.0,
+           -9.5,
+           -37.333,
+           1.0,
+           0,
+           0.0,
+           0,
+           1,
+           0,
+           -0.0,
+           0,
+           1.0
+          ],
+          "Color": [
+           0.32,
+           0.3,
+           0.28
+          ],
+          "Material": "Metal",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth"
+         }
+        },
+        {
+         "name": "Bar5",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           0.3,
+           9,
+           0.3
+          ],
+          "CFrame": [
+           -36.0,
+           -9.5,
+           -38.0,
+           1.0,
+           0,
+           0.0,
+           0,
+           1,
+           0,
+           -0.0,
+           0,
+           1.0
+          ],
+          "Color": [
+           0.32,
+           0.3,
+           0.28
+          ],
+          "Material": "Metal",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth"
+         }
+        },
+        {
+         "name": "Bar6",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           0.3,
+           9,
+           0.3
+          ],
+          "CFrame": [
+           -36.0,
+           -9.5,
+           -30.0,
+           1.0,
+           0,
+           0.0,
+           0,
+           1,
+           0,
+           -0.0,
+           0,
+           1.0
+          ],
+          "Color": [
+           0.32,
+           0.3,
+           0.28
+          ],
+          "Material": "Metal",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth"
+         }
+        },
+        {
+         "name": "Bar7",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           0.3,
+           9,
+           0.3
+          ],
+          "CFrame": [
+           -38.0,
+           -9.5,
+           -36.0,
+           1.0,
+           0,
+           0.0,
+           0,
+           1,
+           0,
+           -0.0,
+           0,
+           1.0
+          ],
+          "Color": [
+           0.32,
+           0.3,
+           0.28
+          ],
+          "Material": "Metal",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth"
+         }
+        },
+        {
+         "name": "Bar8",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           0.3,
+           9,
+           0.3
+          ],
+          "CFrame": [
+           -30.0,
+           -9.5,
+           -36.0,
+           1.0,
+           0,
+           0.0,
+           0,
+           1,
+           0,
+           -0.0,
+           0,
+           1.0
+          ],
+          "Color": [
+           0.32,
+           0.3,
+           0.28
+          ],
+          "Material": "Metal",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth"
+         }
+        },
+        {
+         "name": "Bar9",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           0.3,
+           9,
+           0.3
+          ],
+          "CFrame": [
+           -34.667,
+           -9.5,
+           -38.0,
+           1.0,
+           0,
+           0.0,
+           0,
+           1,
+           0,
+           -0.0,
+           0,
+           1.0
+          ],
+          "Color": [
+           0.32,
+           0.3,
+           0.28
+          ],
+          "Material": "Metal",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth"
+         }
+        },
+        {
+         "name": "Bar10",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           0.3,
+           9,
+           0.3
+          ],
+          "CFrame": [
+           -34.667,
+           -9.5,
+           -30.0,
+           1.0,
+           0,
+           0.0,
+           0,
+           1,
+           0,
+           -0.0,
+           0,
+           1.0
+          ],
+          "Color": [
+           0.32,
+           0.3,
+           0.28
+          ],
+          "Material": "Metal",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth"
+         }
+        },
+        {
+         "name": "Bar11",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           0.3,
+           9,
+           0.3
+          ],
+          "CFrame": [
+           -38.0,
+           -9.5,
+           -34.667,
+           1.0,
+           0,
+           0.0,
+           0,
+           1,
+           0,
+           -0.0,
+           0,
+           1.0
+          ],
+          "Color": [
+           0.32,
+           0.3,
+           0.28
+          ],
+          "Material": "Metal",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth"
+         }
+        },
+        {
+         "name": "Bar12",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           0.3,
+           9,
+           0.3
+          ],
+          "CFrame": [
+           -30.0,
+           -9.5,
+           -34.667,
+           1.0,
+           0,
+           0.0,
+           0,
+           1,
+           0,
+           -0.0,
+           0,
+           1.0
+          ],
+          "Color": [
+           0.32,
+           0.3,
+           0.28
+          ],
+          "Material": "Metal",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth"
+         }
+        },
+        {
+         "name": "Bar13",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           0.3,
+           9,
+           0.3
+          ],
+          "CFrame": [
+           -33.333,
+           -9.5,
+           -38.0,
+           1.0,
+           0,
+           0.0,
+           0,
+           1,
+           0,
+           -0.0,
+           0,
+           1.0
+          ],
+          "Color": [
+           0.32,
+           0.3,
+           0.28
+          ],
+          "Material": "Metal",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth"
+         }
+        },
+        {
+         "name": "Bar14",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           0.3,
+           9,
+           0.3
+          ],
+          "CFrame": [
+           -33.333,
+           -9.5,
+           -30.0,
+           1.0,
+           0,
+           0.0,
+           0,
+           1,
+           0,
+           -0.0,
+           0,
+           1.0
+          ],
+          "Color": [
+           0.32,
+           0.3,
+           0.28
+          ],
+          "Material": "Metal",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth"
+         }
+        },
+        {
+         "name": "Bar15",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           0.3,
+           9,
+           0.3
+          ],
+          "CFrame": [
+           -38.0,
+           -9.5,
+           -33.333,
+           1.0,
+           0,
+           0.0,
+           0,
+           1,
+           0,
+           -0.0,
+           0,
+           1.0
+          ],
+          "Color": [
+           0.32,
+           0.3,
+           0.28
+          ],
+          "Material": "Metal",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth"
+         }
+        },
+        {
+         "name": "Bar16",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           0.3,
+           9,
+           0.3
+          ],
+          "CFrame": [
+           -30.0,
+           -9.5,
+           -33.333,
+           1.0,
+           0,
+           0.0,
+           0,
+           1,
+           0,
+           -0.0,
+           0,
+           1.0
+          ],
+          "Color": [
+           0.32,
+           0.3,
+           0.28
+          ],
+          "Material": "Metal",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth"
+         }
+        },
+        {
+         "name": "Bar17",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           0.3,
+           9,
+           0.3
+          ],
+          "CFrame": [
+           -32.0,
+           -9.5,
+           -38.0,
+           1.0,
+           0,
+           0.0,
+           0,
+           1,
+           0,
+           -0.0,
+           0,
+           1.0
+          ],
+          "Color": [
+           0.32,
+           0.3,
+           0.28
+          ],
+          "Material": "Metal",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth"
+         }
+        },
+        {
+         "name": "Bar18",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           0.3,
+           9,
+           0.3
+          ],
+          "CFrame": [
+           -32.0,
+           -9.5,
+           -30.0,
+           1.0,
+           0,
+           0.0,
+           0,
+           1,
+           0,
+           -0.0,
+           0,
+           1.0
+          ],
+          "Color": [
+           0.32,
+           0.3,
+           0.28
+          ],
+          "Material": "Metal",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth"
+         }
+        },
+        {
+         "name": "Bar19",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           0.3,
+           9,
+           0.3
+          ],
+          "CFrame": [
+           -38.0,
+           -9.5,
+           -32.0,
+           1.0,
+           0,
+           0.0,
+           0,
+           1,
+           0,
+           -0.0,
+           0,
+           1.0
+          ],
+          "Color": [
+           0.32,
+           0.3,
+           0.28
+          ],
+          "Material": "Metal",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth"
+         }
+        },
+        {
+         "name": "Bar20",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           0.3,
+           9,
+           0.3
+          ],
+          "CFrame": [
+           -30.0,
+           -9.5,
+           -32.0,
+           1.0,
+           0,
+           0.0,
+           0,
+           1,
+           0,
+           -0.0,
+           0,
+           1.0
+          ],
+          "Color": [
+           0.32,
+           0.3,
+           0.28
+          ],
+          "Material": "Metal",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth"
+         }
+        },
+        {
+         "name": "Bar21",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           0.3,
+           9,
+           0.3
+          ],
+          "CFrame": [
+           -30.667,
+           -9.5,
+           -38.0,
+           1.0,
+           0,
+           0.0,
+           0,
+           1,
+           0,
+           -0.0,
+           0,
+           1.0
+          ],
+          "Color": [
+           0.32,
+           0.3,
+           0.28
+          ],
+          "Material": "Metal",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth"
+         }
+        },
+        {
+         "name": "Bar22",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           0.3,
+           9,
+           0.3
+          ],
+          "CFrame": [
+           -30.667,
+           -9.5,
+           -30.0,
+           1.0,
+           0,
+           0.0,
+           0,
+           1,
+           0,
+           -0.0,
+           0,
+           1.0
+          ],
+          "Color": [
+           0.32,
+           0.3,
+           0.28
+          ],
+          "Material": "Metal",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth"
+         }
+        },
+        {
+         "name": "Bar23",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           0.3,
+           9,
+           0.3
+          ],
+          "CFrame": [
+           -38.0,
+           -9.5,
+           -30.667,
+           1.0,
+           0,
+           0.0,
+           0,
+           1,
+           0,
+           -0.0,
+           0,
+           1.0
+          ],
+          "Color": [
+           0.32,
+           0.3,
+           0.28
+          ],
+          "Material": "Metal",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth"
+         }
+        },
+        {
+         "name": "Bar24",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           0.3,
+           9,
+           0.3
+          ],
+          "CFrame": [
+           -30.0,
+           -9.5,
+           -30.667,
+           1.0,
+           0,
+           0.0,
+           0,
+           1,
+           0,
+           -0.0,
+           0,
+           1.0
+          ],
+          "Color": [
+           0.32,
+           0.3,
+           0.28
+          ],
+          "Material": "Metal",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth"
+         }
+        },
+        {
+         "name": "CageDoor",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           0.5,
+           6,
+           3
+          ],
+          "CFrame": [
+           -29.4,
+           -11.0,
+           -34.0,
+           1.0,
+           0,
+           0.0,
+           0,
+           1,
+           0,
+           -0.0,
+           0,
+           1.0
+          ],
+          "Color": [
+           0.4,
+           0.05,
+           0.05
+          ],
+          "Material": "Metal",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth",
+          "Transparency": 0.6,
+          "CanCollide": false,
+          "Tags": [
+           "CageDoor"
+          ]
+         }
+        },
+        {
+         "name": "CageInside",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           1,
+           1,
+           1
+          ],
+          "CFrame": [
+           -34.0,
+           -10.8,
+           -34.0,
+           1.0,
+           0,
+           0.0,
+           0,
+           1,
+           0,
+           -0.0,
+           0,
+           1.0
+          ],
+          "Color": [
+           1,
+           0,
+           1
+          ],
+          "Material": "SmoothPlastic",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth",
+          "Transparency": 1,
+          "CanCollide": false,
+          "CanQuery": false,
+          "CanTouch": false,
+          "CastShadow": false,
+          "Tags": [
+           "CageInside"
+          ]
+         }
+        },
+        {
+         "name": "CageOutside",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           1,
+           1,
+           1
+          ],
+          "CFrame": [
+           -26.5,
+           -10.8,
+           -34.0,
+           1.0,
+           0,
+           0.0,
+           0,
+           1,
+           0,
+           -0.0,
+           0,
+           1.0
+          ],
+          "Color": [
+           1,
+           0,
+           1
+          ],
+          "Material": "SmoothPlastic",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth",
+          "Transparency": 1,
+          "CanCollide": false,
+          "CanQuery": false,
+          "CanTouch": false,
+          "CastShadow": false,
+          "Tags": [
+           "CageOutside"
+          ]
+         }
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "name": "Furniture",
+     "className": "Folder",
+     "children": [
+      {
+       "name": "Counter",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         24,
+         3.5,
+         2.5
+        ],
+        "CFrame": [
+         -26,
+         1.75,
+         -38.25,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         0.26,
+         0.18,
+         0.12
+        ],
+        "Material": "Wood",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+       }
+      },
+      {
+       "name": "CounterTop",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         24,
+         0.3,
+         2.7
+        ],
+        "CFrame": [
+         -26,
+         3.65,
+         -38.25,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         0.5,
+         0.49,
+         0.45
+        ],
+        "Material": "Marble",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+       }
+      },
+      {
+       "name": "Island",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         10,
+         3.5,
+         4
+        ],
+        "CFrame": [
+         -24,
+         1.75,
+         -25,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         0.26,
+         0.18,
+         0.12
+        ],
+        "Material": "Wood",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+       }
+      },
+      {
+       "name": "IslandTop",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         10.4,
+         0.3,
+         4.4
+        ],
+        "CFrame": [
+         -24,
+         3.65,
+         -25,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         0.5,
+         0.49,
+         0.45
+        ],
+        "Material": "Marble",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+       }
+      },
+      {
+       "name": "Fridge",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         3,
+         7,
+         3
+        ],
+        "CFrame": [
+         -37.5,
+         3.5,
+         -16,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         0.55,
+         0.56,
+         0.52
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+       }
+      },
+      {
+       "name": "Stove",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         3,
+         3.5,
+         2.5
+        ],
+        "CFrame": [
+         -12.5,
+         1.75,
+         -38.25,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         0.32,
+         0.3,
+         0.28
+        ],
+        "Material": "Metal",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+       }
+      },
+      {
+       "name": "Couch",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         8,
+         2.5,
+         3
+        ],
+        "CFrame": [
+         -12.5,
+         1.25,
+         -7.5,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         0.3,
+         0.12,
+         0.12
+        ],
+        "Material": "Fabric",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+       }
+      },
+      {
+       "name": "CouchBack",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         8,
+         2,
+         0.8
+        ],
+        "CFrame": [
+         -12.5,
+         3.5,
+         -8.6,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         0.3,
+         0.12,
+         0.12
+        ],
+        "Material": "Fabric",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+       }
+      },
+      {
+       "name": "SideTable",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         3,
+         2.6,
+         3
+        ],
+        "CFrame": [
+         -24,
+         1.3,
+         8,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         0.26,
+         0.18,
+         0.12
+        ],
+        "Material": "Wood",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+       }
+      },
+      {
+       "name": "Grandfather",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         2,
+         8,
+         1.5
+        ],
+        "CFrame": [
+         -9.5,
+         4,
+         16,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         0.2,
+         0.14,
+         0.1
+        ],
+        "Material": "Wood",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+       }
+      },
+      {
+       "name": "HallTable",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         2,
+         3,
+         4
+        ],
+        "CFrame": [
+         -6,
+         1.5,
+         -2,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         0.26,
+         0.18,
+         0.12
+        ],
+        "Material": "Wood",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+       }
+      },
+      {
+       "name": "HallTable2",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         2,
+         3,
+         4
+        ],
+        "CFrame": [
+         6,
+         1.5,
+         12,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         0.26,
+         0.18,
+         0.12
+        ],
+        "Material": "Wood",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+       }
+      },
+      {
+       "name": "Rug",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         6,
+         0.1,
+         30
+        ],
+        "CFrame": [
+         0,
+         0.05,
+         -2,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         0.25,
+         0.08,
+         0.08
+        ],
+        "Material": "Fabric",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth",
+        "CanCollide": false
+       }
+      },
+      {
+       "name": "Shelf",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         18,
+         8,
+         2
+        ],
+        "CFrame": [
+         24,
+         4,
+         -28,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         0.2,
+         0.14,
+         0.1
+        ],
+        "Material": "Wood",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+       }
+      },
+      {
+       "name": "Shelf2",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         2,
+         8,
+         14
+        ],
+        "CFrame": [
+         31,
+         4,
+         4,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         0.2,
+         0.14,
+         0.1
+        ],
+        "Material": "Wood",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+       }
+      },
+      {
+       "name": "Shelf3",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         10,
+         8,
+         2
+        ],
+        "CFrame": [
+         18,
+         4,
+         -36.5,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         0.2,
+         0.14,
+         0.1
+        ],
+        "Material": "Wood",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+       }
+      },
+      {
+       "name": "Desk",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         6,
+         3,
+         3
+        ],
+        "CFrame": [
+         16,
+         1.5,
+         12,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         0.26,
+         0.18,
+         0.12
+        ],
+        "Material": "Wood",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+       }
+      },
+      {
+       "name": "Armchair",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         3,
+         3,
+         3
+        ],
+        "CFrame": [
+         20,
+         1.5,
+         15,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         0.3,
+         0.12,
+         0.12
+        ],
+        "Material": "Fabric",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+       }
+      },
+      {
+       "name": "Pillar",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         2,
+         13,
+         2
+        ],
+        "CFrame": [
+         -24,
+         -7.5,
+         -24,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         0.24,
+         0.24,
+         0.26
+        ],
+        "Material": "Concrete",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+       }
+      },
+      {
+       "name": "Pillar2",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         2,
+         13,
+         2
+        ],
+        "CFrame": [
+         -24,
+         -7.5,
+         4,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         0.24,
+         0.24,
+         0.26
+        ],
+        "Material": "Concrete",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+       }
+      },
+      {
+       "name": "Boiler",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         5,
+         8,
+         5
+        ],
+        "CFrame": [
+         -12,
+         -10,
+         -36,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         0.32,
+         0.3,
+         0.28
+        ],
+        "Material": "CorrodedMetal",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+       }
+      },
+      {
+       "name": "Crates",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         4,
+         4,
+         4
+        ],
+        "CFrame": [
+         -16,
+         -12,
+         -6,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         0.26,
+         0.18,
+         0.12
+        ],
+        "Material": "WoodPlanks",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+       }
+      },
+      {
+       "name": "Crates2",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         4,
+         3,
+         4
+        ],
+        "CFrame": [
+         -12,
+         -12.5,
+         -2,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         0.26,
+         0.18,
+         0.12
+        ],
+        "Material": "WoodPlanks",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+       }
+      },
+      {
+       "name": "BaseShelf",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         2,
+         7,
+         10
+        ],
+        "CFrame": [
+         -9.5,
+         -10.5,
+         8,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         0.2,
+         0.14,
+         0.1
+        ],
+        "Material": "Wood",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth"
+       }
+      }
+     ]
+    },
+    {
+     "name": "Closets",
+     "className": "Folder",
+     "children": [
+      {
+       "name": "Closet",
+       "className": "Model",
+       "properties": {
+        "Tags": [
+         "Closet"
+        ]
+       },
+       "attributes": {
+        "Room": "Kitchen"
+       },
+       "children": [
+        {
+         "name": "Back",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           4,
+           8,
+           0.4
+          ],
+          "CFrame": [
+           -39.3,
+           4.0,
+           -30.0,
+           0.0,
+           0,
+           -1.0,
+           0,
+           1,
+           0,
+           1.0,
+           0,
+           0.0
+          ],
+          "Color": [
+           0.26,
+           0.18,
+           0.12
+          ],
+          "Material": "Wood",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth"
+         }
+        },
+        {
+         "name": "Left",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           0.4,
+           8,
+           3
+          ],
+          "CFrame": [
+           -38.0,
+           4.0,
+           -31.8,
+           0.0,
+           0,
+           -1.0,
+           0,
+           1,
+           0,
+           1.0,
+           0,
+           0.0
+          ],
+          "Color": [
+           0.26,
+           0.18,
+           0.12
+          ],
+          "Material": "Wood",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth"
+         }
+        },
+        {
+         "name": "Right",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           0.4,
+           8,
+           3
+          ],
+          "CFrame": [
+           -38.0,
+           4.0,
+           -28.2,
+           0.0,
+           0,
+           -1.0,
+           0,
+           1,
+           0,
+           1.0,
+           0,
+           0.0
+          ],
+          "Color": [
+           0.26,
+           0.18,
+           0.12
+          ],
+          "Material": "Wood",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth"
+         }
+        },
+        {
+         "name": "Top",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           4,
+           0.4,
+           3
+          ],
+          "CFrame": [
+           -38.0,
+           7.8,
+           -30.0,
+           0.0,
+           0,
+           -1.0,
+           0,
+           1,
+           0,
+           1.0,
+           0,
+           0.0
+          ],
+          "Color": [
+           0.26,
+           0.18,
+           0.12
+          ],
+          "Material": "Wood",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth"
+         }
+        },
+        {
+         "name": "Bottom",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           4,
+           0.3,
+           3
+          ],
+          "CFrame": [
+           -38.0,
+           0.15,
+           -30.0,
+           0.0,
+           0,
+           -1.0,
+           0,
+           1,
+           0,
+           1.0,
+           0,
+           0.0
+          ],
+          "Color": [
+           0.26,
+           0.18,
+           0.12
+          ],
+          "Material": "Wood",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth"
+         }
+        },
+        {
+         "name": "DoorLow",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           3.2,
+           4.6,
+           0.25
+          ],
+          "CFrame": [
+           -36.6,
+           2.6,
+           -30.0,
+           0.0,
+           0,
+           -1.0,
+           0,
+           1,
+           0,
+           1.0,
+           0,
+           0.0
+          ],
+          "Color": [
+           0.2,
+           0.14,
+           0.1
+          ],
+          "Material": "Wood",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth"
+         }
+        },
+        {
+         "name": "DoorHigh",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           3.2,
+           2.2,
+           0.25
+          ],
+          "CFrame": [
+           -36.6,
+           6.6,
+           -30.0,
+           0.0,
+           0,
+           -1.0,
+           0,
+           1,
+           0,
+           1.0,
+           0,
+           0.0
+          ],
+          "Color": [
+           0.2,
+           0.14,
+           0.1
+          ],
+          "Material": "Wood",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth"
+         }
+        },
+        {
+         "name": "Inside",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           1,
+           1,
+           1
+          ],
+          "CFrame": [
+           -38.1,
+           3.2,
+           -30.0,
+           0.0,
+           0,
+           -1.0,
+           0,
+           1,
+           0,
+           1.0,
+           0,
+           0.0
+          ],
+          "Color": [
+           1,
+           0,
+           1
+          ],
+          "Material": "SmoothPlastic",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth",
+          "Transparency": 1,
+          "CanCollide": false,
+          "CanQuery": false,
+          "CanTouch": false
+         }
+        },
+        {
+         "name": "Front",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           3,
+           5,
+           0.5
+          ],
+          "CFrame": [
+           -35.4,
+           3.0,
+           -30.0,
+           0.0,
+           0,
+           -1.0,
+           0,
+           1,
+           0,
+           1.0,
+           0,
+           0.0
+          ],
+          "Color": [
+           1,
+           0,
+           1
+          ],
+          "Material": "SmoothPlastic",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth",
+          "Transparency": 1,
+          "CanCollide": false,
+          "CanQuery": false,
+          "CanTouch": false
+         }
+        }
+       ]
+      },
+      {
+       "name": "Closet2",
+       "className": "Model",
+       "properties": {
+        "Tags": [
+         "Closet"
+        ]
+       },
+       "attributes": {
+        "Room": "Study"
+       },
+       "children": [
+        {
+         "name": "Back2",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           4,
+           8,
+           0.4
+          ],
+          "CFrame": [
+           39.3,
+           4.0,
+           -36.0,
+           0.0,
+           0,
+           1.0,
+           0,
+           1,
+           0,
+           -1.0,
+           0,
+           0.0
+          ],
+          "Color": [
+           0.26,
+           0.18,
+           0.12
+          ],
+          "Material": "Wood",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth"
+         }
+        },
+        {
+         "name": "Left2",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           0.4,
+           8,
+           3
+          ],
+          "CFrame": [
+           38.0,
+           4.0,
+           -34.2,
+           0.0,
+           0,
+           1.0,
+           0,
+           1,
+           0,
+           -1.0,
+           0,
+           0.0
+          ],
+          "Color": [
+           0.26,
+           0.18,
+           0.12
+          ],
+          "Material": "Wood",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth"
+         }
+        },
+        {
+         "name": "Right2",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           0.4,
+           8,
+           3
+          ],
+          "CFrame": [
+           38.0,
+           4.0,
+           -37.8,
+           0.0,
+           0,
+           1.0,
+           0,
+           1,
+           0,
+           -1.0,
+           0,
+           0.0
+          ],
+          "Color": [
+           0.26,
+           0.18,
+           0.12
+          ],
+          "Material": "Wood",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth"
+         }
+        },
+        {
+         "name": "Top2",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           4,
+           0.4,
+           3
+          ],
+          "CFrame": [
+           38.0,
+           7.8,
+           -36.0,
+           0.0,
+           0,
+           1.0,
+           0,
+           1,
+           0,
+           -1.0,
+           0,
+           0.0
+          ],
+          "Color": [
+           0.26,
+           0.18,
+           0.12
+          ],
+          "Material": "Wood",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth"
+         }
+        },
+        {
+         "name": "Bottom2",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           4,
+           0.3,
+           3
+          ],
+          "CFrame": [
+           38.0,
+           0.15,
+           -36.0,
+           0.0,
+           0,
+           1.0,
+           0,
+           1,
+           0,
+           -1.0,
+           0,
+           0.0
+          ],
+          "Color": [
+           0.26,
+           0.18,
+           0.12
+          ],
+          "Material": "Wood",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth"
+         }
+        },
+        {
+         "name": "DoorLow2",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           3.2,
+           4.6,
+           0.25
+          ],
+          "CFrame": [
+           36.6,
+           2.6,
+           -36.0,
+           0.0,
+           0,
+           1.0,
+           0,
+           1,
+           0,
+           -1.0,
+           0,
+           0.0
+          ],
+          "Color": [
+           0.2,
+           0.14,
+           0.1
+          ],
+          "Material": "Wood",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth"
+         }
+        },
+        {
+         "name": "DoorHigh2",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           3.2,
+           2.2,
+           0.25
+          ],
+          "CFrame": [
+           36.6,
+           6.6,
+           -36.0,
+           0.0,
+           0,
+           1.0,
+           0,
+           1,
+           0,
+           -1.0,
+           0,
+           0.0
+          ],
+          "Color": [
+           0.2,
+           0.14,
+           0.1
+          ],
+          "Material": "Wood",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth"
+         }
+        },
+        {
+         "name": "Inside2",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           1,
+           1,
+           1
+          ],
+          "CFrame": [
+           38.1,
+           3.2,
+           -36.0,
+           0.0,
+           0,
+           1.0,
+           0,
+           1,
+           0,
+           -1.0,
+           0,
+           0.0
+          ],
+          "Color": [
+           1,
+           0,
+           1
+          ],
+          "Material": "SmoothPlastic",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth",
+          "Transparency": 1,
+          "CanCollide": false,
+          "CanQuery": false,
+          "CanTouch": false
+         }
+        },
+        {
+         "name": "Front2",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           3,
+           5,
+           0.5
+          ],
+          "CFrame": [
+           35.4,
+           3.0,
+           -36.0,
+           0.0,
+           0,
+           1.0,
+           0,
+           1,
+           0,
+           -1.0,
+           0,
+           0.0
+          ],
+          "Color": [
+           1,
+           0,
+           1
+          ],
+          "Material": "SmoothPlastic",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth",
+          "Transparency": 1,
+          "CanCollide": false,
+          "CanQuery": false,
+          "CanTouch": false
+         }
+        }
+       ]
+      },
+      {
+       "name": "Closet3",
+       "className": "Model",
+       "properties": {
+        "Tags": [
+         "Closet"
+        ]
+       },
+       "attributes": {
+        "Room": "Study"
+       },
+       "children": [
+        {
+         "name": "Back3",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           4,
+           8,
+           0.4
+          ],
+          "CFrame": [
+           34.0,
+           4.0,
+           19.3,
+           1.0,
+           0,
+           0.0,
+           0,
+           1,
+           0,
+           -0.0,
+           0,
+           1.0
+          ],
+          "Color": [
+           0.26,
+           0.18,
+           0.12
+          ],
+          "Material": "Wood",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth"
+         }
+        },
+        {
+         "name": "Left3",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           0.4,
+           8,
+           3
+          ],
+          "CFrame": [
+           32.2,
+           4.0,
+           18.0,
+           1.0,
+           0,
+           0.0,
+           0,
+           1,
+           0,
+           -0.0,
+           0,
+           1.0
+          ],
+          "Color": [
+           0.26,
+           0.18,
+           0.12
+          ],
+          "Material": "Wood",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth"
+         }
+        },
+        {
+         "name": "Right3",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           0.4,
+           8,
+           3
+          ],
+          "CFrame": [
+           35.8,
+           4.0,
+           18.0,
+           1.0,
+           0,
+           0.0,
+           0,
+           1,
+           0,
+           -0.0,
+           0,
+           1.0
+          ],
+          "Color": [
+           0.26,
+           0.18,
+           0.12
+          ],
+          "Material": "Wood",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth"
+         }
+        },
+        {
+         "name": "Top3",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           4,
+           0.4,
+           3
+          ],
+          "CFrame": [
+           34.0,
+           7.8,
+           18.0,
+           1.0,
+           0,
+           0.0,
+           0,
+           1,
+           0,
+           -0.0,
+           0,
+           1.0
+          ],
+          "Color": [
+           0.26,
+           0.18,
+           0.12
+          ],
+          "Material": "Wood",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth"
+         }
+        },
+        {
+         "name": "Bottom3",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           4,
+           0.3,
+           3
+          ],
+          "CFrame": [
+           34.0,
+           0.15,
+           18.0,
+           1.0,
+           0,
+           0.0,
+           0,
+           1,
+           0,
+           -0.0,
+           0,
+           1.0
+          ],
+          "Color": [
+           0.26,
+           0.18,
+           0.12
+          ],
+          "Material": "Wood",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth"
+         }
+        },
+        {
+         "name": "DoorLow3",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           3.2,
+           4.6,
+           0.25
+          ],
+          "CFrame": [
+           34.0,
+           2.6,
+           16.6,
+           1.0,
+           0,
+           0.0,
+           0,
+           1,
+           0,
+           -0.0,
+           0,
+           1.0
+          ],
+          "Color": [
+           0.2,
+           0.14,
+           0.1
+          ],
+          "Material": "Wood",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth"
+         }
+        },
+        {
+         "name": "DoorHigh3",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           3.2,
+           2.2,
+           0.25
+          ],
+          "CFrame": [
+           34.0,
+           6.6,
+           16.6,
+           1.0,
+           0,
+           0.0,
+           0,
+           1,
+           0,
+           -0.0,
+           0,
+           1.0
+          ],
+          "Color": [
+           0.2,
+           0.14,
+           0.1
+          ],
+          "Material": "Wood",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth"
+         }
+        },
+        {
+         "name": "Inside3",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           1,
+           1,
+           1
+          ],
+          "CFrame": [
+           34.0,
+           3.2,
+           18.1,
+           1.0,
+           0,
+           0.0,
+           0,
+           1,
+           0,
+           -0.0,
+           0,
+           1.0
+          ],
+          "Color": [
+           1,
+           0,
+           1
+          ],
+          "Material": "SmoothPlastic",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth",
+          "Transparency": 1,
+          "CanCollide": false,
+          "CanQuery": false,
+          "CanTouch": false
+         }
+        },
+        {
+         "name": "Front3",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           3,
+           5,
+           0.5
+          ],
+          "CFrame": [
+           34.0,
+           3.0,
+           15.4,
+           1.0,
+           0,
+           0.0,
+           0,
+           1,
+           0,
+           -0.0,
+           0,
+           1.0
+          ],
+          "Color": [
+           1,
+           0,
+           1
+          ],
+          "Material": "SmoothPlastic",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth",
+          "Transparency": 1,
+          "CanCollide": false,
+          "CanQuery": false,
+          "CanTouch": false
+         }
+        }
+       ]
+      },
+      {
+       "name": "Closet4",
+       "className": "Model",
+       "properties": {
+        "Tags": [
+         "Closet"
+        ]
+       },
+       "attributes": {
+        "Room": "Stairs"
+       },
+       "children": [
+        {
+         "name": "Back4",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           4,
+           8,
+           0.4
+          ],
+          "CFrame": [
+           -20.0,
+           4.0,
+           19.3,
+           1.0,
+           0,
+           0.0,
+           0,
+           1,
+           0,
+           -0.0,
+           0,
+           1.0
+          ],
+          "Color": [
+           0.26,
+           0.18,
+           0.12
+          ],
+          "Material": "Wood",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth"
+         }
+        },
+        {
+         "name": "Left4",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           0.4,
+           8,
+           3
+          ],
+          "CFrame": [
+           -21.8,
+           4.0,
+           18.0,
+           1.0,
+           0,
+           0.0,
+           0,
+           1,
+           0,
+           -0.0,
+           0,
+           1.0
+          ],
+          "Color": [
+           0.26,
+           0.18,
+           0.12
+          ],
+          "Material": "Wood",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth"
+         }
+        },
+        {
+         "name": "Right4",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           0.4,
+           8,
+           3
+          ],
+          "CFrame": [
+           -18.2,
+           4.0,
+           18.0,
+           1.0,
+           0,
+           0.0,
+           0,
+           1,
+           0,
+           -0.0,
+           0,
+           1.0
+          ],
+          "Color": [
+           0.26,
+           0.18,
+           0.12
+          ],
+          "Material": "Wood",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth"
+         }
+        },
+        {
+         "name": "Top4",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           4,
+           0.4,
+           3
+          ],
+          "CFrame": [
+           -20.0,
+           7.8,
+           18.0,
+           1.0,
+           0,
+           0.0,
+           0,
+           1,
+           0,
+           -0.0,
+           0,
+           1.0
+          ],
+          "Color": [
+           0.26,
+           0.18,
+           0.12
+          ],
+          "Material": "Wood",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth"
+         }
+        },
+        {
+         "name": "Bottom4",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           4,
+           0.3,
+           3
+          ],
+          "CFrame": [
+           -20.0,
+           0.15,
+           18.0,
+           1.0,
+           0,
+           0.0,
+           0,
+           1,
+           0,
+           -0.0,
+           0,
+           1.0
+          ],
+          "Color": [
+           0.26,
+           0.18,
+           0.12
+          ],
+          "Material": "Wood",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth"
+         }
+        },
+        {
+         "name": "DoorLow4",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           3.2,
+           4.6,
+           0.25
+          ],
+          "CFrame": [
+           -20.0,
+           2.6,
+           16.6,
+           1.0,
+           0,
+           0.0,
+           0,
+           1,
+           0,
+           -0.0,
+           0,
+           1.0
+          ],
+          "Color": [
+           0.2,
+           0.14,
+           0.1
+          ],
+          "Material": "Wood",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth"
+         }
+        },
+        {
+         "name": "DoorHigh4",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           3.2,
+           2.2,
+           0.25
+          ],
+          "CFrame": [
+           -20.0,
+           6.6,
+           16.6,
+           1.0,
+           0,
+           0.0,
+           0,
+           1,
+           0,
+           -0.0,
+           0,
+           1.0
+          ],
+          "Color": [
+           0.2,
+           0.14,
+           0.1
+          ],
+          "Material": "Wood",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth"
+         }
+        },
+        {
+         "name": "Inside4",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           1,
+           1,
+           1
+          ],
+          "CFrame": [
+           -20.0,
+           3.2,
+           18.1,
+           1.0,
+           0,
+           0.0,
+           0,
+           1,
+           0,
+           -0.0,
+           0,
+           1.0
+          ],
+          "Color": [
+           1,
+           0,
+           1
+          ],
+          "Material": "SmoothPlastic",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth",
+          "Transparency": 1,
+          "CanCollide": false,
+          "CanQuery": false,
+          "CanTouch": false
+         }
+        },
+        {
+         "name": "Front4",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           3,
+           5,
+           0.5
+          ],
+          "CFrame": [
+           -20.0,
+           3.0,
+           15.4,
+           1.0,
+           0,
+           0.0,
+           0,
+           1,
+           0,
+           -0.0,
+           0,
+           1.0
+          ],
+          "Color": [
+           1,
+           0,
+           1
+          ],
+          "Material": "SmoothPlastic",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth",
+          "Transparency": 1,
+          "CanCollide": false,
+          "CanQuery": false,
+          "CanTouch": false
+         }
+        }
+       ]
+      },
+      {
+       "name": "Closet5",
+       "className": "Model",
+       "properties": {
+        "Tags": [
+         "Closet"
+        ]
+       },
+       "attributes": {
+        "Room": "Basement"
+       },
+       "children": [
+        {
+         "name": "Back5",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           4,
+           8,
+           0.4
+          ],
+          "CFrame": [
+           -8.3,
+           -10.0,
+           -20.0,
+           0.0,
+           0,
+           1.0,
+           0,
+           1,
+           0,
+           -1.0,
+           0,
+           0.0
+          ],
+          "Color": [
+           0.26,
+           0.18,
+           0.12
+          ],
+          "Material": "Wood",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth"
+         }
+        },
+        {
+         "name": "Left5",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           0.4,
+           8,
+           3
+          ],
+          "CFrame": [
+           -9.6,
+           -10.0,
+           -18.2,
+           0.0,
+           0,
+           1.0,
+           0,
+           1,
+           0,
+           -1.0,
+           0,
+           0.0
+          ],
+          "Color": [
+           0.26,
+           0.18,
+           0.12
+          ],
+          "Material": "Wood",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth"
+         }
+        },
+        {
+         "name": "Right5",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           0.4,
+           8,
+           3
+          ],
+          "CFrame": [
+           -9.6,
+           -10.0,
+           -21.8,
+           0.0,
+           0,
+           1.0,
+           0,
+           1,
+           0,
+           -1.0,
+           0,
+           0.0
+          ],
+          "Color": [
+           0.26,
+           0.18,
+           0.12
+          ],
+          "Material": "Wood",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth"
+         }
+        },
+        {
+         "name": "Top5",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           4,
+           0.4,
+           3
+          ],
+          "CFrame": [
+           -9.6,
+           -6.2,
+           -20.0,
+           0.0,
+           0,
+           1.0,
+           0,
+           1,
+           0,
+           -1.0,
+           0,
+           0.0
+          ],
+          "Color": [
+           0.26,
+           0.18,
+           0.12
+          ],
+          "Material": "Wood",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth"
+         }
+        },
+        {
+         "name": "Bottom5",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           4,
+           0.3,
+           3
+          ],
+          "CFrame": [
+           -9.6,
+           -13.85,
+           -20.0,
+           0.0,
+           0,
+           1.0,
+           0,
+           1,
+           0,
+           -1.0,
+           0,
+           0.0
+          ],
+          "Color": [
+           0.26,
+           0.18,
+           0.12
+          ],
+          "Material": "Wood",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth"
+         }
+        },
+        {
+         "name": "DoorLow5",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           3.2,
+           4.6,
+           0.25
+          ],
+          "CFrame": [
+           -11.0,
+           -11.4,
+           -20.0,
+           0.0,
+           0,
+           1.0,
+           0,
+           1,
+           0,
+           -1.0,
+           0,
+           0.0
+          ],
+          "Color": [
+           0.2,
+           0.14,
+           0.1
+          ],
+          "Material": "Wood",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth"
+         }
+        },
+        {
+         "name": "DoorHigh5",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           3.2,
+           2.2,
+           0.25
+          ],
+          "CFrame": [
+           -11.0,
+           -7.4,
+           -20.0,
+           0.0,
+           0,
+           1.0,
+           0,
+           1,
+           0,
+           -1.0,
+           0,
+           0.0
+          ],
+          "Color": [
+           0.2,
+           0.14,
+           0.1
+          ],
+          "Material": "Wood",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth"
+         }
+        },
+        {
+         "name": "Inside5",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           1,
+           1,
+           1
+          ],
+          "CFrame": [
+           -9.5,
+           -10.8,
+           -20.0,
+           0.0,
+           0,
+           1.0,
+           0,
+           1,
+           0,
+           -1.0,
+           0,
+           0.0
+          ],
+          "Color": [
+           1,
+           0,
+           1
+          ],
+          "Material": "SmoothPlastic",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth",
+          "Transparency": 1,
+          "CanCollide": false,
+          "CanQuery": false,
+          "CanTouch": false
+         }
+        },
+        {
+         "name": "Front5",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           3,
+           5,
+           0.5
+          ],
+          "CFrame": [
+           -12.2,
+           -11.0,
+           -20.0,
+           0.0,
+           0,
+           1.0,
+           0,
+           1,
+           0,
+           -1.0,
+           0,
+           0.0
+          ],
+          "Color": [
+           1,
+           0,
+           1
+          ],
+          "Material": "SmoothPlastic",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth",
+          "Transparency": 1,
+          "CanCollide": false,
+          "CanQuery": false,
+          "CanTouch": false
+         }
+        }
+       ]
+      },
+      {
+       "name": "Closet6",
+       "className": "Model",
+       "properties": {
+        "Tags": [
+         "Closet"
+        ]
+       },
+       "attributes": {
+        "Room": "Basement"
+       },
+       "children": [
+        {
+         "name": "Back6",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           4,
+           8,
+           0.4
+          ],
+          "CFrame": [
+           -20.0,
+           -10.0,
+           19.7,
+           1.0,
+           0,
+           0.0,
+           0,
+           1,
+           0,
+           -0.0,
+           0,
+           1.0
+          ],
+          "Color": [
+           0.26,
+           0.18,
+           0.12
+          ],
+          "Material": "Wood",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth"
+         }
+        },
+        {
+         "name": "Left6",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           0.4,
+           8,
+           3
+          ],
+          "CFrame": [
+           -21.8,
+           -10.0,
+           18.4,
+           1.0,
+           0,
+           0.0,
+           0,
+           1,
+           0,
+           -0.0,
+           0,
+           1.0
+          ],
+          "Color": [
+           0.26,
+           0.18,
+           0.12
+          ],
+          "Material": "Wood",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth"
+         }
+        },
+        {
+         "name": "Right6",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           0.4,
+           8,
+           3
+          ],
+          "CFrame": [
+           -18.2,
+           -10.0,
+           18.4,
+           1.0,
+           0,
+           0.0,
+           0,
+           1,
+           0,
+           -0.0,
+           0,
+           1.0
+          ],
+          "Color": [
+           0.26,
+           0.18,
+           0.12
+          ],
+          "Material": "Wood",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth"
+         }
+        },
+        {
+         "name": "Top6",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           4,
+           0.4,
+           3
+          ],
+          "CFrame": [
+           -20.0,
+           -6.2,
+           18.4,
+           1.0,
+           0,
+           0.0,
+           0,
+           1,
+           0,
+           -0.0,
+           0,
+           1.0
+          ],
+          "Color": [
+           0.26,
+           0.18,
+           0.12
+          ],
+          "Material": "Wood",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth"
+         }
+        },
+        {
+         "name": "Bottom6",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           4,
+           0.3,
+           3
+          ],
+          "CFrame": [
+           -20.0,
+           -13.85,
+           18.4,
+           1.0,
+           0,
+           0.0,
+           0,
+           1,
+           0,
+           -0.0,
+           0,
+           1.0
+          ],
+          "Color": [
+           0.26,
+           0.18,
+           0.12
+          ],
+          "Material": "Wood",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth"
+         }
+        },
+        {
+         "name": "DoorLow6",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           3.2,
+           4.6,
+           0.25
+          ],
+          "CFrame": [
+           -20.0,
+           -11.4,
+           17.0,
+           1.0,
+           0,
+           0.0,
+           0,
+           1,
+           0,
+           -0.0,
+           0,
+           1.0
+          ],
+          "Color": [
+           0.2,
+           0.14,
+           0.1
+          ],
+          "Material": "Wood",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth"
+         }
+        },
+        {
+         "name": "DoorHigh6",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           3.2,
+           2.2,
+           0.25
+          ],
+          "CFrame": [
+           -20.0,
+           -7.4,
+           17.0,
+           1.0,
+           0,
+           0.0,
+           0,
+           1,
+           0,
+           -0.0,
+           0,
+           1.0
+          ],
+          "Color": [
+           0.2,
+           0.14,
+           0.1
+          ],
+          "Material": "Wood",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth"
+         }
+        },
+        {
+         "name": "Inside6",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           1,
+           1,
+           1
+          ],
+          "CFrame": [
+           -20.0,
+           -10.8,
+           18.5,
+           1.0,
+           0,
+           0.0,
+           0,
+           1,
+           0,
+           -0.0,
+           0,
+           1.0
+          ],
+          "Color": [
+           1,
+           0,
+           1
+          ],
+          "Material": "SmoothPlastic",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth",
+          "Transparency": 1,
+          "CanCollide": false,
+          "CanQuery": false,
+          "CanTouch": false
+         }
+        },
+        {
+         "name": "Front6",
+         "className": "Part",
+         "properties": {
+          "Anchored": true,
+          "Size": [
+           3,
+           5,
+           0.5
+          ],
+          "CFrame": [
+           -20.0,
+           -11.0,
+           15.8,
+           1.0,
+           0,
+           0.0,
+           0,
+           1,
+           0,
+           -0.0,
+           0,
+           1.0
+          ],
+          "Color": [
+           1,
+           0,
+           1
+          ],
+          "Material": "SmoothPlastic",
+          "TopSurface": "Smooth",
+          "BottomSurface": "Smooth",
+          "Transparency": 1,
+          "CanCollide": false,
+          "CanQuery": false,
+          "CanTouch": false
+         }
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "name": "Lights",
+     "className": "Folder",
+     "children": [
+      {
+       "name": "Lamp",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1.2,
+         0.6,
+         1.2
+        ],
+        "CFrame": [
+         0,
+         11.6,
+         -30,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         1.0,
+         0.78,
+         0.5
+        ],
+        "Material": "Neon",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth",
+        "CanCollide": false,
+        "CanQuery": false,
+        "CastShadow": false,
+        "Tags": [
+         "HouseLight"
+        ]
+       },
+       "attributes": {
+        "Room": "Hallway",
+        "BaseBrightness": 0.9
+       },
+       "children": [
+        {
+         "name": "Light",
+         "className": "PointLight",
+         "properties": {
+          "Brightness": 0.9,
+          "Range": 24,
+          "Color": [
+           1.0,
+           0.78,
+           0.5
+          ],
+          "Shadows": true
+         }
+        }
+       ]
+      },
+      {
+       "name": "Lamp2",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1.2,
+         0.6,
+         1.2
+        ],
+        "CFrame": [
+         0,
+         11.6,
+         -6,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         1.0,
+         0.78,
+         0.5
+        ],
+        "Material": "Neon",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth",
+        "CanCollide": false,
+        "CanQuery": false,
+        "CastShadow": false,
+        "Tags": [
+         "HouseLight"
+        ]
+       },
+       "attributes": {
+        "Room": "Hallway",
+        "BaseBrightness": 0.9
+       },
+       "children": [
+        {
+         "name": "Light",
+         "className": "PointLight",
+         "properties": {
+          "Brightness": 0.9,
+          "Range": 24,
+          "Color": [
+           1.0,
+           0.78,
+           0.5
+          ],
+          "Shadows": true
+         }
+        }
+       ]
+      },
+      {
+       "name": "Lamp3",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1.2,
+         0.6,
+         1.2
+        ],
+        "CFrame": [
+         0,
+         11.6,
+         14,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         1.0,
+         0.78,
+         0.5
+        ],
+        "Material": "Neon",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth",
+        "CanCollide": false,
+        "CanQuery": false,
+        "CastShadow": false,
+        "Tags": [
+         "HouseLight"
+        ]
+       },
+       "attributes": {
+        "Room": "Hallway",
+        "BaseBrightness": 0.9
+       },
+       "children": [
+        {
+         "name": "Light",
+         "className": "PointLight",
+         "properties": {
+          "Brightness": 0.9,
+          "Range": 24,
+          "Color": [
+           1.0,
+           0.78,
+           0.5
+          ],
+          "Shadows": true
+         }
+        }
+       ]
+      },
+      {
+       "name": "Lamp4",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1.2,
+         0.6,
+         1.2
+        ],
+        "CFrame": [
+         -24,
+         11.6,
+         -25,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         1.0,
+         0.78,
+         0.5
+        ],
+        "Material": "Neon",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth",
+        "CanCollide": false,
+        "CanQuery": false,
+        "CastShadow": false,
+        "Tags": [
+         "HouseLight"
+        ]
+       },
+       "attributes": {
+        "Room": "Kitchen",
+        "BaseBrightness": 0.9
+       },
+       "children": [
+        {
+         "name": "Light",
+         "className": "PointLight",
+         "properties": {
+          "Brightness": 0.9,
+          "Range": 28,
+          "Color": [
+           1.0,
+           0.78,
+           0.5
+          ],
+          "Shadows": true
+         }
+        }
+       ]
+      },
+      {
+       "name": "Lamp5",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1.2,
+         0.6,
+         1.2
+        ],
+        "CFrame": [
+         -34,
+         11.6,
+         -16,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         1.0,
+         0.78,
+         0.5
+        ],
+        "Material": "Neon",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth",
+        "CanCollide": false,
+        "CanQuery": false,
+        "CastShadow": false,
+        "Tags": [
+         "HouseLight"
+        ]
+       },
+       "attributes": {
+        "Room": "Kitchen",
+        "BaseBrightness": 0.9
+       },
+       "children": [
+        {
+         "name": "Light",
+         "className": "PointLight",
+         "properties": {
+          "Brightness": 0.9,
+          "Range": 18,
+          "Color": [
+           1.0,
+           0.78,
+           0.5
+          ],
+          "Shadows": true
+         }
+        }
+       ]
+      },
+      {
+       "name": "Lamp6",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1.2,
+         0.6,
+         1.2
+        ],
+        "CFrame": [
+         -18,
+         11.6,
+         4,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         1.0,
+         0.78,
+         0.5
+        ],
+        "Material": "Neon",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth",
+        "CanCollide": false,
+        "CanQuery": false,
+        "CastShadow": false,
+        "Tags": [
+         "HouseLight"
+        ]
+       },
+       "attributes": {
+        "Room": "Stairs",
+        "BaseBrightness": 0.9
+       },
+       "children": [
+        {
+         "name": "Light",
+         "className": "PointLight",
+         "properties": {
+          "Brightness": 0.9,
+          "Range": 26,
+          "Color": [
+           1.0,
+           0.78,
+           0.5
+          ],
+          "Shadows": true
+         }
+        }
+       ]
+      },
+      {
+       "name": "Lamp7",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1.2,
+         0.6,
+         1.2
+        ],
+        "CFrame": [
+         18,
+         11.6,
+         -20,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         1.0,
+         0.78,
+         0.5
+        ],
+        "Material": "Neon",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth",
+        "CanCollide": false,
+        "CanQuery": false,
+        "CastShadow": false,
+        "Tags": [
+         "HouseLight"
+        ]
+       },
+       "attributes": {
+        "Room": "Study",
+        "BaseBrightness": 0.9
+       },
+       "children": [
+        {
+         "name": "Light",
+         "className": "PointLight",
+         "properties": {
+          "Brightness": 0.9,
+          "Range": 24,
+          "Color": [
+           1.0,
+           0.78,
+           0.5
+          ],
+          "Shadows": true
+         }
+        }
+       ]
+      },
+      {
+       "name": "Lamp8",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1.2,
+         0.6,
+         1.2
+        ],
+        "CFrame": [
+         30,
+         11.6,
+         -34,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         1.0,
+         0.78,
+         0.5
+        ],
+        "Material": "Neon",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth",
+        "CanCollide": false,
+        "CanQuery": false,
+        "CastShadow": false,
+        "Tags": [
+         "HouseLight"
+        ]
+       },
+       "attributes": {
+        "Room": "Study",
+        "BaseBrightness": 0.9
+       },
+       "children": [
+        {
+         "name": "Light",
+         "className": "PointLight",
+         "properties": {
+          "Brightness": 0.9,
+          "Range": 20,
+          "Color": [
+           1.0,
+           0.78,
+           0.5
+          ],
+          "Shadows": true
+         }
+        }
+       ]
+      },
+      {
+       "name": "Lamp9",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1.2,
+         0.6,
+         1.2
+        ],
+        "CFrame": [
+         22,
+         11.6,
+         6,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         1.0,
+         0.78,
+         0.5
+        ],
+        "Material": "Neon",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth",
+        "CanCollide": false,
+        "CanQuery": false,
+        "CastShadow": false,
+        "Tags": [
+         "HouseLight"
+        ]
+       },
+       "attributes": {
+        "Room": "Study",
+        "BaseBrightness": 0.9
+       },
+       "children": [
+        {
+         "name": "Light",
+         "className": "PointLight",
+         "properties": {
+          "Brightness": 0.9,
+          "Range": 24,
+          "Color": [
+           1.0,
+           0.78,
+           0.5
+          ],
+          "Shadows": true
+         }
+        }
+       ]
+      },
+      {
+       "name": "Lamp10",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1.2,
+         0.6,
+         1.2
+        ],
+        "CFrame": [
+         -30,
+         -1.6,
+         -26,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         0.75,
+         0.82,
+         1.0
+        ],
+        "Material": "Neon",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth",
+        "CanCollide": false,
+        "CanQuery": false,
+        "CastShadow": false,
+        "Tags": [
+         "HouseLight"
+        ]
+       },
+       "attributes": {
+        "Room": "Basement",
+        "BaseBrightness": 0.9
+       },
+       "children": [
+        {
+         "name": "Light",
+         "className": "PointLight",
+         "properties": {
+          "Brightness": 0.9,
+          "Range": 22,
+          "Color": [
+           0.75,
+           0.82,
+           1.0
+          ],
+          "Shadows": true
+         }
+        }
+       ]
+      },
+      {
+       "name": "Lamp11",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1.2,
+         0.6,
+         1.2
+        ],
+        "CFrame": [
+         -18,
+         -1.6,
+         -12,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         0.75,
+         0.82,
+         1.0
+        ],
+        "Material": "Neon",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth",
+        "CanCollide": false,
+        "CanQuery": false,
+        "CastShadow": false,
+        "Tags": [
+         "HouseLight"
+        ]
+       },
+       "attributes": {
+        "Room": "Basement",
+        "BaseBrightness": 0.9
+       },
+       "children": [
+        {
+         "name": "Light",
+         "className": "PointLight",
+         "properties": {
+          "Brightness": 0.9,
+          "Range": 22,
+          "Color": [
+           0.75,
+           0.82,
+           1.0
+          ],
+          "Shadows": true
+         }
+        }
+       ]
+      },
+      {
+       "name": "Lamp12",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1.2,
+         0.6,
+         1.2
+        ],
+        "CFrame": [
+         -18,
+         -1.6,
+         12,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         0.75,
+         0.82,
+         1.0
+        ],
+        "Material": "Neon",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth",
+        "CanCollide": false,
+        "CanQuery": false,
+        "CastShadow": false,
+        "Tags": [
+         "HouseLight"
+        ]
+       },
+       "attributes": {
+        "Room": "Basement",
+        "BaseBrightness": 0.9
+       },
+       "children": [
+        {
+         "name": "Light",
+         "className": "PointLight",
+         "properties": {
+          "Brightness": 0.9,
+          "Range": 20,
+          "Color": [
+           0.75,
+           0.82,
+           1.0
+          ],
+          "Shadows": true
+         }
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "name": "Markers",
+     "className": "Folder",
+     "children": [
+      {
+       "name": "ExitZone",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         14,
+         10,
+         10
+        ],
+        "CFrame": [
+         0,
+         5,
+         -48,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         1,
+         0,
+         1
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth",
+        "Transparency": 1,
+        "CanCollide": false,
+        "CanQuery": false,
+        "CanTouch": false,
+        "CastShadow": false,
+        "Tags": [
+         "ExitZone"
+        ]
+       }
+      },
+      {
+       "name": "RoomHallway",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         16,
+         12,
+         60
+        ],
+        "CFrame": [
+         0.0,
+         6.0,
+         -10.0,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         1,
+         0,
+         1
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth",
+        "Transparency": 1,
+        "CanCollide": false,
+        "CanQuery": false,
+        "CanTouch": false,
+        "CastShadow": false,
+        "Tags": [
+         "RoomVolume"
+        ]
+       },
+       "attributes": {
+        "RoomName": "Hallway"
+       }
+      },
+      {
+       "name": "RoomKitchen",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         32,
+         12,
+         30
+        ],
+        "CFrame": [
+         -24.0,
+         6.0,
+         -25.0,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         1,
+         0,
+         1
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth",
+        "Transparency": 1,
+        "CanCollide": false,
+        "CanQuery": false,
+        "CanTouch": false,
+        "CastShadow": false,
+        "Tags": [
+         "RoomVolume"
+        ]
+       },
+       "attributes": {
+        "RoomName": "Kitchen"
+       }
+      },
+      {
+       "name": "RoomStairs",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         32,
+         13,
+         30
+        ],
+        "CFrame": [
+         -24.0,
+         5.5,
+         5.0,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         1,
+         0,
+         1
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth",
+        "Transparency": 1,
+        "CanCollide": false,
+        "CanQuery": false,
+        "CanTouch": false,
+        "CastShadow": false,
+        "Tags": [
+         "RoomVolume"
+        ]
+       },
+       "attributes": {
+        "RoomName": "Stairs"
+       }
+      },
+      {
+       "name": "RoomStudy",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         32,
+         12,
+         60
+        ],
+        "CFrame": [
+         24.0,
+         6.0,
+         -10.0,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         1,
+         0,
+         1
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth",
+        "Transparency": 1,
+        "CanCollide": false,
+        "CanQuery": false,
+        "CanTouch": false,
+        "CastShadow": false,
+        "Tags": [
+         "RoomVolume"
+        ]
+       },
+       "attributes": {
+        "RoomName": "Study"
+       }
+      },
+      {
+       "name": "RoomBasement",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         32,
+         13,
+         60
+        ],
+        "CFrame": [
+         -24.0,
+         -7.5,
+         -10.0,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         1,
+         0,
+         1
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth",
+        "Transparency": 1,
+        "CanCollide": false,
+        "CanQuery": false,
+        "CanTouch": false,
+        "CastShadow": false,
+        "Tags": [
+         "RoomVolume"
+        ]
+       },
+       "attributes": {
+        "RoomName": "Basement"
+       }
+      },
+      {
+       "name": "FuseSpawn",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1,
+         1,
+         1
+        ],
+        "CFrame": [
+         -30,
+         4.7,
+         -38.2,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         1,
+         0,
+         1
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth",
+        "Transparency": 1,
+        "CanCollide": false,
+        "CanQuery": false,
+        "CanTouch": false,
+        "CastShadow": false,
+        "Tags": [
+         "FuseSpawn"
+        ]
+       },
+       "attributes": {
+        "Room": "Kitchen"
+       }
+      },
+      {
+       "name": "FuseSpawn2",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1,
+         1,
+         1
+        ],
+        "CFrame": [
+         -24,
+         4.7,
+         -25,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         1,
+         0,
+         1
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth",
+        "Transparency": 1,
+        "CanCollide": false,
+        "CanQuery": false,
+        "CanTouch": false,
+        "CastShadow": false,
+        "Tags": [
+         "FuseSpawn"
+        ]
+       },
+       "attributes": {
+        "Room": "Kitchen"
+       }
+      },
+      {
+       "name": "FuseSpawn3",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1,
+         1,
+         1
+        ],
+        "CFrame": [
+         -12,
+         0.9,
+         -14,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         1,
+         0,
+         1
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth",
+        "Transparency": 1,
+        "CanCollide": false,
+        "CanQuery": false,
+        "CanTouch": false,
+        "CastShadow": false,
+        "Tags": [
+         "FuseSpawn"
+        ]
+       },
+       "attributes": {
+        "Room": "Kitchen"
+       }
+      },
+      {
+       "name": "FuseSpawn4",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1,
+         1,
+         1
+        ],
+        "CFrame": [
+         16,
+         3.9,
+         12,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         1,
+         0,
+         1
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth",
+        "Transparency": 1,
+        "CanCollide": false,
+        "CanQuery": false,
+        "CanTouch": false,
+        "CastShadow": false,
+        "Tags": [
+         "FuseSpawn"
+        ]
+       },
+       "attributes": {
+        "Room": "Study"
+       }
+      },
+      {
+       "name": "FuseSpawn5",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1,
+         1,
+         1
+        ],
+        "CFrame": [
+         36,
+         0.9,
+         -20,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         1,
+         0,
+         1
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth",
+        "Transparency": 1,
+        "CanCollide": false,
+        "CanQuery": false,
+        "CanTouch": false,
+        "CastShadow": false,
+        "Tags": [
+         "FuseSpawn"
+        ]
+       },
+       "attributes": {
+        "Room": "Study"
+       }
+      },
+      {
+       "name": "FuseSpawn6",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1,
+         1,
+         1
+        ],
+        "CFrame": [
+         20,
+         0.9,
+         -21,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         1,
+         0,
+         1
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth",
+        "Transparency": 1,
+        "CanCollide": false,
+        "CanQuery": false,
+        "CanTouch": false,
+        "CastShadow": false,
+        "Tags": [
+         "FuseSpawn"
+        ]
+       },
+       "attributes": {
+        "Room": "Study"
+       }
+      },
+      {
+       "name": "FuseSpawn7",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1,
+         1,
+         1
+        ],
+        "CFrame": [
+         -24,
+         3.5,
+         8,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         1,
+         0,
+         1
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth",
+        "Transparency": 1,
+        "CanCollide": false,
+        "CanQuery": false,
+        "CanTouch": false,
+        "CastShadow": false,
+        "Tags": [
+         "FuseSpawn"
+        ]
+       },
+       "attributes": {
+        "Room": "Stairs"
+       }
+      },
+      {
+       "name": "FuseSpawn8",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1,
+         1,
+         1
+        ],
+        "CFrame": [
+         -12,
+         0.9,
+         12,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         1,
+         0,
+         1
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth",
+        "Transparency": 1,
+        "CanCollide": false,
+        "CanQuery": false,
+        "CanTouch": false,
+        "CastShadow": false,
+        "Tags": [
+         "FuseSpawn"
+        ]
+       },
+       "attributes": {
+        "Room": "Stairs"
+       }
+      },
+      {
+       "name": "FuseSpawn9",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1,
+         1,
+         1
+        ],
+        "CFrame": [
+         -14,
+         -13.1,
+         -24,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         1,
+         0,
+         1
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth",
+        "Transparency": 1,
+        "CanCollide": false,
+        "CanQuery": false,
+        "CanTouch": false,
+        "CastShadow": false,
+        "Tags": [
+         "FuseSpawn"
+        ]
+       },
+       "attributes": {
+        "Room": "Basement"
+       }
+      },
+      {
+       "name": "FuseSpawn10",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1,
+         1,
+         1
+        ],
+        "CFrame": [
+         -36,
+         -13.1,
+         -20,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         1,
+         0,
+         1
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth",
+        "Transparency": 1,
+        "CanCollide": false,
+        "CanQuery": false,
+        "CanTouch": false,
+        "CastShadow": false,
+        "Tags": [
+         "FuseSpawn"
+        ]
+       },
+       "attributes": {
+        "Room": "Basement"
+       }
+      },
+      {
+       "name": "FuseSpawn11",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1,
+         1,
+         1
+        ],
+        "CFrame": [
+         -12,
+         -13.1,
+         14,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         1,
+         0,
+         1
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth",
+        "Transparency": 1,
+        "CanCollide": false,
+        "CanQuery": false,
+        "CanTouch": false,
+        "CastShadow": false,
+        "Tags": [
+         "FuseSpawn"
+        ]
+       },
+       "attributes": {
+        "Room": "Basement"
+       }
+      },
+      {
+       "name": "FuseSpawn12",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1,
+         1,
+         1
+        ],
+        "CFrame": [
+         -6,
+         3.9,
+         -2,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         1,
+         0,
+         1
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth",
+        "Transparency": 1,
+        "CanCollide": false,
+        "CanQuery": false,
+        "CanTouch": false,
+        "CastShadow": false,
+        "Tags": [
+         "FuseSpawn"
+        ]
+       },
+       "attributes": {
+        "Room": "Hallway"
+       }
+      },
+      {
+       "name": "PatrolPoint",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1,
+         1,
+         1
+        ],
+        "CFrame": [
+         0,
+         0.5,
+         -30,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         1,
+         0,
+         1
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth",
+        "Transparency": 1,
+        "CanCollide": false,
+        "CanQuery": false,
+        "CanTouch": false,
+        "CastShadow": false,
+        "Tags": [
+         "PatrolPoint"
+        ]
+       },
+       "attributes": {
+        "Room": "Hallway"
+       }
+      },
+      {
+       "name": "PatrolPoint2",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1,
+         1,
+         1
+        ],
+        "CFrame": [
+         0,
+         0.5,
+         0,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         1,
+         0,
+         1
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth",
+        "Transparency": 1,
+        "CanCollide": false,
+        "CanQuery": false,
+        "CanTouch": false,
+        "CastShadow": false,
+        "Tags": [
+         "PatrolPoint"
+        ]
+       },
+       "attributes": {
+        "Room": "Hallway"
+       }
+      },
+      {
+       "name": "PatrolPoint3",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1,
+         1,
+         1
+        ],
+        "CFrame": [
+         0,
+         0.5,
+         14,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         1,
+         0,
+         1
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth",
+        "Transparency": 1,
+        "CanCollide": false,
+        "CanQuery": false,
+        "CanTouch": false,
+        "CastShadow": false,
+        "Tags": [
+         "PatrolPoint"
+        ]
+       },
+       "attributes": {
+        "Room": "Hallway"
+       }
+      },
+      {
+       "name": "PatrolPoint4",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1,
+         1,
+         1
+        ],
+        "CFrame": [
+         -16,
+         0.5,
+         -30,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         1,
+         0,
+         1
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth",
+        "Transparency": 1,
+        "CanCollide": false,
+        "CanQuery": false,
+        "CanTouch": false,
+        "CastShadow": false,
+        "Tags": [
+         "PatrolPoint"
+        ]
+       },
+       "attributes": {
+        "Room": "Kitchen"
+       }
+      },
+      {
+       "name": "PatrolPoint5",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1,
+         1,
+         1
+        ],
+        "CFrame": [
+         -32,
+         0.5,
+         -22,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         1,
+         0,
+         1
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth",
+        "Transparency": 1,
+        "CanCollide": false,
+        "CanQuery": false,
+        "CanTouch": false,
+        "CastShadow": false,
+        "Tags": [
+         "PatrolPoint"
+        ]
+       },
+       "attributes": {
+        "Room": "Kitchen"
+       }
+      },
+      {
+       "name": "PatrolPoint6",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1,
+         1,
+         1
+        ],
+        "CFrame": [
+         -24,
+         0.5,
+         -16,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         1,
+         0,
+         1
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth",
+        "Transparency": 1,
+        "CanCollide": false,
+        "CanQuery": false,
+        "CanTouch": false,
+        "CastShadow": false,
+        "Tags": [
+         "PatrolPoint"
+        ]
+       },
+       "attributes": {
+        "Room": "Kitchen"
+       }
+      },
+      {
+       "name": "PatrolPoint7",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1,
+         1,
+         1
+        ],
+        "CFrame": [
+         20,
+         0.5,
+         -34,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         1,
+         0,
+         1
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth",
+        "Transparency": 1,
+        "CanCollide": false,
+        "CanQuery": false,
+        "CanTouch": false,
+        "CastShadow": false,
+        "Tags": [
+         "PatrolPoint"
+        ]
+       },
+       "attributes": {
+        "Room": "Study"
+       }
+      },
+      {
+       "name": "PatrolPoint8",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1,
+         1,
+         1
+        ],
+        "CFrame": [
+         18,
+         0.5,
+         -4,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         1,
+         0,
+         1
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth",
+        "Transparency": 1,
+        "CanCollide": false,
+        "CanQuery": false,
+        "CanTouch": false,
+        "CastShadow": false,
+        "Tags": [
+         "PatrolPoint"
+        ]
+       },
+       "attributes": {
+        "Room": "Study"
+       }
+      },
+      {
+       "name": "PatrolPoint9",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1,
+         1,
+         1
+        ],
+        "CFrame": [
+         34,
+         0.5,
+         10,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         1,
+         0,
+         1
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth",
+        "Transparency": 1,
+        "CanCollide": false,
+        "CanQuery": false,
+        "CanTouch": false,
+        "CastShadow": false,
+        "Tags": [
+         "PatrolPoint"
+        ]
+       },
+       "attributes": {
+        "Room": "Study"
+       }
+      },
+      {
+       "name": "PatrolPoint10",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1,
+         1,
+         1
+        ],
+        "CFrame": [
+         36,
+         0.5,
+         -16,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         1,
+         0,
+         1
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth",
+        "Transparency": 1,
+        "CanCollide": false,
+        "CanQuery": false,
+        "CanTouch": false,
+        "CastShadow": false,
+        "Tags": [
+         "PatrolPoint"
+        ]
+       },
+       "attributes": {
+        "Room": "Study"
+       }
+      },
+      {
+       "name": "PatrolPoint11",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1,
+         1,
+         1
+        ],
+        "CFrame": [
+         -24,
+         0.5,
+         0,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         1,
+         0,
+         1
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth",
+        "Transparency": 1,
+        "CanCollide": false,
+        "CanQuery": false,
+        "CanTouch": false,
+        "CastShadow": false,
+        "Tags": [
+         "PatrolPoint"
+        ]
+       },
+       "attributes": {
+        "Room": "Stairs"
+       }
+      },
+      {
+       "name": "PatrolPoint12",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1,
+         1,
+         1
+        ],
+        "CFrame": [
+         -14,
+         0.5,
+         14,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         1,
+         0,
+         1
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth",
+        "Transparency": 1,
+        "CanCollide": false,
+        "CanQuery": false,
+        "CanTouch": false,
+        "CastShadow": false,
+        "Tags": [
+         "PatrolPoint"
+        ]
+       },
+       "attributes": {
+        "Room": "Stairs"
+       }
+      },
+      {
+       "name": "PatrolPoint13",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1,
+         1,
+         1
+        ],
+        "CFrame": [
+         -16,
+         -13.5,
+         -32,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         1,
+         0,
+         1
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth",
+        "Transparency": 1,
+        "CanCollide": false,
+        "CanQuery": false,
+        "CanTouch": false,
+        "CastShadow": false,
+        "Tags": [
+         "PatrolPoint"
+        ]
+       },
+       "attributes": {
+        "Room": "Basement"
+       }
+      },
+      {
+       "name": "PatrolPoint14",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1,
+         1,
+         1
+        ],
+        "CFrame": [
+         -20,
+         -13.5,
+         6,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         1,
+         0,
+         1
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth",
+        "Transparency": 1,
+        "CanCollide": false,
+        "CanQuery": false,
+        "CanTouch": false,
+        "CastShadow": false,
+        "Tags": [
+         "PatrolPoint"
+        ]
+       },
+       "attributes": {
+        "Room": "Basement"
+       }
+      },
+      {
+       "name": "PatrolPoint15",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1,
+         1,
+         1
+        ],
+        "CFrame": [
+         -28,
+         -13.5,
+         -20,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         1,
+         0,
+         1
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth",
+        "Transparency": 1,
+        "CanCollide": false,
+        "CanQuery": false,
+        "CanTouch": false,
+        "CastShadow": false,
+        "Tags": [
+         "PatrolPoint"
+        ]
+       },
+       "attributes": {
+        "Room": "Basement"
+       }
+      },
+      {
+       "name": "PlayerStart",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1,
+         1,
+         1
+        ],
+        "CFrame": [
+         -3,
+         3.5,
+         14,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         1,
+         0,
+         1
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth",
+        "Transparency": 1,
+        "CanCollide": false,
+        "CanQuery": false,
+        "CanTouch": false,
+        "CastShadow": false,
+        "Tags": [
+         "PlayerStart"
+        ]
+       },
+       "attributes": {
+        "Index": 1
+       }
+      },
+      {
+       "name": "PlayerStart2",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1,
+         1,
+         1
+        ],
+        "CFrame": [
+         3,
+         3.5,
+         14,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         1,
+         0,
+         1
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth",
+        "Transparency": 1,
+        "CanCollide": false,
+        "CanQuery": false,
+        "CanTouch": false,
+        "CastShadow": false,
+        "Tags": [
+         "PlayerStart"
+        ]
+       },
+       "attributes": {
+        "Index": 2
+       }
+      },
+      {
+       "name": "PlayerStart3",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1,
+         1,
+         1
+        ],
+        "CFrame": [
+         -3,
+         3.5,
+         17,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         1,
+         0,
+         1
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth",
+        "Transparency": 1,
+        "CanCollide": false,
+        "CanQuery": false,
+        "CanTouch": false,
+        "CastShadow": false,
+        "Tags": [
+         "PlayerStart"
+        ]
+       },
+       "attributes": {
+        "Index": 3
+       }
+      },
+      {
+       "name": "PlayerStart4",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1,
+         1,
+         1
+        ],
+        "CFrame": [
+         3,
+         3.5,
+         17,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         1,
+         0,
+         1
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth",
+        "Transparency": 1,
+        "CanCollide": false,
+        "CanQuery": false,
+        "CanTouch": false,
+        "CastShadow": false,
+        "Tags": [
+         "PlayerStart"
+        ]
+       },
+       "attributes": {
+        "Index": 4
+       }
+      },
+      {
+       "name": "PlayerStart5",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1,
+         1,
+         1
+        ],
+        "CFrame": [
+         0,
+         3.5,
+         11,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         1,
+         0,
+         1
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth",
+        "Transparency": 1,
+        "CanCollide": false,
+        "CanQuery": false,
+        "CanTouch": false,
+        "CastShadow": false,
+        "Tags": [
+         "PlayerStart"
+        ]
+       },
+       "attributes": {
+        "Index": 5
+       }
+      },
+      {
+       "name": "PlayerStart6",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1,
+         1,
+         1
+        ],
+        "CFrame": [
+         -5,
+         3.5,
+         11,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         1,
+         0,
+         1
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth",
+        "Transparency": 1,
+        "CanCollide": false,
+        "CanQuery": false,
+        "CanTouch": false,
+        "CastShadow": false,
+        "Tags": [
+         "PlayerStart"
+        ]
+       },
+       "attributes": {
+        "Index": 6
+       }
+      },
+      {
+       "name": "PlayerStart7",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1,
+         1,
+         1
+        ],
+        "CFrame": [
+         5,
+         3.5,
+         11,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         1,
+         0,
+         1
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth",
+        "Transparency": 1,
+        "CanCollide": false,
+        "CanQuery": false,
+        "CanTouch": false,
+        "CastShadow": false,
+        "Tags": [
+         "PlayerStart"
+        ]
+       },
+       "attributes": {
+        "Index": 7
+       }
+      },
+      {
+       "name": "PlayerStart8",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1,
+         1,
+         1
+        ],
+        "CFrame": [
+         0,
+         3.5,
+         17,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         1,
+         0,
+         1
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth",
+        "Transparency": 1,
+        "CanCollide": false,
+        "CanQuery": false,
+        "CanTouch": false,
+        "CastShadow": false,
+        "Tags": [
+         "PlayerStart"
+        ]
+       },
+       "attributes": {
+        "Index": 8
+       }
+      },
+      {
+       "name": "MonsterSpawn",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1,
+         1,
+         1
+        ],
+        "CFrame": [
+         -16,
+         -9.8,
+         -32,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         1,
+         0,
+         1
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth",
+        "Transparency": 1,
+        "CanCollide": false,
+        "CanQuery": false,
+        "CanTouch": false,
+        "CastShadow": false,
+        "Tags": [
+         "MonsterSpawn"
+        ]
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Outside",
+   "className": "Folder",
+   "children": [
+    {
+     "name": "GroundSouth",
+     "className": "Part",
+     "properties": {
+      "Anchored": true,
+      "Size": [
+       240,
+       4,
+       99.5
+      ],
+      "CFrame": [
+       0.0,
+       -2.0,
+       70.25,
+       1.0,
+       0,
+       0.0,
+       0,
+       1,
+       0,
+       -0.0,
+       0,
+       1.0
+      ],
+      "Color": [
+       0.12,
+       0.17,
+       0.11
+      ],
+      "Material": "Grass",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "name": "GroundNorth",
+     "className": "Part",
+     "properties": {
+      "Anchored": true,
+      "Size": [
+       240,
+       4,
+       79.5
+      ],
+      "CFrame": [
+       0.0,
+       -2.0,
+       -80.25,
+       1.0,
+       0,
+       0.0,
+       0,
+       1,
+       0,
+       -0.0,
+       0,
+       1.0
+      ],
+      "Color": [
+       0.12,
+       0.17,
+       0.11
+      ],
+      "Material": "Grass",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "name": "GroundWest",
+     "className": "Part",
+     "properties": {
+      "Anchored": true,
+      "Size": [
+       79.5,
+       4,
+       61.0
+      ],
+      "CFrame": [
+       -80.25,
+       -2.0,
+       -10.0,
+       1.0,
+       0,
+       0.0,
+       0,
+       1,
+       0,
+       -0.0,
+       0,
+       1.0
+      ],
+      "Color": [
+       0.12,
+       0.17,
+       0.11
+      ],
+      "Material": "Grass",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "name": "GroundEast",
+     "className": "Part",
+     "properties": {
+      "Anchored": true,
+      "Size": [
+       79.5,
+       4,
+       61.0
+      ],
+      "CFrame": [
+       80.25,
+       -2.0,
+       -10.0,
+       1.0,
+       0,
+       0.0,
+       0,
+       1,
+       0,
+       -0.0,
+       0,
+       1.0
+      ],
+      "Color": [
+       0.12,
+       0.17,
+       0.11
+      ],
+      "Material": "Grass",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "name": "Path",
+     "className": "Part",
+     "properties": {
+      "Anchored": true,
+      "Size": [
+       8,
+       0.2,
+       40
+      ],
+      "CFrame": [
+       0,
+       0.1,
+       40,
+       1.0,
+       0,
+       0.0,
+       0,
+       1,
+       0,
+       -0.0,
+       0,
+       1.0
+      ],
+      "Color": [
+       0.25,
+       0.24,
+       0.22
+      ],
+      "Material": "Cobblestone",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "name": "LobbyPad",
+     "className": "Part",
+     "properties": {
+      "Anchored": true,
+      "Size": [
+       30,
+       0.4,
+       24
+      ],
+      "CFrame": [
+       0,
+       0.2,
+       70,
+       1.0,
+       0,
+       0.0,
+       0,
+       1,
+       0,
+       -0.0,
+       0,
+       1.0
+      ],
+      "Color": [
+       0.2,
+       0.2,
+       0.22
+      ],
+      "Material": "Cobblestone",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "name": "SpawnLocation",
+     "className": "SpawnLocation",
+     "properties": {
+      "Anchored": true,
+      "Size": [
+       10,
+       1,
+       10
+      ],
+      "CFrame": [
+       0,
+       0.5,
+       72,
+       1.0,
+       0,
+       0.0,
+       0,
+       1,
+       0,
+       -0.0,
+       0,
+       1.0
+      ],
+      "Color": [
+       0.3,
+       0.3,
+       0.32
+      ],
+      "Material": "Slate",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Duration": 0,
+      "Neutral": true,
+      "AllowTeamChangeOnTouch": false
+     }
+    },
+    {
+     "name": "LobbyLamp",
+     "className": "Part",
+     "properties": {
+      "Anchored": true,
+      "Size": [
+       1,
+       10,
+       1
+      ],
+      "CFrame": [
+       -12,
+       5,
+       62,
+       1.0,
+       0,
+       0.0,
+       0,
+       1,
+       0,
+       -0.0,
+       0,
+       1.0
+      ],
+      "Color": [
+       0.2,
+       0.14,
+       0.1
+      ],
+      "Material": "Metal",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     }
+    },
+    {
+     "name": "LobbyLampBulb",
+     "className": "Part",
+     "properties": {
+      "Anchored": true,
+      "Size": [
+       1.6,
+       1.6,
+       1.6
+      ],
+      "CFrame": [
+       -12,
+       10.5,
+       62,
+       1.0,
+       0,
+       0.0,
+       0,
+       1,
+       0,
+       -0.0,
+       0,
+       1.0
+      ],
+      "Color": [
+       1.0,
+       0.78,
+       0.5
+      ],
+      "Material": "Neon",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     },
+     "children": [
+      {
+       "name": "Light",
+       "className": "PointLight",
+       "properties": {
+        "Brightness": 1.2,
+        "Range": 30,
+        "Color": [
+         1.0,
+         0.78,
+         0.5
+        ],
+        "Shadows": true
+       }
+      }
+     ]
+    },
+    {
+     "name": "Sign",
+     "className": "Part",
+     "properties": {
+      "Anchored": true,
+      "Size": [
+       14,
+       6,
+       0.5
+      ],
+      "CFrame": [
+       0,
+       4,
+       58,
+       1.0,
+       0,
+       0.0,
+       0,
+       1,
+       0,
+       -0.0,
+       0,
+       1.0
+      ],
+      "Color": [
+       0.2,
+       0.14,
+       0.1
+      ],
+      "Material": "Wood",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth"
+     },
+     "children": [
+      {
+       "name": "SurfaceGui",
+       "className": "SurfaceGui",
+       "properties": {
+        "Face": "Front",
+        "SizingMode": "PixelsPerStud",
+        "PixelsPerStud": 40,
+        "LightInfluence": 0,
+        "Brightness": 1.5
+       },
+       "children": [
+        {
+         "name": "Title",
+         "className": "TextLabel",
+         "properties": {
+          "Size": {
+           "UDim2": [
+            [
+             1,
+             0
+            ],
+            [
+             1,
+             0
+            ]
+           ]
+          },
+          "BackgroundTransparency": 1,
+          "Text": "IT TALKS BACK\nFind 3 fuses. Restore power. Get out.\nIt is listening.",
+          "TextColor3": [
+           0.92,
+           0.85,
+           0.75
+          ],
+          "TextScaled": true,
+          "FontFace": {
+           "family": "rbxasset://fonts/families/SpecialElite.json",
+           "weight": "Regular",
+           "style": "Normal"
+          }
+         }
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "name": "Bound",
+     "className": "Part",
+     "properties": {
+      "Anchored": true,
+      "Size": [
+       240,
+       40,
+       1
+      ],
+      "CFrame": [
+       0,
+       20,
+       120,
+       1.0,
+       0,
+       0.0,
+       0,
+       1,
+       0,
+       -0.0,
+       0,
+       1.0
+      ],
+      "Color": [
+       0,
+       0,
+       0
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 1,
+      "CastShadow": false
+     }
+    },
+    {
+     "name": "Bound2",
+     "className": "Part",
+     "properties": {
+      "Anchored": true,
+      "Size": [
+       240,
+       40,
+       1
+      ],
+      "CFrame": [
+       0,
+       20,
+       -120,
+       1.0,
+       0,
+       0.0,
+       0,
+       1,
+       0,
+       -0.0,
+       0,
+       1.0
+      ],
+      "Color": [
+       0,
+       0,
+       0
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 1,
+      "CastShadow": false
+     }
+    },
+    {
+     "name": "Bound3",
+     "className": "Part",
+     "properties": {
+      "Anchored": true,
+      "Size": [
+       1,
+       40,
+       240
+      ],
+      "CFrame": [
+       120,
+       20,
+       0,
+       1.0,
+       0,
+       0.0,
+       0,
+       1,
+       0,
+       -0.0,
+       0,
+       1.0
+      ],
+      "Color": [
+       0,
+       0,
+       0
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 1,
+      "CastShadow": false
+     }
+    },
+    {
+     "name": "Bound4",
+     "className": "Part",
+     "properties": {
+      "Anchored": true,
+      "Size": [
+       1,
+       40,
+       240
+      ],
+      "CFrame": [
+       -120,
+       20,
+       0,
+       1.0,
+       0,
+       0.0,
+       0,
+       1,
+       0,
+       -0.0,
+       0,
+       1.0
+      ],
+      "Color": [
+       0,
+       0,
+       0
+      ],
+      "Material": "SmoothPlastic",
+      "TopSurface": "Smooth",
+      "BottomSurface": "Smooth",
+      "Transparency": 1,
+      "CastShadow": false
+     }
+    }
+   ]
+  }
+ ]
+}

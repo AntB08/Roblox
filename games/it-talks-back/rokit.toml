@@ -1,0 +1,13 @@
+# rokit.toml: pinned toolchain. Run `rokit install` after cloning.
+# Versions copied from knowledge/08-bot-toolchain-and-workflow.md (snapshot 2026-11-05).
+# Checked 2026-11-05: every version below exists as a git tag upstream (and was the latest tag).
+# NOT checked: that each release has a binary for your platform. If `rokit install` fails for
+# one, run `rokit add <repo>` without a version and record what it picked here.
+[tools]
+rojo = "rojo-rbx/rojo@7.7.1"
+wally = "UpliftGames/wally@0.3.2"
+wally-package-types = "JohnnyMorganz/wally-package-types@1.7.0"
+selene = "Kampfkarren/selene@0.32.0"
+stylua = "JohnnyMorganz/StyLua@2.6.0"
+luau-lsp = "JohnnyMorganz/luau-lsp@1.70.1"
+lune = "lune-org/lune@0.11.1"

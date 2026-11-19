@@ -1,0 +1,134 @@
+{
+  "name": "it-talks-back",
+  "emitLegacyScripts": true,
+  "globIgnorePaths": [
+    "**/__tests__/**",
+    "**/*.spec.luau"
+  ],
+  "servePlaceIds": [],
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "Shared": {
+        "$path": "src/shared"
+      }
+    },
+    "ServerScriptService": {
+      "Server": {
+        "$path": "src/server"
+      }
+    },
+    "StarterPlayer": {
+      "$properties": {
+        "CharacterWalkSpeed": 14,
+        "CharacterJumpHeight": 5,
+        "CameraMaxZoomDistance": 14,
+        "CameraMinZoomDistance": 0.5
+      },
+      "StarterPlayerScripts": {
+        "Client": {
+          "$path": "src/client"
+        }
+      }
+    },
+    "StarterGui": {
+      "HUD": {
+        "$path": "src/gui/HUD.model.json"
+      },
+      "Overlay": {
+        "$path": "src/gui/Overlay.model.json"
+      }
+    },
+    "Workspace": {
+      "$properties": {
+        "StreamingEnabled": true,
+        "Gravity": 196.2
+      },
+      "Map": {
+        "$path": "src/map/House.model.json"
+      }
+    },
+    "Lighting": {
+      "$properties": {
+        "LightingStyle": "Soft",
+        "PrioritizeLightingQuality": true,
+        "Brightness": 0.4,
+        "ExposureCompensation": 0.2,
+        "ClockTime": 0.2,
+        "GeographicLatitude": 35,
+        "GlobalShadows": true,
+        "ShadowSoftness": 0.4,
+        "EnvironmentDiffuseScale": 0.2,
+        "EnvironmentSpecularScale": 0.3,
+        "Ambient": [
+          0.09,
+          0.09,
+          0.11
+        ],
+        "OutdoorAmbient": [
+          0.16,
+          0.17,
+          0.22
+        ],
+        "ColorShift_Top": [
+          0.6,
+          0.65,
+          0.8
+        ],
+        "ColorShift_Bottom": [
+          0,
+          0,
+          0
+        ]
+      },
+      "Atmosphere": {
+        "$className": "Atmosphere",
+        "$properties": {
+          "Density": 0.38,
+          "Offset": 0.1,
+          "Haze": 2,
+          "Glare": 0,
+          "Color": [
+            0.2,
+            0.22,
+            0.3
+          ],
+          "Decay": [
+            0.08,
+            0.09,
+            0.12
+          ]
+        }
+      },
+      "Sky": {
+        "$className": "Sky"
+      },
+      "ColorCorrection": {
+        "$className": "ColorCorrectionEffect",
+        "$properties": {
+          "Brightness": 0.02,
+          "Contrast": 0.12,
+          "Saturation": -0.25,
+          "TintColor": [
+            0.92,
+            0.95,
+            1
+          ]
+        }
+      },
+      "Bloom": {
+        "$className": "BloomEffect",
+        "$properties": {
+          "Intensity": 0.6,
+          "Size": 28,
+          "Threshold": 0.95
+        }
+      }
+    },
+    "SoundService": {
+      "$properties": {
+        "RespectFilteringEnabled": true
+      }
+    }
+  }
+}

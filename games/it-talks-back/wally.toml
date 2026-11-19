@@ -1,0 +1,25 @@
+# Wally manifest. OPTIONAL: the template builds WITHOUT Wally because ProfileStore,
+# Trove and Signal are vendored (src/server/Packages, src/shared/Packages).
+# Wally is still needed for the Jest dev-dependencies used by the cloud test run.
+#
+# To switch the runtime libraries to Wally instead of the vendored copies, see
+# README.md -> "Using Wally instead of the vendored packages".
+[package]
+name = "yourname/starter-game"      # RENAME: scope/name, lowercase
+version = "0.1.0"
+registry = "https://github.com/UpliftGames/wally-index"
+realm = "shared"
+private = true                      # never publish a game as a package
+license = "UNLICENSED"
+
+[dependencies]
+# Same versions as the vendored copies (verify with `wally search` before switching).
+Trove = "sleitnick/trove@1.8.0"
+Signal = "sleitnick/signal@2.0.3"
+
+[server-dependencies]
+ProfileStore = "lm-loleris/profilestore@1.0.3"
+
+[dev-dependencies]
+Jest = "roblox/jest@=3.20.0"
+JestGlobals = "roblox/jest-globals@=3.20.0"
