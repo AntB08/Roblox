@@ -1,12 +1,13 @@
 --!strict
--- VoiceController: plays the monster's lines as 3D speech from wherever it stands, and shows a
--- subtitle when you are close enough to hear it.
+-- VoiceController: the monster's voice, played in 3D from its head, plus subtitles when you
+-- are close enough to hear it. The server only sends the line's text (MonsterSpeak).
 --
--- Audio graph (new Audio API, built locally on each client):
---   AudioTextToSpeech (monster Head) -> Wire -> AudioEmitter (monster Head)
---   AudioListener (camera) -> Wire -> AudioDeviceOutput
--- The emitter's distance curve makes the voice fade with distance, so you hear it "from the
--- basement" or "right behind you". The server only sends the text (MonsterSpeak).
+-- Two kinds of voice:
+--   * Recorded: if Shared/Config/VoiceLines.luau has an uploaded clip for this exact line, it
+--     plays that (your own horror voice), with only room reverb added.
+--   * Live: Roblox text-to-speech, disguised as a monster. Two layers (normal-low and very low)
+--     run through EQ -> Distortion -> Chorus -> Tremolo -> Reverb. Tune in HorrorConfig.Voice.Effects.
+-- A camera AudioListener -> AudioDeviceOutput lets the player hear the emitter.
 
 local CollectionService = game:GetService("CollectionService")
 local Players = game:GetService("Players")
@@ -17,6 +18,7 @@ local Workspace = game:GetService("Workspace")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local NetClient = require(Shared.Net.Client)
 local HorrorConfig = require(Shared.Config.HorrorConfig)
+local VoiceLines = require(Shared.Config.VoiceLines)
 
 local Client = script.Parent.Parent
 local Hud = require(Client.UI.Hud)
@@ -26,7 +28,6 @@ local cfg = HorrorConfig.Voice
 
 local VoiceController = {}
 
-local tts: AudioTextToSpeech? = nil
 local subtitleToken = 0
 
 local function wire(source: Instance, target: Instance)
@@ -64,24 +65,93 @@ local function monsterHead(): BasePart?
 	return nil
 end
 
-local function ensureVoice(head: BasePart): AudioTextToSpeech
-	local existing = head:FindFirstChild("Voice")
-	if existing and existing:IsA("AudioTextToSpeech") then
-		return existing
+type VoiceRig = {
+	main: AudioTextToSpeech,
+	low: AudioTextToSpeech,
+	clip: AudioPlayer,
+}
+
+local speaking: VoiceRig? = nil
+
+local function effect<T>(className: string, name: string, parent: Instance, props: { [string]: any }): T
+	local inst = Instance.new(className)
+	inst.Name = name
+	for key, value in props do
+		(inst :: any)[key] = value
 	end
-	local voice = Instance.new("AudioTextToSpeech")
-	voice.Name = "Voice"
-	voice.VoiceId = cfg.VoiceId
-	voice.Pitch = cfg.Pitch
-	voice.Speed = cfg.Speed
-	voice.Volume = cfg.Volume
-	voice.Parent = head
+	inst.Parent = parent
+	return inst :: any
+end
+
+-- Builds the monster's voice on its head once:
+--   live:     [TTS main] + [TTS low layer] -> EQ -> Distortion -> Chorus -> Tremolo -> Reverb -> Emitter
+--   recorded: [AudioPlayer clip] ----------------------------------------------> Reverb -> Emitter
+local function ensureVoice(head: BasePart): VoiceRig
+	local folder = head:FindFirstChild("MonsterVoice")
+	if folder then
+		return {
+			main = folder:FindFirstChild("Main") :: AudioTextToSpeech,
+			low = folder:FindFirstChild("Low") :: AudioTextToSpeech,
+			clip = folder:FindFirstChild("Clip") :: AudioPlayer,
+		}
+	end
+	local fx = cfg.Effects
+	local root = Instance.new("Folder")
+	root.Name = "MonsterVoice"
+
+	local main = effect("AudioTextToSpeech", "Main", root, {
+		VoiceId = cfg.VoiceId,
+		Pitch = cfg.Pitch,
+		Speed = cfg.Speed,
+		Volume = cfg.Volume,
+	}) :: AudioTextToSpeech
+	local low = effect("AudioTextToSpeech", "Low", root, {
+		VoiceId = cfg.VoiceId,
+		Pitch = cfg.LowPitch,
+		Speed = cfg.Speed,
+		Volume = cfg.Volume * cfg.LowLayerVolume,
+	}) :: AudioTextToSpeech
+	local clip = effect("AudioPlayer", "Clip", root, { Volume = cfg.Volume }) :: AudioPlayer
+
+	local eq = effect("AudioEqualizer", "EQ", root, {
+		LowGain = fx.LowGain,
+		MidGain = fx.MidGain,
+		HighGain = fx.HighGain,
+	})
+	local distortion = effect("AudioDistortion", "Distortion", root, { Level = fx.Distortion })
+	local chorus = effect("AudioChorus", "Chorus", root, {
+		Mix = fx.ChorusMix,
+		Rate = fx.ChorusRate,
+		Depth = fx.ChorusDepth,
+	})
+	local tremolo = effect("AudioTremolo", "Tremolo", root, {
+		Depth = fx.TremoloDepth,
+		Frequency = fx.TremoloFrequency,
+	})
+	local reverb = effect("AudioReverb", "Reverb", root, {
+		DecayTime = fx.ReverbDecay,
+		WetLevel = fx.ReverbWet,
+		DryLevel = fx.ReverbDry,
+	})
 	local emitter = Instance.new("AudioEmitter")
 	emitter.Name = "VoiceEmitter"
 	emitter:SetDistanceAttenuation({ [0] = 1, [15] = 0.9, [40] = 0.45, [75] = 0.12, [110] = 0 } :: any)
 	emitter.Parent = head
-	wire(voice, emitter)
-	return voice
+
+	wire(main, eq)
+	wire(low, eq)
+	wire(eq, distortion)
+	wire(distortion, chorus)
+	wire(chorus, tremolo)
+	wire(tremolo, reverb)
+	wire(clip, reverb)
+	wire(reverb, emitter)
+	root.Parent = head
+	return { main = main, low = low, clip = clip }
+end
+
+local function isRecording(asset: string?): boolean
+	return asset ~= nil and asset ~= "" and asset ~= "rbxassetid://0"
 end
 
 local function showSubtitle(text: string)
@@ -110,26 +180,45 @@ local function speak(text: string)
 	if (from - head.Position).Magnitude <= cfg.HearRange then
 		showSubtitle(text)
 	end
-	local voice = ensureVoice(head)
-	tts = voice
+	local rig = ensureVoice(head)
+	speaking = rig
 	task.spawn(function()
 		local ok, err = pcall(function()
-			if voice.IsPlaying then
-				voice:Pause()
+			for _, source in { rig.main, rig.low } do
+				if source.IsPlaying then
+					source:Pause()
+				end
 			end
-			voice.Text = text
-			voice.TimePosition = 0
-			voice:LoadAsync()
-			voice:Play()
+			if rig.clip.IsPlaying then
+				rig.clip:Stop()
+			end
+			local asset = VoiceLines[text]
+			if isRecording(asset) then
+				-- Your recorded voice for this exact line.
+				rig.clip.Asset = asset
+				rig.clip.TimePosition = 0
+				rig.clip:Play()
+				return
+			end
+			-- Live voice: load both layers, then start them together so they stay in sync.
+			for _, source in { rig.main, rig.low } do
+				source.Text = text
+				source.TimePosition = 0
+			end
+			rig.main:LoadAsync()
+			rig.low:LoadAsync()
+			rig.main:Play()
+			rig.low:Play()
 		end)
 		if not ok then
-			warn(`[VoiceController] text-to-speech failed: {err}`) -- subtitles still showed
+			warn(`[VoiceController] monster voice failed: {err}`) -- subtitles still showed
 		end
 	end)
 end
 
 function VoiceController.isSpeaking(): boolean
-	return tts ~= nil and tts.IsPlaying
+	local rig = speaking
+	return rig ~= nil and (rig.main.IsPlaying or rig.clip.IsPlaying)
 end
 
 function VoiceController:Start()

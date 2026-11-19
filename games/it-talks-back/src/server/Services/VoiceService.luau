@@ -22,6 +22,7 @@ local HorrorConfig = require(Shared.Config.HorrorConfig)
 
 local Net = require(script.Parent.Parent.Net)
 local Lines = require(script.Parent.Parent.Config.Lines)
+local VoiceLines = require(Shared.Config.VoiceLines)
 local LiveConfig = require(script.Parent.LiveConfig)
 
 export type Context = { name: string?, room: string?, count: number?, total: number?, said: string? }
@@ -63,6 +64,15 @@ local function fill(template: string, ctx: Context): string
 	)
 end
 
+local function isRecorded(line: string): boolean
+	local asset = VoiceLines[line]
+	return asset ~= nil and asset ~= "" and asset ~= "rbxassetid://0"
+end
+
+local function recordedOnly(): boolean
+	return HorrorConfig.Voice.Mode == "RecordedOnly"
+end
+
 local function pickCanned(kind: string, ctx: Context): string?
 	local pool = Lines[kind]
 	if not pool or #pool == 0 then
@@ -76,6 +86,9 @@ local function pickCanned(kind: string, ctx: Context): string?
 			if (ctx :: any)[key] == nil then
 				ok = false
 			end
+		end
+		if ok and recordedOnly() and not isRecorded(line) then
+			ok = false
 		end
 		if ok and (line ~= lastLine[kind] or #pool == 1) then
 			table.insert(options, line)
@@ -186,7 +199,63 @@ local function generateOpenAI(situation: string): string?
 	return if clean then filterForEveryone(clean) else nil
 end
 
+-- RecordedOnly mode: GPT can't write new audio, so it chooses which recording fits best.
+local function chooseRecorded(kind: string, ctx: Context): string?
+	local oc = HorrorConfig.Voice.OpenAI
+	if not oc.Enabled or openAIFailures >= HorrorConfig.Voice.AIMaxFailures then
+		return nil
+	end
+	local options = {}
+	for _, pool in Lines do
+		for _, line in pool do
+			if isRecorded(line) and not line:find("{", 1, true) then
+				table.insert(options, line)
+			end
+		end
+	end
+	if #options < 2 then
+		return nil
+	end
+	local list = {}
+	for i, line in options do
+		table.insert(list, `{i}. {line}`)
+	end
+	local situation = fill(AI_KINDS[kind] or "React to the moment.", ctx)
+		.. "\nYou can ONLY say one of these recorded lines. Reply with just its number:\n"
+		.. table.concat(list, "\n")
+	local ok, result = pcall(function()
+		local secret = HttpService:GetSecret(oc.SecretName)
+		return HttpService:RequestAsync({
+			Url = OPENAI_URL,
+			Method = "POST",
+			Headers = { ["Content-Type"] = "application/json", ["Authorization"] = secret:AddPrefix("Bearer ") },
+			Body = HttpService:JSONEncode({
+				model = oc.Model,
+				max_tokens = 5,
+				temperature = 0.7,
+				messages = {
+					{ role = "system", content = SYSTEM_PROMPT },
+					{ role = "user", content = situation },
+				},
+			}),
+		})
+	end)
+	if not ok or typeof(result) ~= "table" or not result.Success then
+		openAIFailures += 1
+		return nil
+	end
+	local decoded, data = pcall(HttpService.JSONDecode, HttpService, result.Body)
+	local choice = decoded and typeof(data) == "table" and data.choices and data.choices[1]
+	local content = choice and choice.message and choice.message.content
+	local index = if typeof(content) == "string" then tonumber(content:match("%d+")) else nil
+	openAIFailures = 0
+	return if index then options[index] else nil
+end
+
 local function generate(kind: string, ctx: Context): string?
+	if recordedOnly() then
+		return chooseRecorded(kind, ctx) -- never invent text there is no recording for
+	end
 	local fromGPT = generateOpenAI(fill(AI_KINDS[kind], ctx))
 	if fromGPT then
 		return fromGPT

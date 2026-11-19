@@ -3,7 +3,9 @@
 A co-op Roblox horror game: find 3 fuses, power the generator and escape a dark house while
 **The Tenant** hunts you. It talks to you, and it listens.
 
-- **It speaks from where it stands.** 3D text-to-speech from its head, plus subtitles when you're close.
+- **It speaks from where it stands**, in 3D from its head, plus subtitles when you're close. The voice
+  is either **your recordings** (`src/shared/Config/VoiceLines.luau`) or a **processed live voice**
+  (two pitched layers + EQ, distortion, chorus, tremolo and reverb) so it doesn't sound like plain TTS.
 - **It hears you.** Server-measured footsteps (running is loud, crouching is silent), fuses, closet doors and rescues.
 - **It lies.** Fuse "hints" are true half the time. When it lies, it waits for you in that room.
 - **Voice chat only.** Text chat is hidden. Talk with your mic, and it hears you too: talking makes
@@ -34,6 +36,15 @@ Design: `docs/DESIGN.md`. How it's built: `docs/SYSTEMS.md`. Tuning: `src/shared
 | Flashlight | F | Y | LIGHT |
 | Callouts | 1–4 | D-pad | "Call out" menu |
 | Hide / take / insert / rescue | E (prompt) | X | tap the prompt |
+
+## Giving it a real horror voice
+1. Open `src/shared/Config/VoiceLines.luau`: it lists every line that can be recorded (33 lines).
+2. Record them in your voice of choice: yourself, a friend, a voice actor, or an AI voice tool whose
+   license allows commercial game use. Don't clone a real person's voice. Process them (pitch down,
+   grit, breath) in Audacity or similar, export `.ogg`, trim silence.
+3. Upload each in Creator Hub → Development Items → Audio, then paste each id next to its line.
+4. `HorrorConfig.Voice.Mode`: `"Hybrid"` plays recordings when they exist, and the live voice for new AI
+   lines and lines with names. `"RecordedOnly"` uses only your recordings, and GPT picks which one fits.
 
 ## Things to know
 - **Voice:** `AudioTextToSpeech` needs a published experience, and it may stay silent in some Studio

@@ -71,10 +71,32 @@ local HorrorConfig = {
 		AmbientMin = 25,
 		AmbientMax = 45,
 		GlobalCooldown = 3.5,
-		VoiceId = "1",
-		Pitch = -6, -- semitones
-		Speed = 0.85,
+		-- "Hybrid": recorded clip when a line has one (Shared/Config/VoiceLines.luau), otherwise the
+		--           processed live voice (new AI lines possible).
+		-- "RecordedOnly": only lines you recorded; GPT picks the best-fitting recording for replies.
+		Mode = "Hybrid",
+		VoiceId = "1", -- base text-to-speech voice under the effects
+		Pitch = -7, -- semitones, main layer
+		LowPitch = -12, -- semitones, the second "demon" layer under it
+		LowLayerVolume = 0.7,
+		Speed = 0.8,
 		Volume = 2.5,
+		-- Effects chain on the live voice (all on the monster, so it stays 3D):
+		-- EQ -> Distortion -> Chorus -> Tremolo -> Reverb. Tune by ear in Studio.
+		Effects = {
+			LowGain = 5, -- dB
+			MidGain = 0,
+			HighGain = -8,
+			Distortion = 0.18, -- 0..1
+			ChorusMix = 0.35,
+			ChorusRate = 0.6,
+			ChorusDepth = 0.4,
+			TremoloDepth = 0.18, -- a slight shake in the voice
+			TremoloFrequency = 7,
+			ReverbDecay = 2.4, -- seconds (old house)
+			ReverbWet = -6, -- dB
+			ReverbDry = 0,
+		},
 		UseAI = true, -- try TextGenerator for flavor lines; canned lines are always the fallback
 		AITimeout = 4, -- seconds to wait for a fresh line before speaking the canned one
 		-- GPT writes the lines (Roblox text-to-speech still speaks them). Needs the API key in the

@@ -13,4 +13,5 @@ Music: instrumental only, authored to loop seamlessly. SFX: non-vocal.
 | Music.Ambient | PLACEHOLDER | audio | | | instrumental drone, seamless loop |
 | Music.Chase | PLACEHOLDER | audio | | | instrumental chase loop |
 | Images.CoinIcon | PLACEHOLDER | image | | | |
-| Monster voice | (none) | TTS | Roblox AudioTextToSpeech | generated at runtime | VoiceId 1, pitch -6 |
+| Monster live voice | (none) | TTS + effects | Roblox AudioTextToSpeech | generated at runtime | two layers, pitch -7 / -12, effects chain |
+| VoiceLines.* | PLACEHOLDER (33 lines) | audio | | | recorded monster lines, see src/shared/Config/VoiceLines.luau |
