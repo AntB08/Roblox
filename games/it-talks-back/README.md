@@ -1,6 +1,7 @@
 # It Talks Back (prototype)
 
-A co-op Roblox horror game: find 3 fuses, power the generator and escape a dark house while
+A co-op Roblox horror game played over **nights**: finish the night's task checklist (fuses, a haunted
+radio, candles, a key), then escape the dark house while
 **The Tenant** hunts you. It talks to you, and it listens.
 
 - **It speaks from where it stands**, in 3D from its head, plus subtitles when you're close. The voice

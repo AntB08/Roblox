@@ -1935,6 +1935,323 @@
      }
     }
    ]
+  },
+  {
+   "className": "Frame",
+   "name": "Tasks",
+   "properties": {
+    "AnchorPoint": [
+     0,
+     0
+    ],
+    "Position": {
+     "UDim2": [
+      [
+       0,
+       12
+      ],
+      [
+       0,
+       8
+      ]
+     ]
+    },
+    "AutomaticSize": "XY",
+    "Size": {
+     "UDim2": [
+      [
+       0,
+       0
+      ],
+      [
+       0,
+       0
+      ]
+     ]
+    },
+    "BackgroundColor3": [
+     0.055,
+     0.05,
+     0.06
+    ],
+    "BackgroundTransparency": 0.25,
+    "Visible": false
+   },
+   "children": [
+    {
+     "className": "UIScale",
+     "name": "Responsive",
+     "properties": {
+      "Scale": 1
+     }
+    },
+    {
+     "className": "UICorner",
+     "name": "UICorner",
+     "properties": {
+      "CornerRadius": {
+       "UDim": [
+        0,
+        12
+       ]
+      }
+     }
+    },
+    {
+     "className": "UIPadding",
+     "name": "UIPadding",
+     "properties": {
+      "PaddingTop": {
+       "UDim": [
+        0,
+        10
+       ]
+      },
+      "PaddingBottom": {
+       "UDim": [
+        0,
+        10
+       ]
+      },
+      "PaddingLeft": {
+       "UDim": [
+        0,
+        10
+       ]
+      },
+      "PaddingRight": {
+       "UDim": [
+        0,
+        10
+       ]
+      }
+     }
+    },
+    {
+     "className": "UIListLayout",
+     "name": "UIListLayout",
+     "properties": {
+      "FillDirection": "Vertical",
+      "Padding": {
+       "UDim": [
+        0,
+        4
+       ]
+      },
+      "SortOrder": "LayoutOrder",
+      "HorizontalAlignment": "Left"
+     }
+    },
+    {
+     "className": "TextLabel",
+     "name": "Title",
+     "properties": {
+      "AutomaticSize": "XY",
+      "Size": {
+       "UDim2": [
+        [
+         0,
+         0
+        ],
+        [
+         0,
+         0
+        ]
+       ]
+      },
+      "BackgroundTransparency": 1,
+      "Text": "TONIGHT",
+      "TextColor3": [
+       0.78,
+       0.12,
+       0.1
+      ],
+      "TextSize": 14,
+      "FontFace": {
+       "family": "rbxasset://fonts/families/BuilderSans.json",
+       "weight": "Bold",
+       "style": "Normal"
+      },
+      "LayoutOrder": 1,
+      "RichText": false
+     }
+    },
+    {
+     "className": "TextLabel",
+     "name": "Row1",
+     "properties": {
+      "AutomaticSize": "XY",
+      "Size": {
+       "UDim2": [
+        [
+         0,
+         0
+        ],
+        [
+         0,
+         0
+        ]
+       ]
+      },
+      "BackgroundTransparency": 1,
+      "Text": "",
+      "TextColor3": [
+       0.93,
+       0.9,
+       0.85
+      ],
+      "TextSize": 17,
+      "FontFace": {
+       "family": "rbxasset://fonts/families/BuilderSans.json",
+       "weight": "Bold",
+       "style": "Normal"
+      },
+      "LayoutOrder": 2,
+      "RichText": false,
+      "Visible": false
+     }
+    },
+    {
+     "className": "TextLabel",
+     "name": "Row2",
+     "properties": {
+      "AutomaticSize": "XY",
+      "Size": {
+       "UDim2": [
+        [
+         0,
+         0
+        ],
+        [
+         0,
+         0
+        ]
+       ]
+      },
+      "BackgroundTransparency": 1,
+      "Text": "",
+      "TextColor3": [
+       0.93,
+       0.9,
+       0.85
+      ],
+      "TextSize": 17,
+      "FontFace": {
+       "family": "rbxasset://fonts/families/BuilderSans.json",
+       "weight": "Bold",
+       "style": "Normal"
+      },
+      "LayoutOrder": 3,
+      "RichText": false,
+      "Visible": false
+     }
+    },
+    {
+     "className": "TextLabel",
+     "name": "Row3",
+     "properties": {
+      "AutomaticSize": "XY",
+      "Size": {
+       "UDim2": [
+        [
+         0,
+         0
+        ],
+        [
+         0,
+         0
+        ]
+       ]
+      },
+      "BackgroundTransparency": 1,
+      "Text": "",
+      "TextColor3": [
+       0.93,
+       0.9,
+       0.85
+      ],
+      "TextSize": 17,
+      "FontFace": {
+       "family": "rbxasset://fonts/families/BuilderSans.json",
+       "weight": "Bold",
+       "style": "Normal"
+      },
+      "LayoutOrder": 4,
+      "RichText": false,
+      "Visible": false
+     }
+    },
+    {
+     "className": "TextLabel",
+     "name": "Row4",
+     "properties": {
+      "AutomaticSize": "XY",
+      "Size": {
+       "UDim2": [
+        [
+         0,
+         0
+        ],
+        [
+         0,
+         0
+        ]
+       ]
+      },
+      "BackgroundTransparency": 1,
+      "Text": "",
+      "TextColor3": [
+       0.93,
+       0.9,
+       0.85
+      ],
+      "TextSize": 17,
+      "FontFace": {
+       "family": "rbxasset://fonts/families/BuilderSans.json",
+       "weight": "Bold",
+       "style": "Normal"
+      },
+      "LayoutOrder": 5,
+      "RichText": false,
+      "Visible": false
+     }
+    },
+    {
+     "className": "TextLabel",
+     "name": "Row5",
+     "properties": {
+      "AutomaticSize": "XY",
+      "Size": {
+       "UDim2": [
+        [
+         0,
+         0
+        ],
+        [
+         0,
+         0
+        ]
+       ]
+      },
+      "BackgroundTransparency": 1,
+      "Text": "",
+      "TextColor3": [
+       0.93,
+       0.9,
+       0.85
+      ],
+      "TextSize": 17,
+      "FontFace": {
+       "family": "rbxasset://fonts/families/BuilderSans.json",
+       "weight": "Bold",
+       "style": "Normal"
+      },
+      "LayoutOrder": 6,
+      "RichText": false,
+      "Visible": false
+     }
+    }
+   ]
   }
  ]
 }

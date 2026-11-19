@@ -1,7 +1,8 @@
 --!strict
 -- FuseService: the objective. Three fuses spawn at random FuseSpawn markers (at most two per
 -- room). A player carries one at a time (attribute "CarryingFuse") and inserts it at the
--- generator. Three inserted -> power on: lights change, the exit gate opens, the monster rages.
+-- generator. All inserted -> power on: lights change and the monster rages. The exit gate opens once every
+-- task of the night is done (TaskService).
 --
 -- Prompts are created here and checked again on the server when triggered. Clients only hide
 -- prompts that don't apply to them (PromptController), which is cosmetic.
@@ -37,6 +38,7 @@ FuseService.PickedUp = Signal.new() -- (player)
 local worldFuses: { [BasePart]: string } = {} -- fuse part -> room
 local carried: { [Player]: BasePart } = {} -- the visual welded to the carrier
 local inserted = 0
+local total = HorrorConfig.Fuses.Count -- set per night by spawnRound(count)
 local generatorPrompt: ProximityPrompt? = nil
 local rng = Random.new()
 
@@ -165,13 +167,13 @@ local function setSlots()
 		slot.Color = if index <= inserted then SLOT_ON else SLOT_OFF
 	end
 	Workspace:SetAttribute("FusesInserted", inserted)
-	Workspace:SetAttribute("FusesTotal", HorrorConfig.Fuses.Count)
+	Workspace:SetAttribute("FusesTotal", total)
 	if generatorPrompt then
-		generatorPrompt.ObjectText = `Generator ({inserted}/{HorrorConfig.Fuses.Count})`
+		generatorPrompt.ObjectText = `Generator ({inserted}/{total})`
 	end
 end
 
-local function setGate(open: boolean)
+function FuseService.setGate(open: boolean)
 	local gate = Map.one("ExitGate")
 	local closedCFrame = gate:GetAttribute("ClosedCFrame")
 	if typeof(closedCFrame) ~= "CFrame" then
@@ -205,10 +207,10 @@ local function onInsert(player: Player)
 	setSlots()
 	DataService.bumpStat(player, "FusesInserted")
 	NoiseService.emit(body.Position, HorrorConfig.Noise.FuseInsert, "FuseInsert", player)
-	FuseService.Inserted:Fire(player, inserted, HorrorConfig.Fuses.Count)
-	if inserted >= HorrorConfig.Fuses.Count then
+	FuseService.Inserted:Fire(player, inserted, total)
+	if inserted >= total then
+		-- Power on: lights come back. The gate opens when ALL of tonight's tasks are done (TaskService).
 		Workspace:SetAttribute("PowerOn", true)
-		setGate(true)
 		FuseService.PowerRestored:Fire()
 	end
 end
@@ -225,10 +227,16 @@ function FuseService.reset()
 	inserted = 0
 	Workspace:SetAttribute("PowerOn", false)
 	setSlots()
-	setGate(false)
+	FuseService.setGate(false)
 end
 
-function FuseService.spawnRound()
+function FuseService.totalCount(): number
+	return total
+end
+
+function FuseService.spawnRound(count: number?)
+	total = count or HorrorConfig.Fuses.Count
+	setSlots()
 	local spawns = Map.fuseSpawns()
 	-- Fisher-Yates shuffle, then take the first Count that respect MaxPerRoom.
 	for i = #spawns, 2, -1 do
@@ -238,7 +246,7 @@ function FuseService.spawnRound()
 	local perRoom: { [string]: number } = {}
 	local placed = 0
 	for _, point in spawns do
-		if placed >= HorrorConfig.Fuses.Count then
+		if placed >= total then
 			break
 		end
 		local n = perRoom[point.room] or 0

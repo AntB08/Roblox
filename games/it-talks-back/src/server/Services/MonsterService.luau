@@ -87,6 +87,7 @@ local reason = ""
 local lure: Lure? = nil
 local pullCloset: Model? = nil
 local rage = false
+local speedMultiplier = 1 -- per night (RoundService)
 local nextAmbient = 0
 local nextHint = 0
 local lastChaseLine = 0
@@ -198,7 +199,7 @@ local function moveToward(to: Vector3, speed: number, direct: boolean?)
 	if not h or not r then
 		return
 	end
-	h.WalkSpeed = speed
+	h.WalkSpeed = speed * speedMultiplier
 	local rootLevel = Vector3.new(to.X, r.Position.Y, to.Z)
 	if direct and math.abs(to.Y - r.Position.Y) < 3.5 and clearLine(r.Position, rootLevel) then
 		waypoints = {}
@@ -738,6 +739,10 @@ function MonsterService.sleep()
 	setTarget(nil)
 	setMood("Dormant")
 	standStill()
+end
+
+function MonsterService.setSpeedMultiplier(multiplier: number)
+	speedMultiplier = multiplier
 end
 
 function MonsterService.position(): Vector3?

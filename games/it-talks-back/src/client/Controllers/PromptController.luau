@@ -11,7 +11,16 @@ local Players = game:GetService("Players")
 
 local player = Players.LocalPlayer
 
-local PROMPT_TAGS = { "GeneratorPrompt", "HidePrompt", "RescuePrompt", "FusePrompt" }
+local PROMPT_TAGS = {
+	"GeneratorPrompt",
+	"HidePrompt",
+	"RescuePrompt",
+	"FusePrompt",
+	"KeyPrompt",
+	"GatePrompt",
+	"RadioPrompt",
+	"CandlePrompt",
+}
 
 local PromptController = {}
 
@@ -31,6 +40,13 @@ local function allowed(prompt: ProximityPrompt): boolean
 	end
 	if prompt:HasTag("FusePrompt") then
 		return not carrying
+	end
+	local hasKey = player:GetAttribute("CarryingKey") == true
+	if prompt:HasTag("GatePrompt") then
+		return hasKey
+	end
+	if prompt:HasTag("KeyPrompt") then
+		return not hasKey
 	end
 	return true
 end
@@ -58,6 +74,7 @@ end
 function PromptController:Start()
 	player:GetAttributeChangedSignal("Status"):Connect(refresh)
 	player:GetAttributeChangedSignal("CarryingFuse"):Connect(refresh)
+	player:GetAttributeChangedSignal("CarryingKey"):Connect(refresh)
 	for _, tag in PROMPT_TAGS do
 		CollectionService:GetInstanceAddedSignal(tag):Connect(function(inst)
 			if inst:IsA("ProximityPrompt") then

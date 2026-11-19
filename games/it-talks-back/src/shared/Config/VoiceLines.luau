@@ -60,6 +60,16 @@ local VoiceLines: { [string]: string } = {
 	-- PowerRestored
 	["No. NO. Nobody leaves!"] = P,
 	["The lights won't save you!"] = P,
+	-- CandleOut
+	["Lights out."] = P,
+	["Too bright in here."] = P,
+	["No candles in my house."] = P,
+	-- RadioOff
+	["Hey. I was listening to that."] = P,
+	["Turn it back on. I like the static."] = P,
+	-- KeyTaken
+	["Put that key back."] = P,
+	["That key isn't yours."] = P,
 }
 
 return table.freeze(VoiceLines)

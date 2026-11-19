@@ -7472,6 +7472,636 @@
        }
       },
       {
+       "name": "RadioSpawn",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1,
+         1,
+         1
+        ],
+        "CFrame": [
+         16,
+         3.6,
+         13,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         1,
+         0,
+         1
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth",
+        "Transparency": 1,
+        "CanCollide": false,
+        "CanQuery": false,
+        "CanTouch": false,
+        "CastShadow": false,
+        "Tags": [
+         "RadioSpawn"
+        ]
+       },
+       "attributes": {
+        "Room": "Study"
+       }
+      },
+      {
+       "name": "RadioSpawn2",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1,
+         1,
+         1
+        ],
+        "CFrame": [
+         -24,
+         4.4,
+         -26.5,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         1,
+         0,
+         1
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth",
+        "Transparency": 1,
+        "CanCollide": false,
+        "CanQuery": false,
+        "CanTouch": false,
+        "CastShadow": false,
+        "Tags": [
+         "RadioSpawn"
+        ]
+       },
+       "attributes": {
+        "Room": "Kitchen"
+       }
+      },
+      {
+       "name": "RadioSpawn3",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1,
+         1,
+         1
+        ],
+        "CFrame": [
+         -24,
+         3.2,
+         9,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         1,
+         0,
+         1
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth",
+        "Transparency": 1,
+        "CanCollide": false,
+        "CanQuery": false,
+        "CanTouch": false,
+        "CastShadow": false,
+        "Tags": [
+         "RadioSpawn"
+        ]
+       },
+       "attributes": {
+        "Room": "Stairs"
+       }
+      },
+      {
+       "name": "RadioSpawn4",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1,
+         1,
+         1
+        ],
+        "CFrame": [
+         -12,
+         -10.4,
+         -2,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         1,
+         0,
+         1
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth",
+        "Transparency": 1,
+        "CanCollide": false,
+        "CanQuery": false,
+        "CanTouch": false,
+        "CastShadow": false,
+        "Tags": [
+         "RadioSpawn"
+        ]
+       },
+       "attributes": {
+        "Room": "Basement"
+       }
+      },
+      {
+       "name": "CandleSpawn",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1,
+         1,
+         1
+        ],
+        "CFrame": [
+         -36,
+         4.6,
+         -38.2,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         1,
+         0,
+         1
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth",
+        "Transparency": 1,
+        "CanCollide": false,
+        "CanQuery": false,
+        "CanTouch": false,
+        "CastShadow": false,
+        "Tags": [
+         "CandleSpawn"
+        ]
+       },
+       "attributes": {
+        "Room": "Kitchen"
+       }
+      },
+      {
+       "name": "CandleSpawn2",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1,
+         1,
+         1
+        ],
+        "CFrame": [
+         24,
+         0.8,
+         -26.5,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         1,
+         0,
+         1
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth",
+        "Transparency": 1,
+        "CanCollide": false,
+        "CanQuery": false,
+        "CanTouch": false,
+        "CastShadow": false,
+        "Tags": [
+         "CandleSpawn"
+        ]
+       },
+       "attributes": {
+        "Room": "Study"
+       }
+      },
+      {
+       "name": "CandleSpawn3",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1,
+         1,
+         1
+        ],
+        "CFrame": [
+         -12,
+         0.8,
+         18,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         1,
+         0,
+         1
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth",
+        "Transparency": 1,
+        "CanCollide": false,
+        "CanQuery": false,
+        "CanTouch": false,
+        "CastShadow": false,
+        "Tags": [
+         "CandleSpawn"
+        ]
+       },
+       "attributes": {
+        "Room": "Stairs"
+       }
+      },
+      {
+       "name": "CandleSpawn4",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1,
+         1,
+         1
+        ],
+        "CFrame": [
+         -24,
+         -13.2,
+         -22.5,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         1,
+         0,
+         1
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth",
+        "Transparency": 1,
+        "CanCollide": false,
+        "CanQuery": false,
+        "CanTouch": false,
+        "CastShadow": false,
+        "Tags": [
+         "CandleSpawn"
+        ]
+       },
+       "attributes": {
+        "Room": "Basement"
+       }
+      },
+      {
+       "name": "KeySpawn",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1,
+         1,
+         1
+        ],
+        "CFrame": [
+         -37.5,
+         7.8,
+         -16,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         1,
+         0,
+         1
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth",
+        "Transparency": 1,
+        "CanCollide": false,
+        "CanQuery": false,
+        "CanTouch": false,
+        "CastShadow": false,
+        "Tags": [
+         "KeySpawn"
+        ]
+       },
+       "attributes": {
+        "Room": "Kitchen"
+       }
+      },
+      {
+       "name": "KeySpawn2",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1,
+         1,
+         1
+        ],
+        "CFrame": [
+         26,
+         0.5,
+         -38,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         1,
+         0,
+         1
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth",
+        "Transparency": 1,
+        "CanCollide": false,
+        "CanQuery": false,
+        "CanTouch": false,
+        "CastShadow": false,
+        "Tags": [
+         "KeySpawn"
+        ]
+       },
+       "attributes": {
+        "Room": "Study"
+       }
+      },
+      {
+       "name": "KeySpawn3",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1,
+         1,
+         1
+        ],
+        "CFrame": [
+         -36,
+         0.5,
+         18.5,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         1,
+         0,
+         1
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth",
+        "Transparency": 1,
+        "CanCollide": false,
+        "CanQuery": false,
+        "CanTouch": false,
+        "CastShadow": false,
+        "Tags": [
+         "KeySpawn"
+        ]
+       },
+       "attributes": {
+        "Room": "Stairs"
+       }
+      },
+      {
+       "name": "KeySpawn4",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1,
+         1,
+         1
+        ],
+        "CFrame": [
+         -12,
+         -5.2,
+         -36,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         1,
+         0,
+         1
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth",
+        "Transparency": 1,
+        "CanCollide": false,
+        "CanQuery": false,
+        "CanTouch": false,
+        "CastShadow": false,
+        "Tags": [
+         "KeySpawn"
+        ]
+       },
+       "attributes": {
+        "Room": "Basement"
+       }
+      },
+      {
+       "name": "KeySpawn5",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1,
+         1,
+         1
+        ],
+        "CFrame": [
+         -28,
+         -13.5,
+         -8,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         1,
+         0,
+         1
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth",
+        "Transparency": 1,
+        "CanCollide": false,
+        "CanQuery": false,
+        "CanTouch": false,
+        "CastShadow": false,
+        "Tags": [
+         "KeySpawn"
+        ]
+       },
+       "attributes": {
+        "Room": "Basement"
+       }
+      },
+      {
+       "name": "KeySpawn6",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1,
+         1,
+         1
+        ],
+        "CFrame": [
+         6,
+         3.5,
+         12,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         1,
+         0,
+         1
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth",
+        "Transparency": 1,
+        "CanCollide": false,
+        "CanQuery": false,
+        "CanTouch": false,
+        "CastShadow": false,
+        "Tags": [
+         "KeySpawn"
+        ]
+       },
+       "attributes": {
+        "Room": "Hallway"
+       }
+      },
+      {
        "name": "PlayerStart",
        "className": "Part",
        "properties": {

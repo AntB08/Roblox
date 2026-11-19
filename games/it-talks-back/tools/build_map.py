@@ -303,6 +303,19 @@ def build():
     ]:
         markers.append(marker("PatrolPoint", (x, y + 0.5, z), "PatrolPoint", attrs={"Room": room}))
 
+    # Night tasks: the radio appears at one of these, every candle spot gets a candle, the key
+    # spawns at one key spot.
+    for room, x, y, z in [("Study", 16, 3, 13), ("Kitchen", -24, 3.8, -26.5), ("Stairs", -24, 2.6, 9),
+                          ("Basement", -12, BASE_FLOOR + 3, -2)]:
+        markers.append(marker("RadioSpawn", (x, y + 0.6, z), "RadioSpawn", attrs={"Room": room}))
+    for room, x, y, z in [("Kitchen", -36, 3.8, -38.2), ("Study", 24, 0, -26.5), ("Stairs", -12, 0, 18),
+                          ("Basement", -24, BASE_FLOOR, -22.5)]:
+        markers.append(marker("CandleSpawn", (x, y + 0.8, z), "CandleSpawn", attrs={"Room": room}))
+    for room, x, y, z in [("Kitchen", -37.5, 7.3, -16), ("Study", 26, 0, -38), ("Stairs", -36, 0, 18.5),
+                          ("Basement", -12, BASE_FLOOR + 8.3, -36), ("Basement", -28, BASE_FLOOR, -8),
+                          ("Hallway", 6, 3, 12)]:
+        markers.append(marker("KeySpawn", (x, y + 0.5, z), "KeySpawn", attrs={"Room": room}))
+
     for i, (x, z) in enumerate([(-3, 14), (3, 14), (-3, 17), (3, 17), (0, 11), (-5, 11), (3, 8), (0, 17)]):
         markers.append(marker("PlayerStart", (x, 3.5, z), "PlayerStart", attrs={"Index": i + 1}))
     markers.append(marker("MonsterSpawn", (-16, BASE_FLOOR + 4.2, -32), "MonsterSpawn"))

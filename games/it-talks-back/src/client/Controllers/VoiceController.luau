@@ -184,6 +184,58 @@ local function ensureVoice(head: BasePart): VoiceRig
 	return { main = main, low = low, clip = clip, warp = warp }
 end
 
+-- The haunted radio (TaskService) also plays the monster's voice, tinny and far away, while it
+-- is switched on. A second emitter on the radio, fed from the same voice chain.
+local function syncRadio(head: BasePart)
+	local folder = head:FindFirstChild("MonsterVoice")
+	if not folder then
+		return
+	end
+	local radioPart: BasePart? = nil
+	for _, inst in CollectionService:GetTagged("Radio") do
+		if inst:IsA("BasePart") and inst:GetAttribute("On") == true then
+			radioPart = inst
+		end
+	end
+	local eq = folder:FindFirstChild("RadioEQ") :: AudioEqualizer?
+	local old = folder:FindFirstChild("RadioEmitterRef") :: ObjectValue?
+	local currentEmitter = if old then old.Value else nil
+	if (currentEmitter and currentEmitter.Parent) == radioPart and (radioPart == nil) == (eq == nil) then
+		return -- already wired to this radio (or no radio and nothing wired)
+	end
+	-- Rebuild for the new radio (or remove when it's off).
+	if eq then
+		eq:Destroy()
+	end
+	if old then
+		if old.Value then
+			old.Value:Destroy()
+		end
+		old:Destroy()
+	end
+	if not radioPart then
+		return
+	end
+	local tremolo = folder:FindFirstChild("Tremolo")
+	local clip = folder:FindFirstChild("Clip")
+	local radioEq = effect("AudioEqualizer", "RadioEQ", folder, { LowGain = -24, MidGain = 6, HighGain = -14 })
+	local emitter = Instance.new("AudioEmitter")
+	emitter.Name = "MonsterRadioEmitter"
+	emitter:SetDistanceAttenuation({ [0] = 0.8, [20] = 0.5, [45] = 0.15, [70] = 0 } :: any)
+	emitter.Parent = radioPart
+	local ref = Instance.new("ObjectValue")
+	ref.Name = "RadioEmitterRef"
+	ref.Value = emitter
+	ref.Parent = folder
+	if tremolo then
+		wire(tremolo, radioEq)
+	end
+	if clip then
+		wire(clip, radioEq)
+	end
+	wire(radioEq, emitter)
+end
+
 local function isRecording(asset: string?): boolean
 	return asset ~= nil and asset ~= "" and asset ~= "rbxassetid://0"
 end
@@ -216,6 +268,7 @@ local function speak(text: string)
 	end
 	local rig = ensureVoice(head)
 	speaking = rig
+	pcall(syncRadio, head)
 	task.spawn(function()
 		local ok, err = pcall(function()
 			for _, source in { rig.main, rig.low } do

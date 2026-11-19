@@ -66,6 +66,29 @@ local HorrorConfig = {
 		MaxPerRoom = 2,
 	},
 
+	-- Nights: survive a night (at least one escape) and the next round is the next night.
+	-- Lose and you replay it. After the last entry, the last night repeats and the monster keeps
+	-- getting a little faster (ExtraSpeedPerNight).
+	-- Tasks: "Radio" (switch off the haunted radio), "Candles" (light every candle), "Key"
+	-- (find the key, unlock the exit gate). Fuses are always a task.
+	Nights = {
+		{ fuses = 2, tasks = { "Key" }, monsterSpeed = 1 },
+		{ fuses = 3, tasks = { "Radio", "Candles" }, monsterSpeed = 1.04 },
+		{ fuses = 3, tasks = { "Radio", "Candles", "Key" }, monsterSpeed = 1.08 },
+	},
+	ExtraSpeedPerNight = 0.03,
+	MaxMonsterSpeed = 1.25,
+
+	Tasks = {
+		RadioNoiseRadius = 55, -- the radio is loud: it keeps pulling the monster to its room
+		RadioNoiseEvery = 6, -- seconds
+		RadioHoldSeconds = 2.5,
+		CandleHoldSeconds = 1.2,
+		CandleBlowOutDistance = 6, -- the monster snuffs lit candles it walks past
+		CandleBlowOutChance = 0.5, -- per candle it passes
+		KeyUnlockHold = 1.5,
+	},
+
 	Voice = {
 		HearRange = 80, -- subtitles show for players within this distance of the monster
 		AmbientMin = 25,

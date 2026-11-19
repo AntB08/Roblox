@@ -171,11 +171,19 @@ def hud():
         "Size": udim2(0, 0, 0, 0), "BackgroundTransparency": 1,
     }, [responsive(), vlist(8, "Left")] + callouts)
 
+    rows = [label(f"Row{i}", "", 17, TEXT, order=i + 1, Visible=False) for i in range(1, 6)]
+    tasks = node("Frame", "Tasks", {
+        "AnchorPoint": [0, 0], "Position": udim2(0, 12, 0, 8), "AutomaticSize": "XY",
+        "Size": udim2(0, 0, 0, 0), "BackgroundColor3": SURFACE, "BackgroundTransparency": 0.25,
+        "Visible": False,
+    }, [responsive(), corner(12), pad(10), vlist(4, "Left"),
+        label("Title", "TONIGHT", 14, BLOOD, order=1)] + rows)
+
     return {
         "className": "ScreenGui",
         "properties": {"ResetOnSpawn": False, "DisplayOrder": 1, "ScreenInsets": "CoreUISafeInsets",
                        "SafeAreaCompatibility": "None", "ZIndexBehavior": "Sibling"},
-        "children": [top, center, bottom, actions, left],
+        "children": [top, center, bottom, actions, left, tasks],
     }
 
 

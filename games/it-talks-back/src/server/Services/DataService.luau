@@ -249,6 +249,14 @@ function DataService.bumpStat(player: Player, key: string, amount: number?)
 	end
 end
 
+-- Records the highest night this player has survived (Stats.BestNight).
+function DataService.setBestNight(player: Player, n: number)
+	local profile = profiles[player]
+	if profile and n > ((profile.Data.Stats :: any).BestNight or 0) then
+		(profile.Data.Stats :: any).BestNight = n
+	end
+end
+
 function DataService.setSetting(player: Player, key: string, value: number)
 	local spec = (GameConfig.Settings :: any)[key]
 	local profile = profiles[player]

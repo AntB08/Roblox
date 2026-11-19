@@ -21,6 +21,18 @@ light) → spotted → run, break line of sight, loop furniture, hide in a close
 4. Caught players go to the basement cage. Teammates hold "Break Lock" (loud) to free everyone.
 5. The round ends when no one is left inside or after 7 minutes.
 
+## Nights and tasks
+Each round is a **night** with a checklist (HUD top-left). The exit gate opens only when every task is done.
+| Night | Tasks | Monster speed |
+|---|---|---|
+| 1 | 2 fuses, find the key and unlock the gate | ×1.00 |
+| 2 | 3 fuses, turn off the haunted radio, light 4 candles | ×1.04 |
+| 3+ | 3 fuses, radio, candles, key | ×1.08, +3% per extra night (max ×1.25) |
+- **Radio:** on in a random room, noisy every 6 s (pulls the monster there), and the monster's voice also comes out of it. Hold 2.5 s to switch it off.
+- **Candles:** one per room; the monster snuffs lit candles it walks past (50%), so lighting them is a race.
+- **Key:** random spot; carry it to the gate. Caught = dropped where you were caught.
+Survive (1+ escape) → next night. Nobody escapes → replay the night. Best night is saved per player.
+
 ## The talking monster (what makes it original)
 | It… | Gameplay effect |
 |---|---|

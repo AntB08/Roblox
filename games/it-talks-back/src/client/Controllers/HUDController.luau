@@ -26,6 +26,13 @@ local player = Players.LocalPlayer
 
 local HUDController = {}
 
+local TASK_NAMES: { [string]: string } = {
+	Fuses = "Put fuses in the generator",
+	Radio = "Turn off the radio",
+	Candles = "Light the candles",
+	Key = "Unlock the gate with the key",
+}
+
 local messageToken = 0
 
 local function formatTime(seconds: number): string
@@ -116,14 +123,18 @@ function HUDController:Start()
 		local inserted = tonumber(Workspace:GetAttribute("FusesInserted")) or 0
 		local total = tonumber(Workspace:GetAttribute("FusesTotal")) or HorrorConfig.Fuses.Count
 		if state == "Playing" and (s == "Alive" or s == "Hidden" or s == "Caged") then
-			if Workspace:GetAttribute("PowerOn") == true then
-				objective.Text = "Power is on! Get out through the north gate!"
+			local nightNumber = tonumber(Workspace:GetAttribute("Night")) or 1
+			if Workspace:GetAttribute("ExitOpen") == true then
+				objective.Text = "The exit is open! Get out through the north gate!"
 				objective.TextColor3 = Color3.fromRGB(120, 255, 150)
 			elseif player:GetAttribute("CarryingFuse") == true then
 				objective.Text = `Bring the fuse to the generator  ·  {inserted}/{total}`
 				objective.TextColor3 = Color3.fromRGB(255, 200, 70)
+			elseif player:GetAttribute("CarryingKey") == true then
+				objective.Text = "Take the key to the exit gate (north end of the hallway)"
+				objective.TextColor3 = Color3.fromRGB(255, 200, 70)
 			else
-				objective.Text = `Find fuses  ·  {inserted}/{total}`
+				objective.Text = `Night {nightNumber}  ·  finish your tasks`
 				objective.TextColor3 = Color3.fromRGB(237, 230, 217)
 			end
 		elseif state == "Playing" then
@@ -155,7 +166,46 @@ function HUDController:Start()
 		end
 	end)
 
-	for _, attr in { "RoundState", "FusesInserted", "FusesTotal", "PowerOn", "IntermissionEndsAt" } do
+	-- Task checklist (Workspace "TaskList" + "Task_<Id>_Done/Goal", set by TaskService).
+	local tasksPanel = Hud.find("Tasks") :: Frame
+	local tasksTitle = Hud.find("Tasks/Title") :: TextLabel
+	local function renderTasks()
+		local list = Workspace:GetAttribute("TaskList")
+		local ids = if typeof(list) == "string" and list ~= "" then string.split(list, ",") else {}
+		local s = status()
+		tasksPanel.Visible = #ids > 0
+			and Workspace:GetAttribute("RoundState") == "Playing"
+			and (s == "Alive" or s == "Hidden" or s == "Caged")
+		tasksTitle.Text = `NIGHT {tonumber(Workspace:GetAttribute("Night")) or 1}`
+		for i = 1, 5 do
+			local row = tasksPanel:FindFirstChild(`Row{i}`) :: TextLabel?
+			if not row then
+				continue
+			end
+			local id = ids[i]
+			if not id then
+				row.Visible = false
+				continue
+			end
+			local done = tonumber(Workspace:GetAttribute(`Task_{id}_Done`)) or 0
+			local goal = tonumber(Workspace:GetAttribute(`Task_{id}_Goal`)) or 1
+			local finished = done >= goal
+			local countText = if goal > 1 then `  {done}/{goal}` else ""
+			row.Text = `{if finished then "✓" else "○"}  {TASK_NAMES[id] or id}{countText}`
+			row.TextColor3 = if finished then Color3.fromRGB(120, 230, 140) else Color3.fromRGB(237, 230, 217)
+			row.TextTransparency = if finished then 0.35 else 0
+			row.Visible = true
+		end
+	end
+	Workspace.AttributeChanged:Connect(function(name: string)
+		if name == "TaskList" or name == "Night" or name == "RoundState" or name:sub(1, 5) == "Task_" then
+			renderTasks()
+		end
+	end)
+	player:GetAttributeChangedSignal("Status"):Connect(renderTasks)
+	renderTasks()
+
+	for _, attr in { "RoundState", "FusesInserted", "FusesTotal", "ExitOpen", "Night", "IntermissionEndsAt" } do
 		Workspace:GetAttributeChangedSignal(attr):Connect(function()
 			renderObjective()
 			renderBanner()
@@ -166,6 +216,7 @@ function HUDController:Start()
 		renderBanner()
 	end)
 	player:GetAttributeChangedSignal("CarryingFuse"):Connect(renderObjective)
+	player:GetAttributeChangedSignal("CarryingKey"):Connect(renderObjective)
 	player:GetAttributeChangedSignal("Stamina"):Connect(function()
 		local v = tonumber(player:GetAttribute("Stamina")) or 1
 		staminaFill.Size = UDim2.fromScale(v, 1)

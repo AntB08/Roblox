@@ -79,6 +79,23 @@ local Lines: { [string]: { string } } = {
 		"{name} got away... no matter. Plenty more.",
 		"Run home, {name}. I'll be here.",
 	},
+	CandleOut = {
+		"Lights out.",
+		"Too bright in here.",
+		"No candles in my house.",
+	},
+	RadioOff = {
+		"Hey. I was listening to that.",
+		"Turn it back on. I like the static.",
+	},
+	KeyTaken = {
+		"Put that key back.",
+		"That key isn't yours.",
+	},
+	NightStart = {
+		"Night {count}. Let's see how long you last.",
+		"Back again? Night {count}, then.",
+	},
 	Reply = {
 		"I heard that, {name}.",
 		"Talking to me, {name}? Come closer, I can't hear you.",

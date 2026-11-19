@@ -27,6 +27,7 @@ local TEMPLATE = {
 		Rescues = 0,
 		TimesCaught = 0,
 		FusesInserted = 0,
+		BestNight = 0,
 		RobuxSpent = 0,
 	},
 	Settings = {

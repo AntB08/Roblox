@@ -3,7 +3,8 @@
 --
 --   Lobby    everyone waits by the house; countdown starts with MinPlayers.
 --   Playing  players start in the foyer; the monster wakes after StartGrace seconds.
---            Win: insert 3 fuses, the gate opens, step into the ExitZone.
+--            Win: finish the night's tasks (TaskService), the gate opens, step into the ExitZone.
+--            Surviving (1+ escape) advances the server to the next night; losing replays it.
 --            A round ends when nobody is left inside (escaped / caged / left) or time runs out.
 --   Results  a short summary, then everyone returns to the lobby.
 --
@@ -30,6 +31,7 @@ local VoiceService = require(script.Parent.VoiceService)
 local DataService = require(script.Parent.DataService)
 local Analytics = require(script.Parent.Analytics)
 local PlayerLifecycle = require(script.Parent.PlayerLifecycle)
+local TaskService = require(script.Parent.TaskService)
 
 local POLL = 0.25
 
@@ -37,6 +39,19 @@ local RoundService = {}
 RoundService.Priority = 10
 
 local cfg = HorrorConfig.Round
+
+local night = 1 -- server-wide: survive to advance, lose to replay
+
+local function nightConfig(n: number): TaskService.Night
+	local list = HorrorConfig.Nights
+	local base = list[math.min(n, #list)]
+	local extra = math.max(0, n - #list) * HorrorConfig.ExtraSpeedPerNight
+	return {
+		fuses = base.fuses,
+		tasks = base.tasks,
+		monsterSpeed = math.min(HorrorConfig.MaxMonsterSpeed, base.monsterSpeed + extra),
+	}
+end
 
 local function message(title: string, subtitle: string, seconds: number)
 	Net.fireAll("RoundMessage", title, subtitle, seconds)
@@ -87,7 +102,10 @@ local function begin(): { Player }
 	FuseService.reset()
 	HideService.reset()
 	MonsterService.reset()
-	FuseService.spawnRound()
+	local tonight = nightConfig(night)
+	TaskService.begin(tonight)
+	MonsterService.setSpeedMultiplier(tonight.monsterSpeed)
+	Workspace:SetAttribute("Night", night)
 
 	local participants = readyPlayers()
 	local starts = Map.playerStarts()
@@ -101,17 +119,24 @@ local function begin(): { Player }
 	end
 	State.setRoundState("Playing")
 	Workspace:SetAttribute("RoundEndsAt", serverNow() + cfg.Duration)
-	message("Find 3 fuses", "Put them in the generator, then get out. Crouch to stay quiet. It hears everything.", 6)
+	message(
+		`Night {night}`,
+		"Finish every task on your list, then get out the north gate. Crouch to stay quiet. It hears everything.",
+		6
+	)
 	task.delay(cfg.StartGrace, function()
 		if State.isPlaying() then
 			MonsterService.wake()
+			if night > 1 then
+				VoiceService.say("NightStart", { count = night }, true)
+			end
 		end
 	end)
 	return participants
 end
 
 local function checkEscapes()
-	if not State.isPowerOn() then
+	if not TaskService.isExitOpen() then
 		return
 	end
 	local zone = Map.one("ExitZone")
@@ -162,12 +187,25 @@ local function results(participants: { Player })
 			Analytics.custom(player, "RoundEnded", escaped, if won then "Win" else "Loss")
 		end
 	end
+	local survivedNight = night
+	if won then
+		night += 1
+		for _, player in participants do
+			if player.Parent == Players and State.getStatus(player) == "Escaped" then
+				DataService.setBestNight(player, survivedNight)
+			end
+		end
+	end
 	if escaped == total and total > 0 then
-		message("Everyone escaped!", "The house is quiet... for now.", cfg.ResultsTime)
+		message(`Night {survivedNight} survived!`, `Everyone escaped. Night {night} is next.`, cfg.ResultsTime)
 	elseif won then
-		message(`{escaped} of {total} escaped`, "The others stay with The Tenant.", cfg.ResultsTime)
+		message(
+			`Night {survivedNight} survived`,
+			`{escaped} of {total} escaped. Night {night} is next.`,
+			cfg.ResultsTime
+		)
 	else
-		message("Nobody escaped", "The Tenant keeps its guests.", cfg.ResultsTime)
+		message("Nobody escaped", `The Tenant keeps its guests. Night {night} again.`, cfg.ResultsTime)
 	end
 	task.wait(cfg.ResultsTime)
 	for _, player in Players:GetPlayers() do
@@ -176,6 +214,7 @@ local function results(participants: { Player })
 		end
 	end
 	FuseService.reset()
+	TaskService.reset()
 	MonsterService.reset()
 end
 
@@ -197,6 +236,7 @@ end
 
 function RoundService:Start()
 	Workspace:SetAttribute("FusesTotal", HorrorConfig.Fuses.Count)
+	Workspace:SetAttribute("Night", night)
 	while true do
 		local ok, err = pcall(function()
 			intermission()
