@@ -10,12 +10,13 @@
 | CageService (55) | cage put/rescue (hold prompt, loud) |
 | VoiceService (50) | picks lines (Server/Config/Lines.luau), optional TextGenerator + TextService filter, `MonsterSpeak` |
 | CalloutService (50) | preset callouts → teammates + the monster |
+| SpeechService (30) | voice transcripts (client STT → Spoke): noise, room words = callouts, AI replies when close. Text chat hidden |
 | MonsterService (40) | rig + state machine (Dormant/Patrol/Investigate/Chase/Search/PullOut/Cooldown) |
 | RoundService (10) | lobby → playing → results loop; escapes; rewards |
 Shared helpers (not services): `Server/Game/State.luau` (statuses, round state), `Map.luau` (tag lookups), `MonsterRig.luau`.
 
 ## Remotes (src/shared/Net/Remotes.luau)
-ToServer (Guard + rate limited): SetSprint(bool), SetCrouch(bool), SetFlashlight(bool), Callout(room ∈ Callouts), LeaveHide(), SetSetting, ClientError.
+ToServer (Guard + rate limited): Spoke(text ≤ 200), SetSprint(bool), SetCrouch(bool), SetFlashlight(bool), Callout(room ∈ Callouts), LeaveHide(), SetSetting, ClientError.
 ToClient: MonsterSpeak(text, kind), RoundMessage(title, subtitle, seconds), CalloutShown(name, room), Caught(name, isYou), Notify.
 
 ## Replicated attributes

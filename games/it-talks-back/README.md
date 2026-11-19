@@ -6,6 +6,8 @@ A co-op Roblox horror game: find 3 fuses, power the generator and escape a dark 
 - **It speaks from where it stands.** 3D text-to-speech from its head, plus subtitles when you're close.
 - **It hears you.** Server-measured footsteps (running is loud, crouching is silent), fuses, closet doors and rescues.
 - **It lies.** Fuse "hints" are true half the time. When it lies, it waits for you in that room.
+- **Voice chat only.** Text chat is hidden. Talk with your mic, and it hears you too: talking makes
+  noise, saying a room name sends it there, and when it's close it answers you out loud.
 - **You can lie back.** Callout buttons ("I'm in the Basement!") tell teammates where you are, and the
   monster hears them too. Fake one to lure it away. Lie twice and it stops listening to you.
 - **Hiding works, unless it watched you get in.** Break line of sight first.
@@ -44,9 +46,10 @@ Design: `docs/DESIGN.md`. How it's built: `docs/SYSTEMS.md`. Tuning: `src/shared
   (`Assets.Music.Ambient` / `Chase`) and record it in `assets/ASSETS.md`.
 - **Map and HUD** are generated: edit `tools/build_map.py` / `tools/build_hud.py` and re-run them, or
   stop using the scripts and edit in Studio (then save the result back to the files).
-- **Chat text is not used.** Roblox is removing scripts' access to chat text (May 2027), so the
-  "the monster hears what you say" idea uses preset callouts instead. Voice-chat hearing
-  (`AudioSpeechToText`) is a possible later add-on for voice-enabled players only.
+- **Voice setup:** turn on voice chat for the experience (*Game Settings → Communication*). The place
+  file already sets `VoiceChatService.UseAudioApi = Enabled`. Speech-to-text needs a published
+  game and players with voice chat (ID-verified 13+). Players without voice can still play using the
+  callout buttons.
 
 ## Not done yet
 It hasn't been playtested (it was built without Studio). It has grey-box art only (no monster

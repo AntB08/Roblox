@@ -2,15 +2,23 @@
 -- SpeechController: lets the monster hear your voice. If you have voice chat on, this runs
 -- Roblox speech-to-text on YOUR mic only (AudioDeviceInput.Player = you) and sends each finished
 -- phrase to the server (Spoke remote). Teammates still hear your normal spatial voice chat.
--- Needs VoiceChatService.UseAudioApi = Enabled (set in the place file).
+-- Needs VoiceChatService.UseAudioApi = Enabled (set in the place file) and voice chat turned on
+-- for the experience (Game Settings -> Communication).
+--
+-- Text chat is hidden in this game: you talk with your voice, and so does the monster.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local SoundService = game:GetService("SoundService")
 local VoiceChatService = game:GetService("VoiceChatService")
 
+local StarterGui = game:GetService("StarterGui")
+
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local NetClient = require(Shared.Net.Client)
+
+local Client = script.Parent.Parent
+local Toast = require(Client.UI.Toast)
 
 local player = Players.LocalPlayer
 
@@ -18,12 +26,28 @@ local MIN_SECONDS_BETWEEN = 2
 
 local SpeechController = {}
 
+-- SetCore can fail while the core scripts are still loading: retry for a few seconds.
+local function hideTextChat()
+	for _ = 1, 20 do
+		local ok = pcall(function()
+			StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Chat, false)
+		end)
+		if ok then
+			return
+		end
+		task.wait(0.5)
+	end
+end
+
 function SpeechController:Start()
+	task.spawn(hideTextChat)
 	local ok, enabled = pcall(function()
 		return VoiceChatService:IsVoiceEnabledForUserIdAsync(player.UserId)
 	end)
 	if not ok or not enabled then
-		return -- no voice chat for this account: callouts and text chat still work
+		-- No voice for this account: they can still play and use the callout buttons.
+		Toast.show("This game is played with voice chat. Turn on voice to talk to your team (and to it).", "info", 8)
+		return
 	end
 
 	local folder = Instance.new("Folder")

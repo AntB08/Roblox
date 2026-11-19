@@ -84,7 +84,6 @@ local HorrorConfig = {
 		ReplyRange = 70, -- it answers what you said if it is this close to you
 		ReplyChance = 0.7,
 		ReplyCooldown = 8,
-		ListenToTextChat = true, -- Player.Chatted; stops working when Roblox forces platform chat (2027)
 		-- Words that count as naming a room (lowercase). Saying one lures it there, true or not.
 		RoomWords = {
 			kitchen = "Kitchen",

@@ -1,9 +1,7 @@
 --!strict
--- SpeechService: the monster hears what players SAY.
---   * Voice: each voice-enabled client runs Roblox speech-to-text on its own mic
---     (SpeechController) and sends the transcript via the Spoke remote.
---   * Text chat: Player.Chatted, while Roblox still lets scripts read chat (until platform-
---     integrated chat is forced in 2027; then only voice keeps working).
+-- SpeechService: the monster hears what players SAY out loud. Text chat is turned off in this
+-- game (SpeechController hides it); voice chat is the only way to talk. Each voice-enabled
+-- client runs Roblox speech-to-text on its own mic and sends the transcript (Spoke remote).
 --
 -- What hearing does:
 --   1. Talking is a noise at your position (HorrorConfig.Noise.Voice): talk near it and it comes.
@@ -96,20 +94,6 @@ end
 
 function SpeechService:Init()
 	Net.handle("Spoke", heard)
-	if cfg.ListenToTextChat then
-		local function hook(player: Player)
-			player.Chatted:Connect(function(message: string)
-				-- Empty when platform-integrated chat is on; then this simply does nothing.
-				if typeof(message) == "string" and message ~= "" and message:sub(1, 1) ~= "/" then
-					heard(player, message)
-				end
-			end)
-		end
-		Players.PlayerAdded:Connect(hook)
-		for _, player in Players:GetPlayers() do
-			hook(player)
-		end
-	end
 	Players.PlayerRemoving:Connect(function(player)
 		lastRoomWord[player] = nil
 	end)
