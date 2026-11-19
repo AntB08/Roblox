@@ -398,6 +398,7 @@ local function loop()
 					snuffChecked[candle] = true
 					if candle:GetAttribute("Lit") == true and rng:NextNumber() < cfg.CandleBlowOutChance then
 						setLit(candle, false)
+						MonsterService.act("Snuff", 1)
 						VoiceService.say("CandleOut", { room = Rooms.at(candle.Position) })
 					end
 				elseif not close then

@@ -51,6 +51,7 @@ type Mode = "Dormant" | "Patrol" | "Investigate" | "Chase" | "Search" | "PullOut
 type Lure = { player: Player, room: string, wasLie: boolean }
 
 local TICK = 0.1
+local GRAB_SECONDS = 1.6
 local ARRIVE_DISTANCE = 3
 local LOOK_STEP_SECONDS = 1.2
 local STUCK_CHECK_SECONDS = 1.5
@@ -138,6 +139,16 @@ local function setMood(mood: Types.Mood)
 		model:SetAttribute("Mood", mood)
 	end
 end
+
+-- One-shot body actions for the client animator: "Grab", "Snuff", "Vanish", "Emerge", "Look".
+-- Attributes "Action" + "ActionUntil" (Workspace:GetServerTimeNow() time).
+local function act(action: string, seconds: number)
+	if model then
+		model:SetAttribute("Action", action)
+		model:SetAttribute("ActionUntil", Workspace:GetServerTimeNow() + seconds)
+	end
+end
+MonsterService.act = act
 
 local function setTarget(player: Player?)
 	target = player
@@ -241,6 +252,9 @@ local function lookAround()
 		return
 	end
 	nextLook = os.clock() + LOOK_STEP_SECONDS
+	if rng:NextNumber() < 0.35 then
+		act("Look", 1.1)
+	end
 	local angle = rng:NextNumber(0, math.pi * 2)
 	h.WalkSpeed = 3
 	h:MoveTo(r.Position + Vector3.new(math.cos(angle), 0, math.sin(angle)) * 1.5)
@@ -426,8 +440,30 @@ local function catch(player: Player)
 	for _, other in State.participants() do
 		Net.fire("Caught", other, player.DisplayName, other == player)
 	end
-	CageService.put(player)
 	VoiceService.say("Caught", { name = player.DisplayName }, true)
+
+	-- The grab: lift the victim off the floor in front of it for a beat, then off to the cage.
+	-- Status becomes Caged right away so nothing else (other catches, prompts) touches them.
+	State.setStatus(player, "Caged")
+	act("Grab", GRAB_SECONDS)
+	local r = root
+	if r then
+		local facing = flat(pr.Position - r.Position)
+		if facing.Magnitude > 0.1 then
+			r.CFrame = CFrame.lookAt(r.Position, r.Position + facing) -- turn to face the victim
+		end
+		pr.Anchored = true
+		State.teleport(player, r.CFrame * CFrame.new(0, 1.6, -3.6) * CFrame.Angles(0, math.pi, 0)) -- in its hands
+	end
+	task.delay(GRAB_SECONDS, function()
+		local victimRoot = State.rootOf(player)
+		if victimRoot then
+			victimRoot.Anchored = false
+		end
+		if State.isPlaying() and State.getStatus(player) == "Caged" then
+			CageService.put(player)
+		end
+	end)
 	DataService.bumpStat(player, "TimesCaught")
 	Analytics.custom(player, "PlayerCaught", 1, room)
 
@@ -437,7 +473,7 @@ local function catch(player: Player)
 	setTarget(nil)
 	setMood("Calm")
 	goal = patrolPointIn("Study") or patrolPointIn("Kitchen") or pickPatrolGoal()
-	waitUntil = os.clock() + 1.2 -- savor it for a moment
+	waitUntil = os.clock() + GRAB_SECONDS + 0.4 -- hold the pose, then walk off
 end
 
 local function doHint()
@@ -787,8 +823,19 @@ function MonsterService.vanish(): boolean
 	if not best then
 		return false
 	end
-	MonsterService.placeAt(best)
-	enterPatrol()
+	act("Vanish", 0.9)
+	mode = "Cooldown" -- freeze in place while it glitches out
+	modeUntil = os.clock() + 1
+	waitUntil = os.clock() + 1
+	local destination = best
+	task.delay(0.9, function()
+		if mode ~= "Cooldown" then
+			return
+		end
+		MonsterService.placeAt(destination)
+		act("Emerge", 1.2)
+		enterPatrol()
+	end)
 	waypoints = {}
 	pathGoal = nil
 	nextAmbient = os.clock() + HorrorConfig.Variety.VanishQuietSeconds

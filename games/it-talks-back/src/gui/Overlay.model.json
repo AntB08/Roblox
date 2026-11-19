@@ -254,6 +254,187 @@
   },
   {
    "className": "Frame",
+   "name": "LetterTop",
+   "properties": {
+    "AnchorPoint": [
+     0,
+     0
+    ],
+    "Position": {
+     "UDim2": [
+      [
+       0,
+       0
+      ],
+      [
+       0,
+       0
+      ]
+     ]
+    },
+    "Size": {
+     "UDim2": [
+      [
+       1,
+       0
+      ],
+      [
+       0,
+       0
+      ]
+     ]
+    },
+    "BackgroundColor3": [
+     0,
+     0,
+     0
+    ],
+    "BorderSizePixel": 0,
+    "ZIndex": 5
+   }
+  },
+  {
+   "className": "Frame",
+   "name": "LetterBottom",
+   "properties": {
+    "AnchorPoint": [
+     0,
+     1
+    ],
+    "Position": {
+     "UDim2": [
+      [
+       0,
+       0
+      ],
+      [
+       1,
+       0
+      ]
+     ]
+    },
+    "Size": {
+     "UDim2": [
+      [
+       1,
+       0
+      ],
+      [
+       0,
+       0
+      ]
+     ]
+    },
+    "BackgroundColor3": [
+     0,
+     0,
+     0
+    ],
+    "BorderSizePixel": 0,
+    "ZIndex": 5
+   }
+  },
+  {
+   "className": "TextLabel",
+   "name": "CutTitle",
+   "properties": {
+    "AnchorPoint": [
+     0.5,
+     0.5
+    ],
+    "Position": {
+     "UDim2": [
+      [
+       0.5,
+       0
+      ],
+      [
+       0.82,
+       0
+      ]
+     ]
+    },
+    "Size": {
+     "UDim2": [
+      [
+       0.9,
+       0
+      ],
+      [
+       0.09,
+       0
+      ]
+     ]
+    },
+    "BackgroundTransparency": 1,
+    "Text": "",
+    "TextColor3": [
+     0.93,
+     0.9,
+     0.85
+    ],
+    "TextScaled": true,
+    "FontFace": {
+     "family": "rbxasset://fonts/families/SpecialElite.json",
+     "weight": "Regular",
+     "style": "Normal"
+    },
+    "TextTransparency": 1,
+    "ZIndex": 6
+   }
+  },
+  {
+   "className": "TextLabel",
+   "name": "SkipHint",
+   "properties": {
+    "AnchorPoint": [
+     1,
+     1
+    ],
+    "Position": {
+     "UDim2": [
+      [
+       1,
+       -16
+      ],
+      [
+       1,
+       -12
+      ]
+     ]
+    },
+    "Size": {
+     "UDim2": [
+      [
+       0,
+       220
+      ],
+      [
+       0,
+       22
+      ]
+     ]
+    },
+    "BackgroundTransparency": 1,
+    "Text": "Tap or press any key to skip",
+    "TextColor3": [
+     0.62,
+     0.6,
+     0.57
+    ],
+    "TextSize": 14,
+    "FontFace": {
+     "family": "rbxasset://fonts/families/BuilderSans.json",
+     "weight": "Bold",
+     "style": "Normal"
+    },
+    "TextXAlignment": "Right",
+    "Visible": false,
+    "ZIndex": 6
+   }
+  },
+  {
+   "className": "Frame",
    "name": "Flash",
    "properties": {
     "Size": {

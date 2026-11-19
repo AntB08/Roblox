@@ -1,7 +1,8 @@
 --!strict
 -- MonsterFxController: everything that makes the monster *feel* present, all client-side and
 -- cosmetic (the server never waits on any of it):
---   * procedural walk: swings the rig's Motor6D.Transform from the root's speed (no anim asset)
+--   * procedural animation of every state (FX/MonsterAnimator.luau): idle, creep, chase sprint,
+--     listen, speak, grab, snuff, look, vanish/emerge (no uploaded animation assets)
 --   * eyes change color with its Mood (Calm / Alert / Chase), and twitch when alert
 --   * heavy, slow footsteps from its root (3D)
 --   * house lights flicker near it
@@ -22,6 +23,8 @@ local NetClient = require(Shared.Net.Client)
 
 local Client = script.Parent.Parent
 local CameraShaker = require(Client.FX.CameraShaker)
+local MonsterAnimator = require(Client.FX.MonsterAnimator)
+local VoiceController = require(script.Parent.VoiceController)
 local MusicManager = require(Client.FX.MusicManager)
 
 local player = Players.LocalPlayer
@@ -44,10 +47,12 @@ type Rig = {
 	head: BasePart,
 	motors: { [string]: Motor6D },
 	step: Sound,
-	phase: number,
-	twitch: CFrame,
-	nextTwitch: number,
+	anim: MonsterAnimator.State,
+	fade: number,
 }
+
+-- Seconds each server action lasts (must match MonsterService / TaskService act() calls).
+local ACTION_LENGTH: { [string]: number } = { Grab = 1.6, Snuff = 1, Look = 1.1, Vanish = 0.9, Emerge = 1.2 }
 
 local rig: Rig? = nil
 local lights: { { part: BasePart, light: PointLight, base: number } } = {}
@@ -88,9 +93,8 @@ local function findRig(): Rig?
 			head = head,
 			motors = motors,
 			step = step,
-			phase = 0,
-			twitch = CFrame.identity,
-			nextTwitch = 0,
+			anim = MonsterAnimator.newState(),
+			fade = 0,
 		}
 		return rig
 	end
@@ -111,44 +115,53 @@ end
 local function animate(r: Rig, dt: number)
 	local v = r.root.AssemblyLinearVelocity
 	local speed = Vector3.new(v.X, 0, v.Z).Magnitude
-	local moving = math.clamp(speed / 12, 0, 1.3)
-	local before = r.phase
-	r.phase += dt * (2 + speed * 0.42)
-	local s = math.sin(r.phase)
-	local swing = 0.55 * moving
-	local m = r.motors
-	if m.LeftHip then
-		m.LeftHip.Transform = CFrame.Angles(s * swing, 0, 0)
-	end
-	if m.RightHip then
-		m.RightHip.Transform = CFrame.Angles(-s * swing, 0, 0)
-	end
-	-- Arms dangle and sway a little behind the legs; extra limp swing at speed.
-	local sway = math.sin(r.phase * 0.5) * 0.08
-	if m.LeftShoulder then
-		m.LeftShoulder.Transform = CFrame.Angles(-s * swing * 0.6 + sway, 0, 0.06)
-	end
-	if m.RightShoulder then
-		m.RightShoulder.Transform = CFrame.Angles(s * swing * 0.6 - sway, 0, -0.06)
-	end
-	if m.Root then
-		m.Root.Transform = CFrame.new(0, math.abs(s) * 0.12 * moving, 0) * CFrame.Angles(0, s * 0.05 * moving, 0)
-	end
-	-- Head twitches when alert / chasing.
 	local mood = r.model:GetAttribute("Mood")
-	local now = os.clock()
-	if (mood == "Alert" or mood == "Chase") and now >= r.nextTwitch and not GuiService.ReducedMotionEnabled then
-		r.nextTwitch = now + rng:NextNumber(0.4, 1.6)
-		r.twitch = CFrame.Angles(rng:NextNumber(-0.2, 0.2), rng:NextNumber(-0.5, 0.5), rng:NextNumber(-0.35, 0.35))
-	elseif mood ~= "Alert" and mood ~= "Chase" then
-		r.twitch = r.twitch:Lerp(CFrame.identity, math.min(1, dt * 4))
+	local action = r.model:GetAttribute("Action")
+	local untilT = tonumber(r.model:GetAttribute("ActionUntil")) or 0
+	local now = Workspace:GetServerTimeNow()
+	local activeAction: string? = nil
+	local alpha = 0
+	if typeof(action) == "string" and now < untilT then
+		activeAction = action
+		local length = ACTION_LENGTH[action] or 1
+		alpha = math.clamp(1 - (untilT - now) / length, 0, 1)
 	end
-	if m.Neck then
-		m.Neck.Transform = r.twitch
+	if GuiService.ReducedMotionEnabled and activeAction == "Vanish" then
+		activeAction = nil -- no strobing glitch for reduced-motion players
 	end
-	-- Footstep on every half cycle while walking.
-	if moving > 0.15 and math.floor(before / math.pi) ~= math.floor(r.phase / math.pi) then
+	local pose = MonsterAnimator.step(r.anim, {
+		speed = speed,
+		mood = if typeof(mood) == "string" then mood else "Calm",
+		action = activeAction,
+		actionAlpha = alpha,
+		speaking = VoiceController.isSpeaking(),
+		dt = dt,
+		time = os.clock(),
+	})
+	for _, name in MonsterAnimator.Joints do
+		local motor = r.motors[name]
+		if motor then
+			motor.Transform = MonsterAnimator.toCFrame(pose[name])
+		end
+	end
+	-- Vanish: fade out while glitching; Emerge: fade back in (local only, cosmetic).
+	local fade = 0
+	if activeAction == "Vanish" then
+		fade = alpha
+	elseif activeAction == "Emerge" then
+		fade = 1 - math.clamp(alpha * 2, 0, 1)
+	end
+	if fade ~= r.fade then
+		r.fade = fade
+		for _, d in r.model:GetDescendants() do
+			if d:IsA("BasePart") then
+				d.LocalTransparencyModifier = fade
+			end
+		end
+	end
+	if r.anim.stepped then
 		r.step.PlaybackSpeed = 0.5 + rng:NextNumber(0, 0.1)
+		r.step.Volume = if speed > 13 then 2.2 else 1.6
 		r.step:Play()
 	end
 end
