@@ -6,11 +6,14 @@
 --   * Recorded: if Shared/Config/VoiceLines.luau has an uploaded clip for this exact line, it
 --     plays that (your own horror voice), with only room reverb added.
 --   * Live: Roblox text-to-speech, disguised as a monster. Two layers (normal-low and very low)
---     run through EQ -> Distortion -> Chorus -> Tremolo -> Reverb. Tune in HorrorConfig.Voice.Effects.
+--     run through EQ -> Distortion -> Chorus -> Tremolo. Tune in HorrorConfig.Voice.Effects.
+--   * Both then go through a Warp pitch shifter (random per-line pitch, slow drift, sudden
+--     glitches; HorrorConfig.Voice.Warp) and room reverb.
 -- A camera AudioListener -> AudioDeviceOutput lets the player hear the emitter.
 
 local CollectionService = game:GetService("CollectionService")
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local SoundService = game:GetService("SoundService")
 local Workspace = game:GetService("Workspace")
@@ -69,9 +72,37 @@ type VoiceRig = {
 	main: AudioTextToSpeech,
 	low: AudioTextToSpeech,
 	clip: AudioPlayer,
+	warp: AudioPitchShifter,
 }
 
 local speaking: VoiceRig? = nil
+local rng = Random.new()
+local warpTime = 0
+local glitchUntil = 0
+local glitchRatio = 1
+
+-- Every frame while it talks: slow drift (smooth noise) plus random short glitches.
+local function updateWarp(dt: number)
+	local rig = speaking
+	if not rig or not rig.warp.Parent then
+		return
+	end
+	local w = cfg.Warp
+	local talking = rig.main.IsPlaying or rig.clip.IsPlaying
+	if not talking then
+		rig.warp.Pitch = 1
+		return
+	end
+	warpTime += dt * w.DriftSpeed
+	local now = os.clock()
+	if now >= glitchUntil and rng:NextNumber() < w.GlitchesPerSecond * dt then
+		glitchRatio = rng:NextNumber(w.GlitchMin, w.GlitchMax)
+		glitchUntil = now + rng:NextNumber(w.GlitchSeconds.Min, w.GlitchSeconds.Max)
+	end
+	local drift = 1 + math.noise(warpTime, 0.37) * 2 * w.DriftDepth
+	local ratio = if now < glitchUntil then glitchRatio else drift
+	rig.warp.Pitch = math.clamp(ratio, 0.5, 2)
+end
 
 local function effect<T>(className: string, name: string, parent: Instance, props: { [string]: any }): T
 	local inst = Instance.new(className)
@@ -93,6 +124,7 @@ local function ensureVoice(head: BasePart): VoiceRig
 			main = folder:FindFirstChild("Main") :: AudioTextToSpeech,
 			low = folder:FindFirstChild("Low") :: AudioTextToSpeech,
 			clip = folder:FindFirstChild("Clip") :: AudioPlayer,
+			warp = folder:FindFirstChild("Warp") :: AudioPitchShifter,
 		}
 	end
 	local fx = cfg.Effects
@@ -128,6 +160,7 @@ local function ensureVoice(head: BasePart): VoiceRig
 		Depth = fx.TremoloDepth,
 		Frequency = fx.TremoloFrequency,
 	})
+	local warp = effect("AudioPitchShifter", "Warp", root, { Pitch = 1 }) :: AudioPitchShifter
 	local reverb = effect("AudioReverb", "Reverb", root, {
 		DecayTime = fx.ReverbDecay,
 		WetLevel = fx.ReverbWet,
@@ -143,11 +176,12 @@ local function ensureVoice(head: BasePart): VoiceRig
 	wire(eq, distortion)
 	wire(distortion, chorus)
 	wire(chorus, tremolo)
-	wire(tremolo, reverb)
-	wire(clip, reverb)
+	wire(tremolo, warp)
+	wire(clip, warp)
+	wire(warp, reverb)
 	wire(reverb, emitter)
 	root.Parent = head
-	return { main = main, low = low, clip = clip }
+	return { main = main, low = low, clip = clip, warp = warp }
 end
 
 local function isRecording(asset: string?): boolean
@@ -200,8 +234,15 @@ local function speak(text: string)
 				rig.clip:Play()
 				return
 			end
-			-- Live voice: load both layers, then start them together so they stay in sync.
+			-- Live voice: random starting pitch/speed per line, same offset on both layers so they
+			-- stay in sync. Load both, then start them together.
+			local w = cfg.Warp
+			local pitchOffset = rng:NextNumber(-w.LinePitchRange, w.LinePitchRange)
+			local speed = cfg.Speed * (1 + rng:NextNumber(-w.LineSpeedRange, w.LineSpeedRange))
+			rig.main.Pitch = math.clamp(cfg.Pitch + pitchOffset, -12, 12)
+			rig.low.Pitch = math.clamp(cfg.LowPitch + pitchOffset, -12, 12)
 			for _, source in { rig.main, rig.low } do
+				source.Speed = speed
 				source.Text = text
 				source.TimePosition = 0
 			end
@@ -222,6 +263,7 @@ function VoiceController.isSpeaking(): boolean
 end
 
 function VoiceController:Start()
+	RunService.Heartbeat:Connect(updateWarp)
 	ensureListener()
 	Workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(ensureListener)
 	NetClient.event("MonsterSpeak").OnClientEvent:Connect(function(text: string, _kind: string)

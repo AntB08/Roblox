@@ -97,6 +97,17 @@ local HorrorConfig = {
 			ReverbWet = -6, -- dB
 			ReverbDry = 0,
 		},
+		-- Unpredictable pitch (applies to live AND recorded voice, through an AudioPitchShifter):
+		Warp = {
+			LinePitchRange = 2.5, -- each line starts up to +/- this many semitones off
+			LineSpeedRange = 0.08, -- and up to +/- 8% faster/slower
+			DriftDepth = 0.07, -- slow wander while speaking (ratio: 0.07 = about +/- 1.2 semitones)
+			DriftSpeed = 0.9, -- how fast it wanders
+			GlitchesPerSecond = 0.7, -- sudden short pitch jumps
+			GlitchMin = 0.7, -- glitch pitch ratio range (0.7 = much lower, 1.3 = higher)
+			GlitchMax = 1.3,
+			GlitchSeconds = NumberRange.new(0.06, 0.22),
+		},
 		UseAI = true, -- try TextGenerator for flavor lines; canned lines are always the fallback
 		AITimeout = 4, -- seconds to wait for a fresh line before speaking the canned one
 		-- GPT writes the lines (Roblox text-to-speech still speaks them). Needs the API key in the
