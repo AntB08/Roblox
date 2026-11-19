@@ -23,7 +23,7 @@ local Net = require(script.Parent.Parent.Net)
 local Lines = require(script.Parent.Parent.Config.Lines)
 local LiveConfig = require(script.Parent.LiveConfig)
 
-export type Context = { name: string?, room: string?, count: number?, total: number? }
+export type Context = { name: string?, room: string?, count: number?, total: number?, said: string? }
 
 local AI_KINDS: { [string]: string } = {
 	-- kind -> what to tell the model about the moment
@@ -33,6 +33,7 @@ local AI_KINDS: { [string]: string } = {
 	FuseInserted = "The guests just put fuse {count} of {total} into your generator. You are annoyed.",
 	Escaped = "A guest named {name} just escaped your house. React, still menacing.",
 	Rescued = "Someone just freed the guests you locked in your cage. You are furious.",
+	Reply = 'A guest named {name} is hiding from you and just said out loud: "{said}". Answer them directly.',
 }
 
 local SYSTEM_PROMPT = [[

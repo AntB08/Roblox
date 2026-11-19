@@ -58,6 +58,7 @@ local HorrorConfig = {
 		Closet = 16,
 		Rescue = 45,
 		Callout = 400, -- it hears every callout (that's the point)
+		Voice = 45, -- talking out loud (voice chat or text chat) is heard this far from you
 	},
 
 	Fuses = {
@@ -77,6 +78,29 @@ local HorrorConfig = {
 		UseAI = true, -- try TextGenerator for flavor lines; canned lines are always the fallback
 		AITimeout = 3,
 		AIMaxFailures = 3, -- after this many failures in a row, this server stops trying
+	},
+
+	Speech = {
+		ReplyRange = 70, -- it answers what you said if it is this close to you
+		ReplyChance = 0.7,
+		ReplyCooldown = 8,
+		ListenToTextChat = true, -- Player.Chatted; stops working when Roblox forces platform chat (2027)
+		-- Words that count as naming a room (lowercase). Saying one lures it there, true or not.
+		RoomWords = {
+			kitchen = "Kitchen",
+			study = "Study",
+			library = "Study",
+			office = "Study",
+			basement = "Basement",
+			cellar = "Basement",
+			downstairs = "Basement",
+			cage = "Basement",
+			hallway = "Hallway",
+			hall = "Hallway",
+			generator = "Hallway",
+			stairs = "Stairs",
+			staircase = "Stairs",
+		},
 	},
 
 	Callouts = { "Kitchen", "Study", "Basement", "Hallway" },

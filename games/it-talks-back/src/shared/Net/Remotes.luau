@@ -47,6 +47,15 @@ local Remotes: { [string]: Def } = {
 		args = { Guard.oneOf(CALLOUT_ROOMS) },
 		rate = { rate = 1, burst = 3 },
 	},
+	-- What the local player just said into their mic (Roblox speech-to-text, client side).
+	-- Untrusted text: the server only matches keywords and feeds it to TextGenerator (moderated);
+	-- it is never shown to other players.
+	Spoke = {
+		kind = "Event",
+		direction = "ToServer",
+		args = { Guard.string(200, 1) },
+		rate = { rate = 0.5, burst = 3 },
+	},
 	-- HUD "Leave" button while hiding (the closet prompt does the same).
 	LeaveHide = { kind = "Event", direction = "ToServer", args = {}, rate = { rate = 2, burst = 4 } },
 

@@ -79,6 +79,12 @@ local Lines: { [string]: { string } } = {
 		"{name} got away... no matter. Plenty more.",
 		"Run home, {name}. I'll be here.",
 	},
+	Reply = {
+		"I heard that, {name}.",
+		"Talking to me, {name}? Come closer, I can't hear you.",
+		"Shh. I'm listening, {name}.",
+		"Say it again, {name}. I'm right here.",
+	},
 	-- Hints: one may be true, one may be a lie. Players have to decide.
 	Hint = {
 		"Psst. There's a fuse in the {room}.",
