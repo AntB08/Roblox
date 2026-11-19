@@ -1,0 +1,19 @@
+std = "roblox"
+# roblox-std-source = "pinned"   # writes roblox.yml locally; use for offline CI
+
+# Vendored third-party code keeps its upstream style; do not lint it.
+exclude = [
+  "Packages/*",
+  "ServerPackages/*",
+  "DevPackages/*",
+  "build/*",
+  "src/shared/Packages/**",
+  "src/server/Packages/**",
+]
+
+[lints]
+shadowing = "allow"
+unused_variable = "warn"
+global_usage = "deny"
+deprecated = "warn"
+incorrect_standard_library_use = "deny"
