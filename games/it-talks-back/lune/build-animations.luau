@@ -24,7 +24,7 @@ local Color3 = roblox.Color3
 local Enum = roblox.Enum
 
 local OUT = "assets/animations"
-local FPS = 20 -- keyframes per second when sampling
+local FPS = 30 -- keyframes per second when sampling
 
 -- ===== Load the game's animator with a tiny shim (it expects Roblox's Random) =================
 local source = fs.readFile("src/client/FX/MonsterAnimator.luau")
@@ -44,81 +44,87 @@ local Animator = luau.load(source, {
 	environment = { Random = ShimRandom, CFrame = CFrame, math = math, table = table },
 })()
 
--- ===== Monster rig (mirror of src/server/Game/MonsterRig.luau) ===============================
-local function part(name, size, color, material)
-	local p = Instance.new("Part")
-	p.Name = name
-	p.Size = size
-	p.Color = color
-	p.Material = material or Enum.Material.SmoothPlastic
-	p.CanCollide = false
-	p.Anchored = false
-	p.Massless = true
-	return p
-end
-
-local function motor(name, p0, p1, c0, c1)
-	local m = Instance.new("Motor6D")
-	m.Name = name
-	m.Part0 = p0
-	m.Part1 = p1
-	m.C0 = c0
-	m.C1 = c1
-	m.Parent = p0
-	return m
-end
+-- ===== Monster rig (built from MonsterRig.SPEC, the same table the game uses) =================
+local rigSource = fs.readFile("src/server/Game/MonsterRig.luau")
+local MonsterRig = luau.load(rigSource, {
+	debugName = "MonsterRig",
+	environment = {
+		Instance = Instance,
+		CFrame = CFrame,
+		Vector3 = Vector3,
+		Color3 = Color3,
+		Enum = Enum,
+		table = table,
+		math = math,
+		ipairs = ipairs,
+	},
+})()
+local SPEC = MonsterRig.SPEC
 
 local function buildRig()
-	local SKIN = Color3.fromRGB(22, 20, 24)
-	local CLOTH = Color3.fromRGB(38, 30, 30)
 	local model = Instance.new("Model")
 	model.Name = "TheTenantRig"
-	local root = part("HumanoidRootPart", Vector3.new(2, 2, 1), SKIN)
+	local root = Instance.new("Part")
+	root.Name = "HumanoidRootPart"
+	root.Size = Vector3.new(2, 2, 1)
 	root.Transparency = 1
 	root.Anchored = true -- so the rig stands still while you animate it
-	root.Massless = false
+	root.CanCollide = false
 	root.CFrame = CFrame.new(0, 4, 0)
 	root.Parent = model
-	local torso = part("Torso", Vector3.new(2, 3, 1), CLOTH, Enum.Material.Fabric)
-	local head = part("Head", Vector3.new(1.3, 1.6, 1.3), SKIN)
-	local la = part("LeftArm", Vector3.new(0.5, 4.4, 0.5), SKIN)
-	local ra = part("RightArm", Vector3.new(0.5, 4.4, 0.5), SKIN)
-	local ll = part("LeftLeg", Vector3.new(0.7, 3, 0.7), CLOTH, Enum.Material.Fabric)
-	local rl = part("RightLeg", Vector3.new(0.7, 3, 0.7), CLOTH, Enum.Material.Fabric)
-	for _, p in { torso, head, la, ra, ll, rl } do
+	local parts = { HumanoidRootPart = root }
+	for _, spec in SPEC.parts do
+		local p = Instance.new("Part")
+		p.Name = spec.name
+		p.Size = spec.size
+		p.Color = spec.color
+		p.Material = spec.material
+		p.CanCollide = false
+		p.Massless = true
 		p.Parent = model
+		parts[spec.name] = p
 	end
-	motor("Root", root, torso, CFrame.new(0, 0.5, 0) * CFrame.Angles(math.rad(-12), 0, 0), CFrame.new())
-	motor("Neck", torso, head, CFrame.new(0, 1.5, -0.25) * CFrame.Angles(math.rad(18), 0, 0), CFrame.new(0, -0.8, 0))
-	motor("LeftShoulder", torso, la, CFrame.new(-1.25, 1.3, 0), CFrame.new(0, 2, 0))
-	motor("RightShoulder", torso, ra, CFrame.new(1.25, 1.3, 0), CFrame.new(0, 2, 0))
-	motor("LeftHip", root, ll, CFrame.new(-0.5, -1, 0), CFrame.new(0, 1.5, 0))
-	motor("RightHip", root, rl, CFrame.new(0.5, -1, 0), CFrame.new(0, 1.5, 0))
-	-- Place the parts where the joints put them (the rig is static in the file).
-	torso.CFrame = root.CFrame * CFrame.new(0, 0.5, 0) * CFrame.Angles(math.rad(-12), 0, 0)
-	head.CFrame = torso.CFrame * CFrame.new(0, 1.5, -0.25) * CFrame.Angles(math.rad(18), 0, 0) * CFrame.new(0, 0.8, 0)
-	la.CFrame = torso.CFrame * CFrame.new(-1.25, 1.3, 0) * CFrame.new(0, -2, 0)
-	ra.CFrame = torso.CFrame * CFrame.new(1.25, 1.3, 0) * CFrame.new(0, -2, 0)
-	ll.CFrame = root.CFrame * CFrame.new(-0.5, -1, 0) * CFrame.new(0, -1.5, 0)
-	rl.CFrame = root.CFrame * CFrame.new(0.5, -1, 0) * CFrame.new(0, -1.5, 0)
+	for _, j in SPEC.joints do
+		local m = Instance.new("Motor6D")
+		m.Name = j.name
+		m.Part0 = parts[j.part0]
+		m.Part1 = parts[j.part1]
+		m.C0 = j.c0
+		m.C1 = j.c1
+		m.Parent = parts[j.part0]
+	end
+	-- Rest layout.
+	local placed = { HumanoidRootPart = true }
+	local progress = true
+	while progress do
+		progress = false
+		for _, j in SPEC.joints do
+			if placed[j.part0] and not placed[j.part1] then
+				parts[j.part1].CFrame = parts[j.part0].CFrame * j.c0 * j.c1:Inverse()
+				placed[j.part1] = true
+				progress = true
+			end
+		end
+	end
 	for i, x in { -0.3, 0.3 } do
-		local eye = part(
-			if i == 1 then "LeftEye" else "RightEye",
-			Vector3.new(0.22, 0.14, 0.05),
-			Color3.fromRGB(235, 230, 210),
-			Enum.Material.Neon
-		)
-		eye.CFrame = head.CFrame * CFrame.new(x, 0.15, -0.66)
+		local eye = Instance.new("Part")
+		eye.Name = if i == 1 then "LeftEye" else "RightEye"
+		eye.Size = Vector3.new(0.22, 0.14, 0.05)
+		eye.Color = Color3.fromRGB(235, 230, 210)
+		eye.Material = Enum.Material.Neon
+		eye.CanCollide = false
+		eye.Massless = true
+		eye.CFrame = parts.Head.CFrame * CFrame.new(x, 0.2, -0.66)
 		local weld = Instance.new("Weld")
-		weld.Part0 = head
+		weld.Part0 = parts.Head
 		weld.Part1 = eye
-		weld.C0 = CFrame.new(x, 0.15, -0.66)
+		weld.C0 = CFrame.new(x, 0.2, -0.66)
 		weld.Parent = eye
 		eye.Parent = model
 	end
 	local humanoid = Instance.new("Humanoid")
 	humanoid.RigType = Enum.HumanoidRigType.R15
-	humanoid.HipHeight = 3
+	humanoid.HipHeight = SPEC.hipHeight
 	local animator = Instance.new("Animator")
 	animator.Parent = humanoid
 	humanoid.Parent = model
@@ -126,20 +132,14 @@ local function buildRig()
 	return model
 end
 
--- Monster pose tree: which Pose sits under which (parent part -> child parts).
-local MONSTER_TREE = {
-	HumanoidRootPart = { "Torso", "LeftLeg", "RightLeg" },
-	Torso = { "Head", "LeftArm", "RightArm" },
-}
--- Part1 name -> joint name in the animator's pose table.
-local MONSTER_JOINT = {
-	Torso = "Root",
-	Head = "Neck",
-	LeftArm = "LeftShoulder",
-	RightArm = "RightShoulder",
-	LeftLeg = "LeftHip",
-	RightLeg = "RightHip",
-}
+-- Pose tree (parent part -> child parts) and Part1 -> joint name, from the spec.
+local MONSTER_TREE = {}
+local MONSTER_JOINT = {}
+for _, j in SPEC.joints do
+	MONSTER_TREE[j.part0] = MONSTER_TREE[j.part0] or {}
+	table.insert(MONSTER_TREE[j.part0], j.part1)
+	MONSTER_JOINT[j.part1] = j.name
+end
 
 local function keyframe(time, transforms, tree, rootName, easing)
 	local kf = Instance.new("Keyframe")
@@ -182,7 +182,7 @@ local function bakeMonster(name, spec)
 		time = 0,
 	}
 	-- Settle into the base pose first (so the first keyframe isn't a T-pose).
-	for i = 1, 90 do
+	for i = 1, 240 do -- springs need a few seconds to reach their steady loop
 		ctx.time = i / 60
 		Animator.step(state, ctx)
 	end
@@ -238,10 +238,10 @@ local function bakeMonster(name, spec)
 	return seq
 end
 
--- One walk/run cycle: phase advances by (2 + speed * k) rad/s; a full stride is 2*pi.
+-- (matches MonsterAnimator: phase advances 2*pi per stride of distance)
 local function cycle(speed)
-	local k = if speed > 13 then 0.55 else 0.42
-	return (2 * math.pi) / (2 + speed * k)
+	local stride = if speed > 13 then 9.5 else 6
+	return stride / speed
 end
 
 local MONSTER = {

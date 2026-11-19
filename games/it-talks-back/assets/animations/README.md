@@ -10,6 +10,9 @@ changing that code. (Editing in Studio is the other way. Then the published vers
 | `Monster_*.rbxm` | Each monster animation on its own (KeyframeSequence). |
 | `Player_*.rbxm` | R15 crouch animations (KeyframeSequence), for any R15 character. |
 
+Rig: 16 joints (spine, neck, jaw, shoulders, elbows, wrists, hips, knees, ankles), the same as the game's
+`MonsterRig.SPEC`. The animations are sampled at 30 fps from the spring-based animator.
+
 Monster: Idle, Walk, Run, Listen, Speak, Dormant (loops) · Grab, Snuff, Look, Vanish, Emerge (one-shots).
 Player: CrouchIdle, CrouchWalk (loops).
 

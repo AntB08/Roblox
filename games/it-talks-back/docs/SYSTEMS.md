@@ -40,7 +40,8 @@ Coins, Stats {Rounds, Escapes, Rescues, TimesCaught, FusesInserted, PlaySeconds,
 RoundEnded, PlayerCaught, PlayerEscaped, CalloutUsed. Onboarding: DataLoaded → FirstRound → FirstFuse → FirstEscape.
 
 ## Animation and cutscenes (all procedural, no uploaded animation assets)
-- Monster: `src/client/FX/MonsterAnimator.luau` (poses: idle, creep walk, chase sprint, listen, speak, grab, snuff, look,
+- Rig: `src/server/Game/MonsterRig.luau` — 16 Motor6Ds (Root, Waist, Neck, Jaw, Shoulder/Elbow/Wrist, Hip/Knee/Ankle ×2), spec in `MonsterRig.SPEC`.
+- Monster: `src/client/FX/MonsterAnimator.luau` — layered target pose + per-joint damped springs (follow-through, overshoot), distance-driven gait (poses: idle, creep walk, chase sprint, listen, speak, grab, snuff, look,
   vanish glitch, emerge), driven by monster attributes `Mood`, `Action` + `ActionUntil` (server `MonsterService.act`).
   Applied each frame by `MonsterFxController`. Action lengths must match `ACTION_LENGTH` there.
 - Catch: server lifts the victim in front of it for 1.6 s (anchored), then cages them.

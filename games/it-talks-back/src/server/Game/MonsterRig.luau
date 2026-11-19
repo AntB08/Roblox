@@ -1,10 +1,20 @@
 --!strict
 -- MonsterRig: builds the monster model in code (no uploaded mesh needed for the prototype).
--- A tall, thin, hunched figure: ~7.5 studs, long arms, two pale eyes. Original design.
--- Joints are Motor6Ds so the client can animate it procedurally (MonsterFxController writes
--- Motor6D.Transform from the root's velocity; nothing here plays an animation asset).
+-- A tall, thin, hunched figure (~7.6 studs) with very long arms and a hinged jaw. Original design.
 --
--- Humanoid uses RigType R15 so HipHeight is honored for a custom body.
+-- Skeleton (16 Motor6Ds; Part1 name in brackets). Neutral = upright; the hunch lives in the
+-- animation, so the rig stays easy to edit in the Animation Editor:
+--   HumanoidRootPart -Root-> [LowerTorso] -Waist-> [UpperTorso] -Neck-> [Head] -Jaw-> [Jaw]
+--     UpperTorso -LeftShoulder-> [LeftUpperArm] -LeftElbow-> [LeftLowerArm] -LeftWrist-> [LeftHand]
+--     (same on the right)
+--     LowerTorso -LeftHip-> [LeftUpperLeg] -LeftKnee-> [LeftLowerLeg] -LeftAnkle-> [LeftFoot]
+--     (same on the right)
+-- Joint axes (Transform rotations): for limbs that hang down, rx > 0 swings them FORWARD (elbows
+-- bend with rx > 0, knees with rx < 0); for upward parts (torso, head), rx < 0 leans forward/down;
+-- Jaw rx < 0 opens the mouth.
+--
+-- The client animates it (FX/MonsterAnimator.luau); the exporter (lune/build-animations.luau)
+-- mirrors MonsterRig.SPEC so the exported rig matches exactly.
 
 local MonsterRig = {}
 
@@ -14,12 +24,79 @@ local EYE = Color3.fromRGB(235, 230, 210)
 
 local HIP_HEIGHT = 3
 
-local function bodyPart(name: string, size: Vector3, color: Color3, material: Enum.Material?): Part
+export type PartSpec = { name: string, size: Vector3, color: Color3, material: Enum.Material }
+export type JointSpec = { name: string, part0: string, part1: string, c0: CFrame, c1: CFrame }
+
+local PARTS: { PartSpec } = {
+	{ name = "LowerTorso", size = Vector3.new(1.6, 0.9, 0.9), color = CLOTH, material = Enum.Material.Fabric },
+	{ name = "UpperTorso", size = Vector3.new(2, 2.4, 1), color = CLOTH, material = Enum.Material.Fabric },
+	{ name = "Head", size = Vector3.new(1.3, 1.5, 1.3), color = SKIN, material = Enum.Material.SmoothPlastic },
+	{ name = "Jaw", size = Vector3.new(1.05, 0.35, 0.95), color = SKIN, material = Enum.Material.SmoothPlastic },
+}
+for _, side in { "Left", "Right" } do
+	local skin, cloth = Enum.Material.SmoothPlastic, Enum.Material.Fabric
+	table.insert(
+		PARTS,
+		{ name = side .. "UpperArm", size = Vector3.new(0.45, 2.3, 0.45), color = SKIN, material = skin }
+	)
+	table.insert(PARTS, { name = side .. "LowerArm", size = Vector3.new(0.4, 2.2, 0.4), color = SKIN, material = skin })
+	table.insert(PARTS, { name = side .. "Hand", size = Vector3.new(0.35, 0.9, 0.25), color = SKIN, material = skin })
+	table.insert(
+		PARTS,
+		{ name = side .. "UpperLeg", size = Vector3.new(0.6, 1.5, 0.6), color = CLOTH, material = cloth }
+	)
+	table.insert(
+		PARTS,
+		{ name = side .. "LowerLeg", size = Vector3.new(0.5, 1.4, 0.5), color = CLOTH, material = cloth }
+	)
+	table.insert(PARTS, { name = side .. "Foot", size = Vector3.new(0.55, 0.2, 1), color = SKIN, material = skin })
+end
+
+local JOINTS: { JointSpec } = {
+	{
+		name = "Root",
+		part0 = "HumanoidRootPart",
+		part1 = "LowerTorso",
+		c0 = CFrame.new(0, -0.55, 0),
+		c1 = CFrame.new(),
+	},
+	{
+		name = "Waist",
+		part0 = "LowerTorso",
+		part1 = "UpperTorso",
+		c0 = CFrame.new(0, 0.4, 0),
+		c1 = CFrame.new(0, -1.2, 0),
+	},
+	{
+		name = "Neck",
+		part0 = "UpperTorso",
+		part1 = "Head",
+		c0 = CFrame.new(0, 1.2, -0.15),
+		c1 = CFrame.new(0, -0.75, 0),
+	},
+	{ name = "Jaw", part0 = "Head", part1 = "Jaw", c0 = CFrame.new(0, -0.55, 0.2), c1 = CFrame.new(0, 0.1, 0.4) },
+}
+for i, side in { "Left", "Right" } do
+	local x = if i == 1 then -1 else 1
+	local function joint(name: string, p0: string, p1: string, c0: CFrame, c1: CFrame)
+		table.insert(JOINTS, { name = side .. name, part0 = p0, part1 = side .. p1, c0 = c0, c1 = c1 })
+	end
+	joint("Shoulder", "UpperTorso", "UpperArm", CFrame.new(1.2 * x, 0.95, 0), CFrame.new(0, 1, 0))
+	joint("Elbow", side .. "UpperArm", "LowerArm", CFrame.new(0, -1.05, 0), CFrame.new(0, 1.05, 0))
+	joint("Wrist", side .. "LowerArm", "Hand", CFrame.new(0, -1.1, 0), CFrame.new(0, 0.45, 0))
+	joint("Hip", "LowerTorso", "UpperLeg", CFrame.new(0.45 * x, -0.35, 0), CFrame.new(0, 0.75, 0))
+	joint("Knee", side .. "UpperLeg", "LowerLeg", CFrame.new(0, -0.75, 0), CFrame.new(0, 0.7, 0))
+	joint("Ankle", side .. "LowerLeg", "Foot", CFrame.new(0, -0.7, 0), CFrame.new(0, 0.1, 0.25))
+end
+
+MonsterRig.SPEC = table.freeze({ parts = PARTS, joints = JOINTS, hipHeight = HIP_HEIGHT })
+
+local function bodyPart(spec: PartSpec): Part
 	local p = Instance.new("Part")
-	p.Name = name
-	p.Size = size
-	p.Color = color
-	p.Material = material or Enum.Material.SmoothPlastic
+	p.Name = spec.name
+	p.Size = spec.size
+	p.Color = spec.color
+	p.Material = spec.material
 	p.CanCollide = false
 	p.CanTouch = false
 	p.CanQuery = false
@@ -28,62 +105,68 @@ local function bodyPart(name: string, size: Vector3, color: Color3, material: En
 	return p
 end
 
-local function motor(name: string, part0: BasePart, part1: BasePart, c0: CFrame, c1: CFrame): Motor6D
-	local m = Instance.new("Motor6D")
-	m.Name = name
-	m.Part0 = part0
-	m.Part1 = part1
-	m.C0 = c0
-	m.C1 = c1
-	m.Parent = part0
-	return m
-end
-
 function MonsterRig.build(name: string): Model
 	local model = Instance.new("Model")
 	model.Name = name
 	model.ModelStreamingMode = Enum.ModelStreamingMode.Persistent
 
 	-- Root: the only colliding part. Bottom of root is HIP_HEIGHT above the floor.
-	local root = bodyPart("HumanoidRootPart", Vector3.new(2, 2, 1), SKIN)
+	local root = Instance.new("Part")
+	root.Name = "HumanoidRootPart"
+	root.Size = Vector3.new(2, 2, 1)
 	root.Transparency = 1
 	root.CanCollide = true
-	root.Massless = false
+	root.CanTouch = false
+	root.CanQuery = false
 	root.CastShadow = false
 	root.Parent = model
 
-	local torso = bodyPart("Torso", Vector3.new(2, 3, 1), CLOTH, Enum.Material.Fabric)
-	torso.Parent = model
-	local head = bodyPart("Head", Vector3.new(1.3, 1.6, 1.3), SKIN)
-	head.Parent = model
-	local leftArm = bodyPart("LeftArm", Vector3.new(0.5, 4.4, 0.5), SKIN)
-	leftArm.Parent = model
-	local rightArm = bodyPart("RightArm", Vector3.new(0.5, 4.4, 0.5), SKIN)
-	rightArm.Parent = model
-	local leftLeg = bodyPart("LeftLeg", Vector3.new(0.7, 3, 0.7), CLOTH, Enum.Material.Fabric)
-	leftLeg.Parent = model
-	local rightLeg = bodyPart("RightLeg", Vector3.new(0.7, 3, 0.7), CLOTH, Enum.Material.Fabric)
-	rightLeg.Parent = model
+	local parts: { [string]: BasePart } = { HumanoidRootPart = root }
+	for _, spec in PARTS do
+		local p = bodyPart(spec)
+		p.Parent = model
+		parts[spec.name] = p
+	end
+	for _, j in JOINTS do
+		local m = Instance.new("Motor6D")
+		m.Name = j.name
+		m.Part0 = parts[j.part0]
+		m.Part1 = parts[j.part1]
+		m.C0 = j.c0
+		m.C1 = j.c1
+		m.Parent = parts[j.part0]
+	end
 
-	-- Torso sits on the root, leaning forward (hunched).
-	motor("Root", root, torso, CFrame.new(0, 0.5, 0) * CFrame.Angles(math.rad(-12), 0, 0), CFrame.new())
-	motor("Neck", torso, head, CFrame.new(0, 1.5, -0.25) * CFrame.Angles(math.rad(18), 0, 0), CFrame.new(0, -0.8, 0))
-	motor("LeftShoulder", torso, leftArm, CFrame.new(-1.25, 1.3, 0), CFrame.new(0, 2, 0))
-	motor("RightShoulder", torso, rightArm, CFrame.new(1.25, 1.3, 0), CFrame.new(0, 2, 0))
-	-- Hips are attached to the ROOT so leaning the torso doesn't tilt the legs.
-	motor("LeftHip", root, leftLeg, CFrame.new(-0.5, -1, 0), CFrame.new(0, 1.5, 0))
-	motor("RightHip", root, rightLeg, CFrame.new(0.5, -1, 0), CFrame.new(0, 1.5, 0))
+	-- Lay the parts out at rest so the model looks right before the first animation frame.
+	local placed: { [string]: boolean } = { HumanoidRootPart = true }
+	local progress = true
+	while progress do
+		progress = false
+		for _, j in JOINTS do
+			if placed[j.part0] and not placed[j.part1] then
+				parts[j.part1].CFrame = parts[j.part0].CFrame * j.c0 * j.c1:Inverse()
+				placed[j.part1] = true
+				progress = true
+			end
+		end
+	end
 
 	-- Eyes: neon dots with a faint light. Clients recolor them by mood.
+	local head = parts.Head
 	for i, x in { -0.3, 0.3 } do
-		local eye =
-			bodyPart(if i == 1 then "LeftEye" else "RightEye", Vector3.new(0.22, 0.14, 0.05), EYE, Enum.Material.Neon)
+		local eye = bodyPart({
+			name = if i == 1 then "LeftEye" else "RightEye",
+			size = Vector3.new(0.22, 0.14, 0.05),
+			color = EYE,
+			material = Enum.Material.Neon,
+		})
 		eye.CastShadow = false
+		eye.CFrame = head.CFrame * CFrame.new(x, 0.2, -0.66)
 		eye.Parent = model
 		local weld = Instance.new("Weld")
 		weld.Part0 = head
 		weld.Part1 = eye
-		weld.C0 = CFrame.new(x, 0.15, -0.66)
+		weld.C0 = CFrame.new(x, 0.2, -0.66)
 		weld.Parent = eye
 		eye:AddTag("MonsterEye")
 	end
