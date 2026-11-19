@@ -70,6 +70,13 @@ local VoiceLines: { [string]: string } = {
 	-- KeyTaken
 	["Put that key back."] = P,
 	["That key isn't yours."] = P,
+	-- Surge
+	["Shh. Listen."] = P,
+	["Can you see me now?"] = P,
+	["Darkness suits you."] = P,
+	-- Knock
+	["Did someone knock?"] = P,
+	["Who's at my door?"] = P,
 }
 
 return table.freeze(VoiceLines)

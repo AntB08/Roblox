@@ -96,6 +96,15 @@ local Lines: { [string]: { string } } = {
 		"Night {count}. Let's see how long you last.",
 		"Back again? Night {count}, then.",
 	},
+	Surge = {
+		"Shh. Listen.",
+		"Can you see me now?",
+		"Darkness suits you.",
+	},
+	Knock = {
+		"Did someone knock?",
+		"Who's at my door?",
+	},
 	Reply = {
 		"I heard that, {name}.",
 		"Talking to me, {name}? Come closer, I can't hear you.",

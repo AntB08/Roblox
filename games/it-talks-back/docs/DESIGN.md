@@ -33,6 +33,15 @@ Each round is a **night** with a checklist (HUD top-left). The exit gate opens o
 - **Key:** random spot; carry it to the gate. Caught = dropped where you were caught.
 Survive (1+ escape) → next night. Nobody escapes → replay the night. Best night is saved per player.
 
+## Every night feels different (VarietyService, HorrorConfig.Variety)
+Already random: fuse/key/radio spots, hints, patrol. On top of that, each night rolls:
+- **Personality** (never twice in a row): Stalker (sees far, rarely talks, remembers longer), Chatty (taunts 2×, lies 70%),
+  Hunter (+10% speed, forgets fast), Listener (hears 1.5×, sees 0.7×). Announced as a hint ("It's quiet tonight. Too quiet.").
+- **Twist**: None, Barricades (up to 2 doorways boarded, every room stays reachable), Blackout (lamps dead), Fog, Jammed closets.
+- **Spawn**: a random patrol point far from the foyer.
+- **Events** every 55–95 s: power surge (lights die 8 s), knocking in an empty room (it goes to check), vanish (it goes quiet
+  and reappears far from everyone).
+
 ## The talking monster (what makes it original)
 | It… | Gameplay effect |
 |---|---|

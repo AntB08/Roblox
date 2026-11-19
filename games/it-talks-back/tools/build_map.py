@@ -303,6 +303,17 @@ def build():
     ]:
         markers.append(marker("PatrolPoint", (x, y + 0.5, z), "PatrolPoint", attrs={"Room": room}))
 
+    # Doorways the director may barricade (A/B = the rooms they connect). Size = the opening.
+    for name, (x, z, sx, sz, a, b) in {
+        "HallKitchen": (-8, -25, 1.2, DOOR_W, "Hallway", "Kitchen"),
+        "HallStairs": (-8, 5, 1.2, DOOR_W, "Hallway", "Stairs"),
+        "KitchenStairs": (-20, -10, DOOR_W, 1.2, "Kitchen", "Stairs"),
+        "HallStudyNorth": (8, -25, 1.2, DOOR_W, "Hallway", "Study"),
+        "HallStudySouth": (8, 5, 1.2, DOOR_W, "Hallway", "Study"),
+    }.items():
+        markers.append(marker("Doorway" + name, (x, DOOR_H / 2, z), "Doorway", attrs={"A": a, "B": b, "Door": name},
+                              size=(sx, DOOR_H, sz)))
+
     # Night tasks: the radio appears at one of these, every candle spot gets a candle, the key
     # spawns at one key spot.
     for room, x, y, z in [("Study", 16, 3, 13), ("Kitchen", -24, 3.8, -26.5), ("Stairs", -24, 2.6, 9),

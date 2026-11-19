@@ -79,6 +79,64 @@ local HorrorConfig = {
 	ExtraSpeedPerNight = 0.03,
 	MaxMonsterSpeed = 1.25,
 
+	-- The director: what changes every night so a replayed night still plays differently.
+	Variety = {
+		-- Monster personalities (one per night, random). Multipliers on the Monster values above.
+		Personalities = {
+			Stalker = {
+				view = 1.25,
+				hear = 0.9,
+				speed = 0.95,
+				talk = 0.4,
+				memory = 1.4,
+				hintTruth = 0.5,
+				blurb = "It's quiet tonight. Too quiet.",
+			},
+			Chatty = {
+				view = 1,
+				hear = 1,
+				speed = 1,
+				talk = 2,
+				memory = 1,
+				hintTruth = 0.3,
+				blurb = "It won't stop talking tonight.",
+			},
+			Hunter = {
+				view = 1,
+				hear = 1,
+				speed = 1.1,
+				talk = 1,
+				memory = 0.6,
+				hintTruth = 0.5,
+				blurb = "It's fast tonight... but forgetful.",
+			},
+			Listener = {
+				view = 0.7,
+				hear = 1.5,
+				speed = 1,
+				talk = 1,
+				memory = 1,
+				hintTruth = 0.5,
+				blurb = "It can barely see tonight. It hears everything.",
+			},
+		},
+		-- Night twists: weight = how often. "None" keeps a normal night in the mix.
+		Twists = {
+			{ id = "None", weight = 3 },
+			{ id = "Barricades", weight = 3, blurb = "Some doors are boarded up." },
+			{ id = "Blackout", weight = 2, blurb = "The lamps are dead. Use your light... carefully." },
+			{ id = "Fog", weight = 2, blurb = "A cold fog fills the house." },
+			{ id = "JammedClosets", weight = 2, blurb = "Some closets are jammed shut." },
+		},
+		MaxBarricades = 2,
+		JammedClosets = 2,
+		FogDensity = 0.62,
+		-- Surprise events during the round (one every EventEvery seconds, random).
+		EventEvery = NumberRange.new(55, 95),
+		SurgeSeconds = 8,
+		VanishQuietSeconds = 15,
+	},
+
 	Tasks = {
 		RadioNoiseRadius = 55, -- the radio is loud: it keeps pulling the monster to its room
 		RadioNoiseEvery = 6, -- seconds

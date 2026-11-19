@@ -18,6 +18,7 @@ local Workspace = game:GetService("Workspace")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Assets = require(Shared.Config.Assets)
+local NetClient = require(Shared.Net.Client)
 
 local Client = script.Parent.Parent
 local CameraShaker = require(Client.FX.CameraShaker)
@@ -169,9 +170,10 @@ end
 
 local function updateLights(monsterPos: Vector3?)
 	local powerOn = Workspace:GetAttribute("PowerOn") == true
+	local lightsOut = Workspace:GetAttribute("LightsOut") == true and not powerOn
 	local t = os.clock()
 	for i, entry in lights do
-		local base = if powerOn then entry.base * 1.7 else entry.base
+		local base = if lightsOut then 0 elseif powerOn then entry.base * 1.7 else entry.base
 		local near = monsterPos and (entry.part.Position - monsterPos).Magnitude < FLICKER_DISTANCE
 		if near then
 			-- Each lamp flickers on its own rhythm.
@@ -193,7 +195,42 @@ local function setEdges(gui: ScreenGui, a: string, b: string, alpha: number)
 	end
 end
 
+-- Server-requested 3D one-shots (knocking in an empty room...): (soundKey, position, times)
+local function playAt(soundKey: string, position: Vector3, times: number)
+	local id = (Assets.Sounds :: any)[soundKey]
+	if typeof(id) ~= "string" or Assets.isPlaceholder(id) or typeof(position) ~= "Vector3" then
+		return
+	end
+	local anchor = Instance.new("Part")
+	anchor.Anchored = true
+	anchor.CanCollide = false
+	anchor.CanQuery = false
+	anchor.CanTouch = false
+	anchor.Transparency = 1
+	anchor.Size = Vector3.one
+	anchor.Position = position
+	local sound = Instance.new("Sound")
+	sound.SoundId = id
+	sound.Volume = 2.2
+	sound.PlaybackSpeed = 0.6
+	sound.RollOffMode = Enum.RollOffMode.InverseTapered
+	sound.RollOffMinDistance = 10
+	sound.RollOffMaxDistance = 120
+	sound.Parent = anchor
+	anchor.Parent = Workspace
+	task.spawn(function()
+		for _ = 1, math.clamp(math.floor(tonumber(times) or 1), 1, 5) do
+			sound.PlaybackSpeed = 0.55 + rng:NextNumber(0, 0.1)
+			sound:Play()
+			task.wait(0.45)
+		end
+		task.wait(1)
+		anchor:Destroy()
+	end)
+end
+
 function MonsterFxController:Start()
+	NetClient.event("PlaySoundAt").OnClientEvent:Connect(playAt)
 	collectLights()
 	CollectionService:GetInstanceAddedSignal("HouseLight"):Connect(collectLights)
 	local overlay = player:WaitForChild("PlayerGui"):WaitForChild("Overlay", 30) :: ScreenGui?

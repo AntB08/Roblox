@@ -28,6 +28,7 @@ HideService.Hid = Signal.new() -- (player, closet)
 
 local occupant: { [Model]: Player } = {}
 local hiding: { [Player]: Hiding } = {}
+local jammed: { [Model]: true } = {}
 
 local function partOf(closet: Model, name: string): BasePart?
 	local p = closet:FindFirstChild(name)
@@ -93,6 +94,26 @@ function HideService.frontOf(closet: Model): Vector3?
 	return if front then front.Position else nil
 end
 
+-- Director twist: some closets won't open tonight.
+function HideService.setJammed(closet: Model, on: boolean)
+	if on then
+		jammed[closet] = true
+	else
+		jammed[closet] = nil
+	end
+	local front = closet:FindFirstChild("Front")
+	local prompt = front and front:FindFirstChild("HidePrompt")
+	if prompt and prompt:IsA("ProximityPrompt") then
+		prompt.ActionText = if on then "Jammed" else "Hide"
+	end
+end
+
+function HideService.unjamAll()
+	for closet in jammed do
+		HideService.setJammed(closet, false)
+	end
+end
+
 function HideService.reset()
 	for player in hiding do
 		HideService.unhide(player, true)
@@ -142,6 +163,10 @@ function HideService:Start()
 				return
 			end
 			if not State.isFree(player) or not State.isPlaying() then
+				return
+			end
+			if jammed[closet] then
+				Net.notify(player, "It's jammed shut.", "warning")
 				return
 			end
 			if occupant[closet] then

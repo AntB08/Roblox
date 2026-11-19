@@ -32,6 +32,7 @@ local DataService = require(script.Parent.DataService)
 local Analytics = require(script.Parent.Analytics)
 local PlayerLifecycle = require(script.Parent.PlayerLifecycle)
 local TaskService = require(script.Parent.TaskService)
+local VarietyService = require(script.Parent.VarietyService)
 
 local POLL = 0.25
 
@@ -105,6 +106,7 @@ local function begin(): { Player }
 	local tonight = nightConfig(night)
 	TaskService.begin(tonight)
 	MonsterService.setSpeedMultiplier(tonight.monsterSpeed)
+	local flavor = VarietyService.rollNight() -- personality, twist, spawn (after the monster reset)
 	Workspace:SetAttribute("Night", night)
 
 	local participants = readyPlayers()
@@ -119,11 +121,7 @@ local function begin(): { Player }
 	end
 	State.setRoundState("Playing")
 	Workspace:SetAttribute("RoundEndsAt", serverNow() + cfg.Duration)
-	message(
-		`Night {night}`,
-		"Finish every task on your list, then get out the north gate. Crouch to stay quiet. It hears everything.",
-		6
-	)
+	message(`Night {night}`, `{flavor.blurb} Finish your tasks, then get out the north gate.`, 6)
 	task.delay(cfg.StartGrace, function()
 		if State.isPlaying() then
 			MonsterService.wake()
@@ -215,6 +213,7 @@ local function results(participants: { Player })
 	end
 	FuseService.reset()
 	TaskService.reset()
+	VarietyService.cleanup()
 	MonsterService.reset()
 end
 

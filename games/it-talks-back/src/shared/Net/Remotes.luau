@@ -67,6 +67,8 @@ local Remotes: { [string]: Def } = {
 
 	-- Generic server -> client toast: (text: string, kind: "info"|"success"|"warning"|"error")
 	Notify = { kind = "Event", direction = "ToClient" },
+	-- 3D one-shot at a position: (soundKey: string from Assets.Sounds, position: Vector3, times: number)
+	PlaySoundAt = { kind = "Event", direction = "ToClient" },
 
 	-- Player settings (persisted in the profile, mirrored to player attributes "Setting_<Key>")
 	SetSetting = {

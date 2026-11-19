@@ -62,6 +62,9 @@ local MonsterService = {}
 MonsterService.Priority = 40
 
 local model: Model? = nil
+local canReactPublic: () -> boolean = function()
+	return false
+end
 local root: BasePart? = nil
 local head: BasePart? = nil
 local humanoid: Humanoid? = nil
@@ -88,6 +91,8 @@ local lure: Lure? = nil
 local pullCloset: Model? = nil
 local rage = false
 local speedMultiplier = 1 -- per night (RoundService)
+export type Persona = { view: number, hear: number, speed: number, talk: number, memory: number, hintTruth: number }
+local persona: Persona = { view = 1, hear = 1, speed = 1, talk = 1, memory = 1, hintTruth = cfg.HintTruthChance }
 local nextAmbient = 0
 local nextHint = 0
 local lastChaseLine = 0
@@ -199,7 +204,7 @@ local function moveToward(to: Vector3, speed: number, direct: boolean?)
 	if not h or not r then
 		return
 	end
-	h.WalkSpeed = speed * speedMultiplier
+	h.WalkSpeed = speed * speedMultiplier * persona.speed
 	local rootLevel = Vector3.new(to.X, r.Position.Y, to.Z)
 	if direct and math.abs(to.Y - r.Position.Y) < 3.5 and clearLine(r.Position, rootLevel) then
 		waypoints = {}
@@ -267,6 +272,7 @@ local function canSee(player: Player, chasingThis: boolean): boolean
 	if rage then
 		range *= 1.15
 	end
+	range *= persona.view
 	if distance > range then
 		return false
 	end
@@ -439,7 +445,7 @@ local function doHint()
 	if next(fuseRooms) == nil then
 		return
 	end
-	local truthful = rng:NextNumber() < cfg.HintTruthChance
+	local truthful = rng:NextNumber() < persona.hintTruth
 	local pool = {}
 	for _, room in HorrorConfig.Rooms do
 		if (fuseRooms[room] == true) == truthful then
@@ -497,7 +503,7 @@ local function tickChase(seen: Player?)
 		startChase(seen) -- lost the old target but someone else is right there
 		return
 	end
-	if os.clock() - lastSeenAt > cfg.LoseSightSeconds then
+	if os.clock() - lastSeenAt > cfg.LoseSightSeconds * persona.memory then
 		search(lastKnown)
 		return
 	end
@@ -645,7 +651,8 @@ local function tick()
 			goal = nil
 		end
 		if now >= nextAmbient then
-			nextAmbient = now + rng:NextNumber(HorrorConfig.Voice.AmbientMin, HorrorConfig.Voice.AmbientMax)
+			nextAmbient = now
+				+ rng:NextNumber(HorrorConfig.Voice.AmbientMin, HorrorConfig.Voice.AmbientMax) / persona.talk
 			VoiceService.say("Ambient", { name = randomName() })
 		end
 		if now >= nextHint then
@@ -661,13 +668,14 @@ end
 local function canReact(): boolean
 	return mode == "Patrol" or mode == "Investigate" or mode == "Search"
 end
+canReactPublic = canReact
 
 local function onNoise(noise: NoiseService.Noise)
 	if not root or not canReact() then
 		return
 	end
 	local dy = math.abs(noise.position.Y - root.Position.Y)
-	local radius = noise.radius * (if dy > 8 then cfg.OtherFloorHearing else 1)
+	local radius = noise.radius * (if dy > 8 then cfg.OtherFloorHearing else 1) * persona.hear
 	if (noise.position - root.Position).Magnitude > radius then
 		return
 	end
@@ -743,6 +751,57 @@ end
 
 function MonsterService.setSpeedMultiplier(multiplier: number)
 	speedMultiplier = multiplier
+end
+
+function MonsterService.setPersona(p: Persona)
+	persona = p
+end
+
+-- Moves the (sleeping) monster to a spawn spot for tonight.
+function MonsterService.placeAt(position: Vector3)
+	if model then
+		model:PivotTo(CFrame.new(position + Vector3.new(0, MonsterRig.RootHeight - 0.5, 0)))
+	end
+end
+
+-- "It's gone quiet": vanish and reappear at the patrol point farthest from every player.
+-- Only while it isn't chasing anyone. Returns true if it moved.
+function MonsterService.vanish(): boolean
+	if not model or not canReactPublic() then
+		return false
+	end
+	local best: Vector3? = nil
+	local bestScore = -math.huge
+	for _, point in Map.patrolPoints() do
+		local nearest = math.huge
+		for _, player in State.playersWith("Alive") do
+			local pr = State.rootOf(player)
+			if pr then
+				nearest = math.min(nearest, (pr.Position - point.part.Position).Magnitude)
+			end
+		end
+		if nearest > bestScore then
+			best, bestScore = point.part.Position, nearest
+		end
+	end
+	if not best then
+		return false
+	end
+	MonsterService.placeAt(best)
+	enterPatrol()
+	waypoints = {}
+	pathGoal = nil
+	nextAmbient = os.clock() + HorrorConfig.Variety.VanishQuietSeconds
+	return true
+end
+
+-- Sends it to look at a spot (knocks, phone rings...). Ignored while chasing.
+function MonsterService.lure(position: Vector3): boolean
+	if not canReactPublic() then
+		return false
+	end
+	investigate(position, "Noise")
+	return true
 end
 
 function MonsterService.position(): Vector3?

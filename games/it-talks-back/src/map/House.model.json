@@ -7472,6 +7472,241 @@
        }
       },
       {
+       "name": "DoorwayHallKitchen",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1.2,
+         9.0,
+         6.0
+        ],
+        "CFrame": [
+         -8,
+         4.5,
+         -25,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         1,
+         0,
+         1
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth",
+        "Transparency": 1,
+        "CanCollide": false,
+        "CanQuery": false,
+        "CanTouch": false,
+        "CastShadow": false,
+        "Tags": [
+         "Doorway"
+        ]
+       },
+       "attributes": {
+        "A": "Hallway",
+        "B": "Kitchen",
+        "Door": "HallKitchen"
+       }
+      },
+      {
+       "name": "DoorwayHallStairs",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1.2,
+         9.0,
+         6.0
+        ],
+        "CFrame": [
+         -8,
+         4.5,
+         5,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         1,
+         0,
+         1
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth",
+        "Transparency": 1,
+        "CanCollide": false,
+        "CanQuery": false,
+        "CanTouch": false,
+        "CastShadow": false,
+        "Tags": [
+         "Doorway"
+        ]
+       },
+       "attributes": {
+        "A": "Hallway",
+        "B": "Stairs",
+        "Door": "HallStairs"
+       }
+      },
+      {
+       "name": "DoorwayKitchenStairs",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         6.0,
+         9.0,
+         1.2
+        ],
+        "CFrame": [
+         -20,
+         4.5,
+         -10,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         1,
+         0,
+         1
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth",
+        "Transparency": 1,
+        "CanCollide": false,
+        "CanQuery": false,
+        "CanTouch": false,
+        "CastShadow": false,
+        "Tags": [
+         "Doorway"
+        ]
+       },
+       "attributes": {
+        "A": "Kitchen",
+        "B": "Stairs",
+        "Door": "KitchenStairs"
+       }
+      },
+      {
+       "name": "DoorwayHallStudyNorth",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1.2,
+         9.0,
+         6.0
+        ],
+        "CFrame": [
+         8,
+         4.5,
+         -25,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         1,
+         0,
+         1
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth",
+        "Transparency": 1,
+        "CanCollide": false,
+        "CanQuery": false,
+        "CanTouch": false,
+        "CastShadow": false,
+        "Tags": [
+         "Doorway"
+        ]
+       },
+       "attributes": {
+        "A": "Hallway",
+        "B": "Study",
+        "Door": "HallStudyNorth"
+       }
+      },
+      {
+       "name": "DoorwayHallStudySouth",
+       "className": "Part",
+       "properties": {
+        "Anchored": true,
+        "Size": [
+         1.2,
+         9.0,
+         6.0
+        ],
+        "CFrame": [
+         8,
+         4.5,
+         5,
+         1.0,
+         0,
+         0.0,
+         0,
+         1,
+         0,
+         -0.0,
+         0,
+         1.0
+        ],
+        "Color": [
+         1,
+         0,
+         1
+        ],
+        "Material": "SmoothPlastic",
+        "TopSurface": "Smooth",
+        "BottomSurface": "Smooth",
+        "Transparency": 1,
+        "CanCollide": false,
+        "CanQuery": false,
+        "CanTouch": false,
+        "CastShadow": false,
+        "Tags": [
+         "Doorway"
+        ]
+       },
+       "attributes": {
+        "A": "Hallway",
+        "B": "Study",
+        "Door": "HallStudySouth"
+       }
+      },
+      {
        "name": "RadioSpawn",
        "className": "Part",
        "properties": {
