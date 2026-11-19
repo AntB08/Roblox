@@ -6,7 +6,10 @@
 -- R15 only (the default avatar). R6 characters keep the camera-only crouch.
 
 local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
+
+local Assets = require(ReplicatedStorage:WaitForChild("Shared").Config.Assets)
 
 local CROUCH: { [string]: CFrame } = {
 	Root = CFrame.new(0, -0.8, 0),
@@ -36,7 +39,70 @@ local function motor(character: Model, joint: string): Motor6D?
 	return if m and m:IsA("Motor6D") then m else nil
 end
 
+-- Published crouch animations (Assets.Animations.Player): the LOCAL player plays them on their
+-- own character (character animations replicate), and the procedural pose turns off for all.
+local function useTracks(): boolean
+	local a = Assets.Animations.Player
+	return not Assets.isPlaceholder(a.CrouchIdle) and not Assets.isPlaceholder(a.CrouchWalk)
+end
+
+local function runTracks()
+	local player = Players.LocalPlayer
+	local idle: AnimationTrack? = nil
+	local walk: AnimationTrack? = nil
+	local function load(character: Model)
+		idle, walk = nil, nil
+		local humanoid = character:WaitForChild("Humanoid", 10)
+		local animator = humanoid and humanoid:WaitForChild("Animator", 10)
+		if not animator or not animator:IsA("Animator") then
+			return
+		end
+		local function track(id: string): AnimationTrack
+			local anim = Instance.new("Animation")
+			anim.AnimationId = id
+			local t = animator:LoadAnimation(anim)
+			t.Priority = Enum.AnimationPriority.Action -- above the default walk/idle
+			return t
+		end
+		idle = track(Assets.Animations.Player.CrouchIdle)
+		walk = track(Assets.Animations.Player.CrouchWalk)
+	end
+	if player.Character then
+		task.spawn(load, player.Character)
+	end
+	player.CharacterAdded:Connect(load)
+	RunService.Heartbeat:Connect(function()
+		local character = player.Character
+		local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+		local i, w = idle, walk
+		if not humanoid or not i or not w then
+			return
+		end
+		local crouched = player:GetAttribute("Crouched") == true
+		local moving = humanoid.MoveDirection.Magnitude > 0.1
+		local wantWalk, wantIdle = crouched and moving, crouched and not moving
+		if wantWalk ~= w.IsPlaying then
+			if wantWalk then
+				w:Play(0.2)
+			else
+				w:Stop(0.2)
+			end
+		end
+		if wantIdle ~= i.IsPlaying then
+			if wantIdle then
+				i:Play(0.2)
+			else
+				i:Stop(0.2)
+			end
+		end
+	end)
+end
+
 function CrouchPoseController:Start()
+	if useTracks() then
+		runTracks()
+		return
+	end
 	Players.PlayerRemoving:Connect(function(p)
 		weights[p] = nil
 	end)

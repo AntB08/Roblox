@@ -47,6 +47,11 @@ Design: `docs/DESIGN.md`. How it's built: `docs/SYSTEMS.md`. Tuning: `src/shared
 4. `HorrorConfig.Voice.Mode`: `"Hybrid"` plays recordings when they exist, and the live voice for new AI
    lines and lines with names. `"RecordedOnly"` uses only your recordings, and GPT picks which one fits.
 
+## Animations
+All animation works without uploads (procedural). To edit it in Studio's Animation Editor, import
+`assets/animations/ItTalksBack_Animations.rbxm`, publish, and paste the ids into `Assets.Animations`.
+See `assets/animations/README.md`.
+
 ## Things to know
 - **Voice:** `AudioTextToSpeech` needs a published experience, and it may stay silent in some Studio
   setups. Subtitles always show. If you hear nothing in a live server, check the Output for

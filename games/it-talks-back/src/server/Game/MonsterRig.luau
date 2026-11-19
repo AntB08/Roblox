@@ -110,6 +110,8 @@ function MonsterRig.build(name: string): Model
 	humanoid:SetStateEnabled(Enum.HumanoidStateType.Jumping, false)
 	humanoid:SetStateEnabled(Enum.HumanoidStateType.Climbing, false)
 	humanoid:SetStateEnabled(Enum.HumanoidStateType.Swimming, false)
+	local animator = Instance.new("Animator") -- lets clients play published animations on it
+	animator.Parent = humanoid
 	humanoid.Parent = model
 
 	model.PrimaryPart = root

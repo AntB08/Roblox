@@ -49,12 +49,16 @@ type Rig = {
 	step: Sound,
 	anim: MonsterAnimator.State,
 	fade: number,
+	tracks: { [string]: AnimationTrack },
+	baseTrack: string?,
+	lastActionUntil: number,
 }
 
 -- Seconds each server action lasts (must match MonsterService / TaskService act() calls).
 local ACTION_LENGTH: { [string]: number } = { Grab = 1.6, Snuff = 1, Look = 1.1, Vanish = 0.9, Emerge = 1.2 }
 
 local rig: Rig? = nil
+local loadTracks: (Model) -> { [string]: AnimationTrack }
 local lights: { { part: BasePart, light: PointLight, base: number } } = {}
 local rng = Random.new()
 
@@ -95,6 +99,9 @@ local function findRig(): Rig?
 			step = step,
 			anim = MonsterAnimator.newState(),
 			fade = 0,
+			tracks = loadTracks(m),
+			baseTrack = nil,
+			lastActionUntil = 0,
 		}
 		return rig
 	end
@@ -108,6 +115,75 @@ local function collectLights()
 		if part:IsA("BasePart") and light then
 			local base = tonumber(part:GetAttribute("BaseBrightness")) or light.Brightness
 			table.insert(lights, { part = part, light = light, base = base })
+		end
+	end
+end
+
+-- Published animations (Assets.Animations.Monster): when an Idle id is set, the monster uses
+-- AnimationTracks for every state that has an id; the procedural animator still runs for
+-- timing (footsteps) but doesn't move the joints.
+loadTracks = function(m: Model): { [string]: AnimationTrack }
+	local tracks: { [string]: AnimationTrack } = {}
+	local humanoid = m:FindFirstChildOfClass("Humanoid")
+	local animator = humanoid and humanoid:FindFirstChildOfClass("Animator")
+	if not animator then
+		return tracks
+	end
+	for name, id in Assets.Animations.Monster do
+		if not Assets.isPlaceholder(id) then
+			local anim = Instance.new("Animation")
+			anim.AnimationId = id
+			local ok, track = pcall(function()
+				return animator:LoadAnimation(anim)
+			end)
+			if ok then
+				tracks[name] = track
+			else
+				warn(`[MonsterFx] could not load monster animation {name} ({id}): {track}`)
+			end
+		end
+	end
+	return tracks
+end
+
+local function baseStateName(speed: number, mood: any, speaking: boolean): string
+	if mood == "Dormant" then
+		return "Dormant"
+	elseif speed > 11 then
+		return "Run"
+	elseif speed > 1.5 then
+		return "Walk"
+	elseif speaking then
+		return "Speak"
+	elseif mood == "Alert" then
+		return "Listen"
+	end
+	return "Idle"
+end
+
+local function playTracks(r: Rig, speed: number, mood: any, speaking: boolean, action: string?, untilT: number)
+	local wanted = baseStateName(speed, mood, speaking)
+	if not r.tracks[wanted] then
+		wanted = "Idle"
+	end
+	if r.baseTrack ~= wanted then
+		local old = r.baseTrack and r.tracks[r.baseTrack]
+		if old then
+			old:Stop(0.25)
+		end
+		r.tracks[wanted]:Play(0.25)
+		r.baseTrack = wanted
+	end
+	local walking = r.tracks[wanted]
+	if wanted == "Walk" or wanted == "Run" then
+		walking:AdjustSpeed(math.clamp(speed / (if wanted == "Run" then 17 else 9), 0.6, 1.6))
+	end
+	-- One-shot actions: start once per new server action.
+	if action and untilT ~= r.lastActionUntil then
+		r.lastActionUntil = untilT
+		local track = r.tracks[action]
+		if track then
+			track:Play(0.1)
 		end
 	end
 end
@@ -138,10 +214,14 @@ local function animate(r: Rig, dt: number)
 		dt = dt,
 		time = os.clock(),
 	})
-	for _, name in MonsterAnimator.Joints do
-		local motor = r.motors[name]
-		if motor then
-			motor.Transform = MonsterAnimator.toCFrame(pose[name])
+	if r.tracks.Idle then
+		playTracks(r, speed, mood, VoiceController.isSpeaking(), activeAction, untilT)
+	else
+		for _, name in MonsterAnimator.Joints do
+			local motor = r.motors[name]
+			if motor then
+				motor.Transform = MonsterAnimator.toCFrame(pose[name])
+			end
 		end
 	end
 	-- Vanish: fade out while glitching; Emerge: fade back in (local only, cosmetic).

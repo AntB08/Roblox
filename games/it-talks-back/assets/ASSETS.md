@@ -15,3 +15,5 @@ Music: instrumental only, authored to loop seamlessly. SFX: non-vocal.
 | Images.CoinIcon | PLACEHOLDER | image | | | |
 | Monster live voice | (none) | TTS + effects | Roblox AudioTextToSpeech | generated at runtime | two layers, pitch -7 / -12, effects chain |
 | VoiceLines.* | PLACEHOLDER (33 lines) | audio | | | recorded monster lines, see src/shared/Config/VoiceLines.luau |
+| Animations.Monster.* (11) | PLACEHOLDER | animation | | made from assets/animations/*.rbxm | procedural until published |
+| Animations.Player.CrouchIdle/CrouchWalk | PLACEHOLDER | animation | | assets/animations/Player_*.rbxm | R15 |

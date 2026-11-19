@@ -32,6 +32,28 @@ local Assets = {
 		Chase = { asset = PLACEHOLDER, volume = 0.8 } :: MusicTrack, -- PLACEHOLDER: tense instrumental chase loop
 	},
 
+	-- Published animation ids. Leave PLACEHOLDER to keep the built-in procedural animation.
+	-- Make them from assets/animations/*.rbxm (see assets/animations/README.md).
+	Animations = {
+		Monster = {
+			Idle = PLACEHOLDER,
+			Walk = PLACEHOLDER,
+			Run = PLACEHOLDER,
+			Listen = PLACEHOLDER,
+			Speak = PLACEHOLDER,
+			Dormant = PLACEHOLDER,
+			Grab = PLACEHOLDER,
+			Snuff = PLACEHOLDER,
+			Look = PLACEHOLDER,
+			Vanish = PLACEHOLDER,
+			Emerge = PLACEHOLDER,
+		} :: { [string]: string },
+		Player = {
+			CrouchIdle = PLACEHOLDER,
+			CrouchWalk = PLACEHOLDER,
+		} :: { [string]: string },
+	},
+
 	Images = {
 		CoinIcon = PLACEHOLDER, -- PLACEHOLDER: original coin icon
 	},
