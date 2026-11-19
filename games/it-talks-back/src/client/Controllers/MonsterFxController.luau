@@ -204,7 +204,16 @@ function MonsterFxController:Start()
 	-- Hiding: first-person + dark edges.
 	local function syncHide()
 		local hidden = player:GetAttribute("Status") == "Hidden"
+		local wasFirstPerson = player.CameraMode == Enum.CameraMode.LockFirstPerson
 		player.CameraMode = if hidden then Enum.CameraMode.LockFirstPerson else Enum.CameraMode.Classic
+		if wasFirstPerson and not hidden then
+			-- Leaving first person keeps minimum zoom; push the camera back out once.
+			local minZoom = player.CameraMinZoomDistance
+			player.CameraMinZoomDistance = 8
+			task.delay(0.1, function()
+				player.CameraMinZoomDistance = minZoom
+			end)
+		end
 		if overlay then
 			setEdges(overlay, "HideX", "HideY", if hidden then 0.85 else 0)
 		end

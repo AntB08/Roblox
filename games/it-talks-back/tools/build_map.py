@@ -186,8 +186,8 @@ def build():
 
     # ---- stairs: a ramp from (z=16, y=0) down to (z=-12, y=-14), with a railing --------------------
     house.append(part("Ramp", (8, 14, 28), (-36, -7, 2), FLOOR_WOOD, "WoodPlanks", cls="WedgePart"))
-    house.append(part("Railing", (0.5, 3, 26), (-32, 1.5, 3), TRIM, "Wood"))
-    house.append(part("RailingPost", (0.8, 3.6, 0.8), (-32, 1.8, 16), TRIM, "Wood"))
+    house.append(part("Railing", (0.5, 3, 22), (-32, 1.5, 1), TRIM, "Wood"))
+    house.append(part("RailingPost", (0.8, 3.6, 0.8), (-32, 1.8, 12), TRIM, "Wood"))
 
     # ---- exit gate (north wall gap) and exit zone outside -----------------------------------------------
     house.append(part("ExitGate", (8, DOOR_H, 1), (0, DOOR_H / 2, -40), METAL, "DiamondPlate",
@@ -303,7 +303,7 @@ def build():
     ]:
         markers.append(marker("PatrolPoint", (x, y + 0.5, z), "PatrolPoint", attrs={"Room": room}))
 
-    for i, (x, z) in enumerate([(-3, 14), (3, 14), (-3, 17), (3, 17), (0, 11), (-5, 11), (5, 11), (0, 17)]):
+    for i, (x, z) in enumerate([(-3, 14), (3, 14), (-3, 17), (3, 17), (0, 11), (-5, 11), (3, 8), (0, 17)]):
         markers.append(marker("PlayerStart", (x, 3.5, z), "PlayerStart", attrs={"Index": i + 1}))
     markers.append(marker("MonsterSpawn", (-16, BASE_FLOOR + 4.2, -32), "MonsterSpawn"))
 
@@ -327,7 +327,7 @@ def build():
         slab("GroundEast", 40.5, 120, -40.5, 20.5, 0, GRASS, "Grass", 4),
         part("Path", (8, 0.2, 40), (0, 0.1, 40), [0.25, 0.24, 0.22], "Cobblestone"),
         part("LobbyPad", (30, 0.4, 24), (0, 0.2, 70), [0.2, 0.2, 0.22], "Cobblestone"),
-        part("SpawnLocation", (10, 1, 10), (0, 0.5, 72), [0.3, 0.3, 0.32], "Slate", cls="SpawnLocation",
+        part("SpawnLocation", (10, 1, 10), (0, 0.5, 72), [0.3, 0.3, 0.32], "Slate", cls="SpawnLocation", tags=["LobbySpawn"],
              Duration=0, Neutral=True, AllowTeamChangeOnTouch=False),
         part("LobbyLamp", (1, 10, 1), (-12, 5, 62), TRIM, "Metal"),
         part("LobbyLampBulb", (1.6, 1.6, 1.6), (-12, 10.5, 62), LAMP_WARM, "Neon", children=[
@@ -349,7 +349,7 @@ def build():
 
     return {
         "className": "Folder",
-        "children": [house_model, {"name": "Outside", "className": "Folder", "children": outside}],
+        "children": [house_model, {"name": "Outside", "className": "Model", "properties": {"ModelStreamingMode": "Persistent"}, "children": outside}],
     }
 
 

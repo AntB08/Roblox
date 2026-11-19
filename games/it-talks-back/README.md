@@ -39,7 +39,13 @@ Design: `docs/DESIGN.md`. How it's built: `docs/SYSTEMS.md`. Tuning: `src/shared
 - **Voice:** `AudioTextToSpeech` needs a published experience, and it may stay silent in some Studio
   setups. Subtitles always show. If you hear nothing in a live server, check the Output for
   `[VoiceService]` / `[VoiceController]` warnings.
-- **AI lines:** `TextGenerator` usually only works in a published game. If it fails 3 times, the server
+- **GPT (OpenAI) lines:** the monster's lines are written by GPT and spoken out loud by Roblox's
+  text-to-speech. Setup: Creator Hub → your experience → **Secrets** → create `openai_api_key`
+  (domain `api.openai.com`) with your OpenAI key. In Studio: *File → Experience Settings → Security*,
+  turn on **Allow HTTP Requests**, and add the same key under **Local Secrets** for testing. Pick the
+  model in `HorrorConfig.Voice.OpenAI.Model`. Every line is filtered by Roblox before players hear it.
+  Never paste the key into a script.
+- **Roblox AI fallback:** if GPT fails, it tries Roblox's `TextGenerator`, which usually only works in a published game. If it fails 3 times, the server
   quietly falls back to `src/server/Config/Lines.luau`. The kill switch is the Creator Hub config
   `monster_ai_dialogue = false`.
 - **Audio:** footsteps use a built-in engine sound. Add your own instrumental music

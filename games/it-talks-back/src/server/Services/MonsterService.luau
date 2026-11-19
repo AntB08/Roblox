@@ -101,6 +101,7 @@ local computing = false
 local pathGoal: Vector3? = nil
 local pathAt = 0
 local pathFailed = false
+local failedGoal: Vector3? = nil -- the goal the last failed path was for
 local progressAt = 0
 local progressPos = Vector3.zero
 local stuckCount = 0
@@ -167,6 +168,7 @@ local function requestPath(to: Vector3)
 			waypoints = {}
 			waypointIndex = 0
 			pathFailed = true
+			failedGoal = to
 		end
 		pathGoal = to
 		pathAt = os.clock()
@@ -324,9 +326,24 @@ local function enterPatrol()
 	setMood("Calm")
 end
 
+-- Noises often come from places it can't stand (inside the generator, on a counter): walk to
+-- the nearest patrol point in the same room instead (or the nearest one anywhere).
+local function walkableNear(at: Vector3): Vector3
+	local room = Rooms.at(at)
+	local best, bestD = at, math.huge
+	for _, point in Map.patrolPoints() do
+		local p = point.part.Position
+		local d = (p - at).Magnitude + (if room and point.room ~= room then 1000 else 0)
+		if d < bestD then
+			best, bestD = p, d
+		end
+	end
+	return best
+end
+
 local function investigate(at: Vector3, why: string, lureRecord: Lure?)
 	mode = "Investigate"
-	goal = at
+	goal = walkableNear(at)
 	waitUntil = 0
 	reason = why
 	lure = lureRecord
@@ -458,6 +475,7 @@ local function tickChase(seen: Player?)
 		local closet = HideService.closetOf(t)
 		if since and closet and since - lastSeenAt <= cfg.SawHideWindow then
 			mode = "PullOut"
+			modeUntil = os.clock() + 6 -- give up if the closet can't be reached
 			pullCloset = closet
 			VoiceService.say("PullOut", nil, true)
 			return
@@ -494,7 +512,7 @@ end
 
 local function tickPullOut()
 	local t, closet = target, pullCloset
-	if not t or not closet or HideService.closetOf(t) ~= closet then
+	if not t or not closet or HideService.closetOf(t) ~= closet or os.clock() > modeUntil then
 		search(lastKnown)
 		return
 	end
@@ -545,7 +563,8 @@ local function walkAndLinger(speed: number, linger: number): boolean
 		return true
 	end
 	if waitUntil == 0 then
-		if arrived(g) or (pathFailed and not computing) then
+		local unreachable = pathFailed and not computing and failedGoal ~= nil and (failedGoal - g).Magnitude < 1
+		if arrived(g) or unreachable then
 			waitUntil = os.clock() + linger
 			standStill()
 		else
@@ -690,7 +709,12 @@ function MonsterService.reset()
 	table.clear(grudgeUntil)
 	table.clear(recentRooms)
 	waypoints = {}
+	waypointIndex = 0
 	pathGoal = nil
+	pathFailed = false
+	failedGoal = nil
+	stuckCount = 0
+	modeUntil = 0
 	setMood("Dormant")
 	if model and humanoid then
 		local spawnPart = Map.one("MonsterSpawn")

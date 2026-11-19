@@ -1108,12 +1108,12 @@
         "Size": [
          0.5,
          3,
-         26
+         22
         ],
         "CFrame": [
          -32,
          1.5,
-         3,
+         1,
          1.0,
          0,
          0.0,
@@ -1147,7 +1147,7 @@
         "CFrame": [
          -32,
          1.8,
-         16,
+         12,
          1.0,
          0,
          0.0,
@@ -7752,9 +7752,9 @@
          1
         ],
         "CFrame": [
-         5,
+         3,
          3.5,
-         11,
+         8,
          1.0,
          0,
          0.0,
@@ -7879,7 +7879,10 @@
   },
   {
    "name": "Outside",
-   "className": "Folder",
+   "className": "Model",
+   "properties": {
+    "ModelStreamingMode": "Persistent"
+   },
    "children": [
     {
      "name": "GroundSouth",
@@ -8119,7 +8122,10 @@
       "BottomSurface": "Smooth",
       "Duration": 0,
       "Neutral": true,
-      "AllowTeamChangeOnTouch": false
+      "AllowTeamChangeOnTouch": false,
+      "Tags": [
+       "LobbySpawn"
+      ]
      }
     },
     {

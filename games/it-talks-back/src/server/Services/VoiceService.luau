@@ -12,6 +12,7 @@
 --   VoiceService.say("Heard", { room = "Kitchen" })
 --   VoiceService.say("Caught", { name = player.DisplayName }, true)  -- urgent: skip cooldown
 
+local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TextService = game:GetService("TextService")
@@ -90,7 +91,20 @@ end
 
 -- Strips anything that isn't a short single spoken sentence.
 function VoiceService.sanitize(text: string): string?
-	local s = text:gsub("[\r\n]+", " "):gsub('["“”*_#<>%[%]{}]', ""):gsub("%s+", " ")
+	local s = text:gsub("[\r\n]+", " "):gsub('["*_#<>%[%]{}]', "")
+	-- Multi-byte punctuation must be replaced as whole strings, not in a byte class.
+	local swaps: { [string]: string } = {
+		["“"] = "",
+		["”"] = "",
+		["’"] = "'",
+		["‘"] = "'",
+		["…"] = "...",
+		["—"] = ", ",
+	}
+	for from, to in swaps do
+		s = s:gsub(from, to)
+	end
+	s = s:gsub("%s+", " ")
 	s = s:match("^%s*(.-)%s*$") or ""
 	if #s < 3 then
 		return nil
@@ -119,7 +133,64 @@ local function filterForEveryone(text: string): string?
 	return result
 end
 
+local openAIFailures = 0
+local OPENAI_URL = "https://api.openai.com/v1/chat/completions"
+
+-- GPT via HttpService. The key lives in the experience's Secrets store (never in code):
+-- Creator Hub > your game > Secrets > name = HorrorConfig.Voice.OpenAI.SecretName, domain api.openai.com.
+-- For Studio testing: File > Experience Settings > Security > Local Secrets (and Allow HTTP Requests).
+local function generateOpenAI(situation: string): string?
+	local oc = HorrorConfig.Voice.OpenAI
+	if not oc.Enabled or openAIFailures >= HorrorConfig.Voice.AIMaxFailures then
+		return nil
+	end
+	local ok, result = pcall(function()
+		local secret = HttpService:GetSecret(oc.SecretName)
+		return HttpService:RequestAsync({
+			Url = OPENAI_URL,
+			Method = "POST",
+			Headers = {
+				["Content-Type"] = "application/json",
+				["Authorization"] = secret:AddPrefix("Bearer "),
+			},
+			Body = HttpService:JSONEncode({
+				model = oc.Model,
+				max_tokens = 60,
+				temperature = 0.9,
+				messages = {
+					{ role = "system", content = SYSTEM_PROMPT },
+					{ role = "user", content = situation },
+				},
+			}),
+		})
+	end)
+	local text: string? = nil
+	if ok and typeof(result) == "table" and result.Success and typeof(result.Body) == "string" then
+		local decoded, data = pcall(HttpService.JSONDecode, HttpService, result.Body)
+		local choice = decoded and typeof(data) == "table" and data.choices and data.choices[1]
+		local content = choice and choice.message and choice.message.content
+		if typeof(content) == "string" then
+			text = content
+		end
+	end
+	if not text then
+		openAIFailures += 1
+		if openAIFailures >= HorrorConfig.Voice.AIMaxFailures then
+			local why = if ok and typeof(result) == "table" then `HTTP {result.StatusCode}` else tostring(result)
+			warn(`[VoiceService] OpenAI unavailable ({why}); falling back to Roblox TextGenerator / canned lines`)
+		end
+		return nil
+	end
+	openAIFailures = 0
+	local clean = VoiceService.sanitize(text)
+	return if clean then filterForEveryone(clean) else nil
+end
+
 local function generate(kind: string, ctx: Context): string?
+	local fromGPT = generateOpenAI(fill(AI_KINDS[kind], ctx))
+	if fromGPT then
+		return fromGPT
+	end
 	local gen = generator
 	if not gen or aiFailures >= HorrorConfig.Voice.AIMaxFailures then
 		return nil
@@ -146,7 +217,9 @@ local function broadcast(text: string, kind: string)
 end
 
 local function aiEnabled(): boolean
-	return HorrorConfig.Voice.UseAI and LiveConfig.boolean("monster_ai_dialogue", true) and generator ~= nil
+	return HorrorConfig.Voice.UseAI
+		and LiveConfig.boolean("monster_ai_dialogue", true)
+		and (generator ~= nil or HorrorConfig.Voice.OpenAI.Enabled)
 end
 
 -- Says a line of `kind`. Returns false if it stayed quiet (cooldown / no line).

@@ -76,7 +76,15 @@ local HorrorConfig = {
 		Speed = 0.85,
 		Volume = 2.5,
 		UseAI = true, -- try TextGenerator for flavor lines; canned lines are always the fallback
-		AITimeout = 3,
+		AITimeout = 4, -- seconds to wait for a fresh line before speaking the canned one
+		-- GPT writes the lines (Roblox text-to-speech still speaks them). Needs the API key in the
+		-- game's Secrets store under SecretName and "Allow HTTP Requests" on. Falls back to Roblox's
+		-- TextGenerator, then canned lines. Set Model to any chat model your key can use.
+		OpenAI = {
+			Enabled = true,
+			SecretName = "openai_api_key",
+			Model = "gpt-4o-mini",
+		},
 		AIMaxFailures = 3, -- after this many failures in a row, this server stops trying
 	},
 
