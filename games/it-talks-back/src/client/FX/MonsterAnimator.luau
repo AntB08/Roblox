@@ -1,13 +1,13 @@
 --!strict
--- MonsterAnimator: procedural animation for the 64-joint monster rig (Server/Game/MonsterRig).
+-- MonsterAnimator: procedural animation for the 91-joint monster rig (Server/Game/MonsterRig).
 --
 -- Two levels:
 --   1. BODY layer (easy to author): Root, Waist, Neck, Jaw, shoulders, elbows, wrists, hips,
 --      knees, ankles + Grip (finger curl / twitch) per hand, Tongue, Tendril (agitation), Lids.
 --      Built from layers: base hunch -> idle / creep walk / chase sprint (blended by speed) ->
 --      listen / speak / dormant overlays -> one-shot actions (grab, snuff, look, emerge).
---   2. EXPANSION to the 64 real joints: the waist bend is spread over 3 spine joints and the neck
---      over 3 neck joints (so they CURVE instead of hinging), clavicles shrug when arms lift or
+--   2. EXPANSION to the 91 real joints: the waist bend is spread over 4 spine joints and the neck
+--      over 4 neck joints + skull (so they CURVE instead of hinging), clavicles shrug when arms lift or
 --      reach, every finger curls with its own lag and twitch, toes flex, the tongue wriggles,
 --      lids blink (never while chasing: it stares), and the 4 back tendrils undulate faster the
 --      more agitated it is.
@@ -45,14 +45,27 @@ export type State = {
 
 local SIDES = { "Left", "Right" }
 
--- ===== The 64 joints and their springs =============================================================
-local JOINTS: { string } =
-	{ "Root", "Spine1", "Spine2", "Spine3", "Neck1", "Neck2", "Skull", "Jaw", "Tongue1", "Tongue2" }
+-- ===== The 91 joints and their springs =============================================================
+local JOINTS: { string } = {
+	"Root",
+	"Spine1",
+	"Spine2",
+	"Spine3",
+	"Spine4",
+	"Neck1",
+	"Neck2",
+	"Neck3",
+	"Neck4",
+	"Skull",
+	"Jaw",
+	"Tongue1",
+	"Tongue2",
+}
 for _, side in SIDES do
 	table.insert(JOINTS, side .. "Lid")
 end
 for _, side in SIDES do
-	for _, j in { "Clavicle", "Shoulder", "Elbow", "Wrist" } do
+	for _, j in { "Clavicle", "Shoulder", "Elbow", "Wrist", "ThumbA", "ThumbB" } do
 		table.insert(JOINTS, side .. j)
 	end
 	for f = 1, 4 do
@@ -64,17 +77,26 @@ for _, side in SIDES do
 		table.insert(JOINTS, side .. j)
 	end
 end
+local TENDRIL_SEGMENTS = 5
 for t = 1, 4 do
-	for _, seg in { "A", "B", "C" } do
-		table.insert(JOINTS, `Tendril{t}{seg}`)
+	for seg = 1, TENDRIL_SEGMENTS do
+		table.insert(JOINTS, `Tendril{t}{string.char(64 + seg)}`)
 	end
 end
-assert(#JOINTS == 64, "MonsterAnimator expects the 64-joint rig")
+for r = 0, 5 do
+	table.insert(JOINTS, `Rag{r}A`)
+	table.insert(JOINTS, `Rag{r}B`)
+end
+assert(#JOINTS == 91, "MonsterAnimator expects the 91-joint rig")
 
 type SpringSpec = { f: number, z: number }
 local function springFor(j: string): SpringSpec
 	if j:find("Tendril") then
-		return { f = 1.7, z = 0.28 } -- whippy
+		return { f = 1.9 - (string.byte(j, -1) - 65) * 0.12, z = 0.28 } -- whippy, tips the loosest
+	elseif j:find("Rag") then
+		return { f = if j:sub(-1) == "A" then 1.6 else 1.3, z = 0.3 } -- cloth: lags and sways
+	elseif j:find("Thumb") then
+		return { f = 4, z = 0.5 }
 	elseif j:find("Finger") then
 		return { f = if j:sub(-1) == "A" then 4.5 else 3.6, z = 0.5 }
 	elseif j:find("Lid") then
@@ -361,7 +383,7 @@ local function action(p: Pose, name: string, a: number, t: number)
 	end
 end
 
--- ===== Expansion: body layer -> 64 joints ============================================================
+-- ===== Expansion: body layer -> 91 joints ============================================================
 
 local function copyInto(target: Pose, joint: string, c: Channel, share: number)
 	add(target, joint, c.rx * share, c.ry * share, c.rz * share, 0)
@@ -375,18 +397,23 @@ local function expand(body: Pose, state: State, ctx: Context, blink: number): Po
 	add(target, "Root", r.rx, r.ry, r.rz, r.y)
 	-- Spine curves: lower spine takes less, upper more of forward bend; twist mostly up top.
 	local w = body.Waist
-	add(target, "Spine1", w.rx * 0.28, w.ry * 0.25, w.rz * 0.3)
-	add(target, "Spine2", w.rx * 0.36, w.ry * 0.35, w.rz * 0.35)
-	add(target, "Spine3", w.rx * 0.36, w.ry * 0.4, w.rz * 0.35)
+	add(target, "Spine1", w.rx * 0.2, w.ry * 0.18, w.rz * 0.22)
+	add(target, "Spine2", w.rx * 0.24, w.ry * 0.22, w.rz * 0.26) -- the wasp waist bends the most
+	add(target, "Spine3", w.rx * 0.28, w.ry * 0.28, w.rz * 0.26)
+	add(target, "Spine4", w.rx * 0.28, w.ry * 0.32, w.rz * 0.26)
 	local n = body.Neck
-	copyInto(target, "Neck1", n, 0.32)
-	copyInto(target, "Neck2", n, 0.33)
-	copyInto(target, "Skull", n, 0.35)
-	-- The vulture S-curve: the neck juts forward and down from the shoulders, then the skull
-	-- tilts back up so the face looks ahead from below shoulder height.
-	add(target, "Neck1", -0.75)
+	copyInto(target, "Neck1", n, 0.17)
+	copyInto(target, "Neck2", n, 0.18)
+	copyInto(target, "Neck3", n, 0.19)
+	copyInto(target, "Neck4", n, 0.2)
+	copyInto(target, "Skull", n, 0.26)
+	-- The vulture S-curve: the neck juts forward and down from the shoulders, then curls and the
+	-- skull tilts back up so the face looks ahead from below shoulder height.
+	add(target, "Neck1", -0.5)
 	add(target, "Neck2", -0.35)
-	add(target, "Skull", 0.9)
+	add(target, "Neck3", -0.15)
+	add(target, "Neck4", 0.1)
+	add(target, "Skull", 0.85)
 	copyInto(target, "Jaw", body.Jaw, 1)
 
 	-- Tongue: rx = stick out, ry = how much it wriggles.
@@ -415,6 +442,8 @@ local function expand(body: Pose, state: State, ctx: Context, blink: number): Po
 		local grip = body[side .. "Grip"]
 		local curl, twitch = grip.rx, grip.ry
 		local open = 1 - math.clamp(curl, 0, 1)
+		add(target, side .. "ThumbA", 0.1 + curl * 0.6, 0, -sign * curl * 0.25)
+		add(target, side .. "ThumbB", 0.1 + curl * 0.7)
 		for f = 1, 4 do
 			local jitter = math.noise(t * (1.8 + f * 0.37), f * 3.1 + i * 11) * 0.35 * twitch
 			local fanned = (f - 2.5) * 0.12 * open * sign
@@ -436,17 +465,26 @@ local function expand(body: Pose, state: State, ctx: Context, blink: number): Po
 	local amp = 0.1 + 0.45 * math.max(0, agitation)
 	local speedA = 1.1 + 2.6 * math.max(0, agitation)
 	for k = 1, 4 do
-		for seg = 1, 3 do
-			local ph = t * speedA + k * 1.7 - seg * 0.9
+		for seg = 1, TENDRIL_SEGMENTS do
+			local ph = t * speedA + k * 1.7 - seg * 0.75
+			local taper = 0.6 + seg * 0.15 -- tips swing wider
 			local name = `Tendril{k}{string.char(64 + seg)}`
 			add(
 				target,
 				name,
-				amp * math.sin(ph) + (if seg == 1 then -agitation * 0.3 else 0),
+				amp * taper * math.sin(ph) + (if seg == 1 then -agitation * 0.3 else 0),
 				0,
-				amp * 0.7 * math.sin(ph * 0.8 + k)
+				amp * 0.7 * taper * math.sin(ph * 0.8 + k)
 			)
 		end
+	end
+
+	-- Rags: hang, sway, and trail backward with speed (the springs make them lag behind).
+	local trail = -math.min(0.9, ctx.speed * 0.055)
+	for r = 0, 5 do
+		local sway = math.noise(t * 0.7, r * 2.3) * 0.18
+		add(target, `Rag{r}A`, trail + sway, 0, math.noise(t * 0.5, r * 4.1) * 0.12)
+		add(target, `Rag{r}B`, trail * 0.6 + sway * 1.3)
 	end
 	return target
 end
