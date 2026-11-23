@@ -6,12 +6,15 @@ Techniques (no primitive "ovals" glued together):
   * Skin modifier on a vertex skeleton -> one continuous body (torso, neck, arms, hands, fingers, legs,
     feet), Subdivision Surface for organic form.
   * Head sculpted by vertex deformation from a dense sphere: long skull, deep eye sockets with bony
-    rims, cheekbones, hollow temples, a protruding muzzle. A BOOLEAN cut tears the mouth open wide.
+    rims (four eyes), cheekbones, hollow temples. A BOOLEAN cut splits the face VERTICALLY from
+    between the eyes to the chin: the jaw opens sideways in two halves.
   * Voxel REMESH fuses head and body into one watertight surface; then procedural sculpt passes push
     out ribs, sternum, collarbones, spine, shoulder blades, bony knees / elbows, a sunken belly, and
     wrinkle / sinew displacement (Voronoi + Clouds textures).
-  * The torn mouth is painted on the body itself (throat inside the pocket, wet gums at the rim);
-    curved, uneven fangs are rooted on the real mouth wall by RAYCASTING; a long tongue (tapered
+  * The torn mouth is painted on the body itself (throat inside the pocket, lips at the rim). Guide
+    curves are traced along both edges of the split (found by RAYCASTING), and every
+    fang grows out of a gum: root sunk in, swollen gum collar, flattened hooked blade, stained root
+    to ivory tip, longest fangs mid-split, two rows aimed across the gap at each other; a long tongue (tapered
     Bezier curve); small milky eyeballs deep in the sockets.
   * Skin shader: grey-mauve to raw red with ambient-occlusion grime, subsurface scattering, wet
     roughness variation, pore and wrinkle bump. Eyes milky with a faint glow.
@@ -138,38 +141,42 @@ HR = Vector((0.42, 0.56, 0.5))  # half extents: narrow, long front-to-back
 bpy.ops.mesh.primitive_uv_sphere_add(segments=96, ring_count=64, radius=1, location=(0, 0, 0))
 head = bpy.context.active_object
 head.name = "Head"
-EYES = [Vector((0.17 * s, -0.5, 0.08)).normalized() for s in (-1, 1)]
+# Four eyes: two main ones and two smaller ones above them.
+EYES = [(Vector((0.27 * s, -0.5, 0.06)).normalized(), 0.2, 0.13) for s in (-1, 1)] + [
+    (Vector((0.17 * s, -0.48, 0.27)).normalized(), 0.12, 0.08) for s in (-1, 1)
+]
 for v in head.data.vertices:
     n = v.co.normalized()
     p = Vector((n.x * HR.x, n.y * HR.y, n.z * HR.z))
     d = 0.0
-    for e in EYES:
+    for e, depth, width in EYES:
         a = n.angle(e)
-        d -= 0.16 * gauss(a, 0.16)  # deep sockets
-        d += 0.025 * gauss(a - 0.27, 0.05)  # bony rims
+        d -= depth * gauss(a, width)  # deep sockets
+        d += 0.02 * gauss(a - width * 1.7, 0.04)  # bony rims
     front = max(0.0, -n.y)
     d += 0.05 * front * gauss(n.z - 0.3, 0.07) * gauss(abs(n.x) - 0.28, 0.2)  # brow ridge
     d += 0.06 * front * gauss(abs(n.x) - 0.6, 0.12) * gauss(n.z + 0.15, 0.12)  # cheekbones
     d -= 0.05 * gauss(abs(n.x) - 0.85, 0.12) * gauss(n.z - 0.15, 0.25)  # hollow temples
     d += 0.08 * max(0.0, n.y) * max(0.0, n.z)  # big cranium at the back
     p += n * d
-    # muzzle: the lower front pulls down and forward (long jaw for a huge mouth)
+    # a modest jaw: the lower front pulls down and forward a little
     if n.z < 0.05 and n.y < 0.2:
         k = min(1.0, (0.05 - n.z) / 0.8) * min(1.0, (0.2 - n.y) / 0.8)
-        p += Vector((0, -0.14 * k, -0.32 * k))
-        p.x *= 1.0 - 0.25 * k  # narrower jaw
+        p += Vector((0, -0.08 * k, -0.16 * k))
+        p.x *= 1.0 - 0.15 * k
     v.co = p
 head.location = HEAD_C
 bpy.ops.object.transform_apply(location=True)
 
 # Mouth: a boolean cut tears the face open from cheek to cheek.
-CUT_C = Vector((0, -1.33, 6.6))
-CUT_S = Vector((0.3, 0.42, 0.34))
-CUT_R = Matrix.Rotation(math.radians(-18), 3, "X")
+# The face splits VERTICALLY: a tall, narrow tear from between the eyes down through the chin.
+CUT_C = Vector((0, -1.24, 6.56))
+CUT_S = Vector((0.13, 0.36, 0.38))
+CUT_R = Matrix.Rotation(math.radians(-8), 3, "X")
 bpy.ops.mesh.primitive_uv_sphere_add(segments=48, ring_count=32, radius=1, location=CUT_C)
 cutter = bpy.context.active_object
 cutter.scale = CUT_S
-cutter.rotation_euler = (math.radians(-18), 0, 0)
+cutter.rotation_euler = (math.radians(-8), 0, 0)
 bpy.ops.object.transform_apply(scale=True, rotation=True)
 bh = head.modifiers.new("Mouth", "BOOLEAN")
 bh.operation = "DIFFERENCE"
@@ -277,51 +284,136 @@ for poly in body.data.polygons:
     inward = poly.normal.dot((CUT_C - poly.center).normalized()) > 0.2
     if dist < 1.08 and inward:
         poly.material_index = 1  # throat
-    elif dist < 1.16:
-        poly.material_index = 2  # gums / lips
+    elif dist < 1.07:
+        poly.material_index = 2  # thin raw edge of the split
 
-# Fangs: rooted on the actual mouth wall (raycast), crowded and uneven, pointing across the gap.
+# ----- Jaws: gum ridges along the real mouth edge, and fangs that grow out of them -----------------------
 bvh = BVHTree.FromObject(body, bpy.context.evaluated_depsgraph_get())
+
+
+def rim_point(th):
+    """Where the mouth wall meets the lips at angle `th` around the opening (raycast on the body)."""
+    for deg in range(62, 125, 2):
+        phi = math.radians(deg)
+        local = Vector((math.sin(phi) * math.cos(th), -math.cos(phi), math.sin(phi) * math.sin(th)))
+        target = CUT_C + CUT_R @ Vector((local.x * CUT_S.x, local.y * CUT_S.y, local.z * CUT_S.z))
+        hit, nrm, _, _ = bvh.ray_cast(CUT_C, (target - CUT_C).normalized(), 1.5)
+        if hit is not None:
+            return hit, nrm
+    return None, None
+
+
+def smooth(points, passes=3):
+    pts = [p.copy() for p in points]
+    for _ in range(passes):
+        pts = [pts[0]] + [(pts[i - 1] + pts[i] * 2 + pts[i + 1]) / 4 for i in range(1, len(pts) - 1)] + [pts[-1]]
+    return pts
+
+
+GUM_RADIUS = 0.02
+JAWS = []  # (row, points along the gum, which way the teeth point)
+gum_objects = []
+for row, (lo, hi, point) in enumerate([(104, 256, 1), (284, 436, -1)]):  # left jaw half, right jaw half
+    samples = []
+    for k in range(25):
+        th = math.radians(lo + (hi - lo) * k / 24)
+        hit, nrm = rim_point(th)
+        if hit is not None:
+            # sit the ridge just inside the lip, on the mouth wall
+            samples.append(hit + (CUT_C - hit).normalized() * 0.04)
+    if len(samples) < 5:
+        continue
+    samples = smooth(samples)
+    JAWS.append((row, samples, point))
+    # The gum ridge: a swollen tube along the jaw line, thicker in the middle, tapering at the corners.
+    gc = bpy.data.curves.new(f"GumCurve{row}", "CURVE")
+    gc.dimensions = "3D"
+    gc.bevel_depth = GUM_RADIUS
+    gc.bevel_resolution = 5
+    gc.resolution_u = 6
+    sp = gc.splines.new("POLY")
+    sp.points.add(len(samples) - 1)
+    for k, (pt, p) in enumerate(zip(sp.points, samples)):
+        u = k / (len(samples) - 1)
+        pt.co = (p.x, p.y, p.z, 1)
+        pt.radius = 0.45 + 0.75 * math.sin(math.pi * u)
+    sp.use_endpoint_u = True
+    go = link(bpy.data.objects.new(f"Gum{row}", gc))
+    bpy.context.view_layer.objects.active = go
+    go.select_set(True)
+    bpy.ops.object.convert(target="MESH")
+    go = bpy.context.active_object
+    bpy.ops.object.shade_smooth()
+    go.hide_render = True  # the ridge only guides tooth placement; the raw split edge is the gum
+    gum_objects.append(go)
+
+
+def arc_frame(points, u):
+    """Position and tangent along the gum at fraction u."""
+    f = u * (len(points) - 1)
+    i = min(int(f), len(points) - 2)
+    t = f - i
+    pos = points[i].lerp(points[i + 1], t)
+    tangent = (points[i + 1] - points[i]).normalized()
+    return pos, tangent
+
+
 teeth = []
-for row, (lo, hi, count, point) in enumerate([(20, 160, 12, -1), (200, 340, 11, 1)]):
+collars = []
+MOUTH_AXIS = CUT_C + Vector((0, -0.2, 0))
+for row, pts, point in JAWS:
+    count = 9
     for i in range(count):
-        th = math.radians(lo + (hi - lo) * (i + random.uniform(-0.25, 0.25)) / (count - 1))
-        # Sweep from the opening inward until the ray meets the mouth wall just inside the lips.
-        hit = None
-        for deg in range(62, 120, 3):
-            phi = math.radians(deg + random.uniform(-2, 2))
-            local = Vector((math.sin(phi) * math.cos(th), -math.cos(phi), math.sin(phi) * math.sin(th)))
-            target = CUT_C + CUT_R @ Vector((local.x * CUT_S.x, local.y * CUT_S.y, local.z * CUT_S.z))
-            hit, nrm, _, _ = bvh.ray_cast(CUT_C, (target - CUT_C).normalized(), 1.5)
-            if hit is not None:
-                break
-        if hit is None:
-            continue
-        mid = abs(i - (count - 1) / 2) / ((count - 1) / 2)
-        length = (0.1 + 0.13 * (1 - mid) + random.uniform(-0.02, 0.05)) * (1.2 if row == 0 else 0.85)
-        radius = 0.018 + 0.01 * (1 - mid) + random.uniform(-0.003, 0.003)
-        # direction: vertical across the gap, leaning in toward the mouth's axis
-        axis = Vector((0, 0, point)) * 0.75 + (CUT_C + Vector((0, -0.25, 0)) - hit).normalized() * 0.35
-        axis.normalize()
-        bpy.ops.mesh.primitive_cone_add(vertices=12, radius1=radius, radius2=0.001, depth=length, location=(0, 0, 0))
+        u = 0.06 + 0.88 * (i + random.uniform(-0.15, 0.15)) / (count - 1)
+        base, tangent = arc_frame(pts, u)
+        # Size: two big fangs near the front corners, a crowd of smaller ones between and behind.
+        canine = max(gauss(u - 0.35, 0.07), gauss(u - 0.65, 0.07))
+        front = math.sin(math.pi * u)  # longest where the split gapes widest
+        length = 0.05 + 0.1 * front + 0.08 * canine + random.uniform(-0.012, 0.02)
+        radius = 0.013 + 0.007 * front + 0.008 * canine
+        # Axis: out of the jaw half, across the split toward the other half, raked back into the throat
+        # and slightly toward the middle of the split.
+        toward_mid = (CUT_C.z - base.z) * 0.6
+        axis = Vector((point * 0.85, 0.4, toward_mid)).normalized()
+        bpy.ops.mesh.primitive_cone_add(vertices=16, radius1=radius, radius2=0.0012, depth=length,
+                                        location=(0, 0, length / 2))  # base at the origin
         t = bpy.context.active_object
         t.name = f"Tooth{row}_{i}"
+        bpy.ops.object.transform_apply(location=True)
+        t.scale = (1.0, 0.62, 1.0)  # flattened blade: wide along the jaw, thin front-to-back
+        bpy.ops.object.transform_apply(scale=True)
         bend = t.modifiers.new("Bend", "SIMPLE_DEFORM")
         bend.deform_method = "BEND"
-        bend.angle = math.radians(random.uniform(12, 30))
+        bend.angle = math.radians(18 + 22 * canine + random.uniform(-4, 6))  # hooked back into the mouth
         bend.deform_axis = "X"
         apply_all(t)
-        # cone axis is +Z: aim it along `axis`, base buried slightly in the gum
+        # orient: local Z -> axis, local X -> along the jaw
+        z = axis
+        x = (tangent - z * tangent.dot(z)).normalized()
+        y = z.cross(x)
         t.rotation_mode = "QUATERNION"
-        t.rotation_quaternion = Vector((0, 0, 1)).rotation_difference(axis)
-        t.location = hit + axis * (length / 2 - 0.02)
+        t.rotation_quaternion = Matrix((x, y, z)).transposed().to_quaternion()
+        t.location = base - axis * (GUM_RADIUS * 0.6)  # root sunk into the gum
         bpy.ops.object.shade_smooth()
         teeth.append(t)
+        # swollen gum collar where the tooth breaks through
+        bpy.ops.mesh.primitive_torus_add(major_radius=radius * 1.05, minor_radius=radius * 0.38,
+                                         major_segments=16, minor_segments=8, location=(0, 0, 0))
+        c = bpy.context.active_object
+        c.name = f"Collar{row}_{i}"
+        c.scale = (1.0, 0.7, 0.8)
+        bpy.ops.object.transform_apply(scale=True)
+        c.rotation_mode = "QUATERNION"
+        c.rotation_quaternion = t.rotation_quaternion
+        c.location = base - axis * 0.01  # half buried: a swelling where the tooth breaks through
+        bpy.ops.object.shade_smooth()
+        c.hide_render = True  # (collars read as rings; the raw split edge works better as the gum)
+        collars.append(c)
 
 # tongue: tapered curve lolling out of the mouth
 cu = bpy.data.curves.new("TongueCurve", "CURVE")
 cu.dimensions = "3D"
-cu.bevel_depth = 0.06
+cu.bevel_depth = 0.035
 cu.bevel_resolution = 6
 cu.resolution_u = 24
 sp = cu.splines.new("BEZIER")
@@ -338,14 +430,18 @@ bpy.context.view_layer.objects.active = tongue
 tongue.select_set(True)
 bpy.ops.object.convert(target="MESH")
 tongue = bpy.context.active_object
-tongue.scale.x = 1.5  # flat and wide
+tongue.scale.x = 1.25  # flat
 bpy.ops.object.transform_apply(scale=True)
 bpy.ops.object.shade_smooth()
 
+# Eyeballs sit at the bottom of each socket (found by raycasting from inside the skull).
 eyes = []
-for s in (-1, 1):
-    e = sphere(f"Eye{'L' if s < 0 else 'R'}", HEAD_C + Vector((0.15 * s, -0.36, 0.07)), (0.052, 0.052, 0.052), 32, 16)
-    eyes.append(e)
+for k, (direction, depth, width) in enumerate(EYES):
+    hit, _, _, _ = bvh.ray_cast(HEAD_C, direction, 2.0)
+    if hit is None:
+        continue
+    r = 0.05 if k < 2 else 0.032
+    eyes.append(sphere(f"Eye{k}", hit - direction * (r * 1.1), (r, r, r), 32, 16))  # sunk deep
 
 
 # ===== 5. Materials ======================================================================================
@@ -425,11 +521,39 @@ SKIN = skin_material()
 body.data.materials.append(SKIN)
 body.data.materials.append(simple("Throat", (0.02, 0.002, 0.003), 0.25, coat=0.5))
 body.data.materials.append(skin_material("Gums", (0.06, 0.012, 0.014), (0.13, 0.02, 0.025)))
-TOOTH = simple("Teeth", (0.42, 0.34, 0.22), 0.4, coat=0.4)
+def tooth_material():
+    m, N, L, b = principled("Teeth")
+    coord = N.new("ShaderNodeTexCoord")
+    sep = N.new("ShaderNodeSeparateXYZ")
+    L.new(coord.outputs["Generated"], sep.inputs[0])  # Z: 0 at the root, 1 at the tip
+    ramp = N.new("ShaderNodeValToRGB")
+    ramp.color_ramp.elements[0].color = (0.09, 0.05, 0.03, 1)  # stained root
+    ramp.color_ramp.elements[0].position = 0.05
+    ramp.color_ramp.elements[1].color = (0.5, 0.42, 0.28, 1)  # yellowed ivory tip
+    ramp.color_ramp.elements[1].position = 0.65
+    L.new(sep.outputs["Z"], ramp.inputs["Fac"])
+    stain = N.new("ShaderNodeTexNoise")
+    stain.inputs["Scale"].default_value = 40
+    mix = N.new("ShaderNodeMix")
+    mix.data_type = "RGBA"
+    mix.blend_type = "MULTIPLY"
+    mix.inputs["Factor"].default_value = 0.5
+    L.new(ramp.outputs["Color"], mix.inputs[6])
+    L.new(stain.outputs["Color"], mix.inputs[7])
+    L.new(mix.outputs[2], b.inputs["Base Color"])
+    b.inputs["Roughness"].default_value = 0.38
+    b.inputs["Coat Weight"].default_value = 0.35
+    return m
+
+
+TOOTH = tooth_material()
 for t in teeth:
     t.data.materials.append(TOOTH)
+GUM_MAT = skin_material("GumFlesh", (0.06, 0.012, 0.014), (0.13, 0.02, 0.025))  # same as the split edge
+for g in gum_objects + collars:
+    g.data.materials.append(GUM_MAT)
 tongue.data.materials.append(skin_material("Tongue", (0.07, 0.012, 0.015), (0.16, 0.025, 0.03)))
-EYE = simple("Eyes", (0.5, 0.53, 0.55), 0.05, coat=1.0, emit=0.12)
+EYE = simple("Eyes", (0.17, 0.19, 0.2), 0.12, coat=0.25, emit=0.05)  # milky, dim
 for e in eyes:
     e.data.materials.append(EYE)
 
