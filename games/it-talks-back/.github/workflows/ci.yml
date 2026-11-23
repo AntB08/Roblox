@@ -1,0 +1,96 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Format, lint, typecheck, build, place checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # VERIFY the install path on the runner (`rokit system-info`) if tools are not found.
+      - name: Install Rokit
+        run: |
+          curl -sSf https://raw.githubusercontent.com/rojo-rbx/rokit/main/scripts/install.sh | bash
+          echo "$HOME/.rokit/bin" >> "$GITHUB_PATH"
+
+      - name: Toolchain (rokit.toml)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          rokit authenticate github --token "$GITHUB_TOKEN" || true
+          rokit install --no-trust-check
+
+      - name: Quality gate
+        run: SKIP_TOOLCHAIN=1 bash scripts/check.sh
+
+      - name: Upload place builds
+        uses: actions/upload-artifact@v4
+        with:
+          name: places
+          path: build/*.rbxl
+
+  cloud-tests:
+    name: Jest in a real Roblox server (Open Cloud)
+    needs: check
+    runs-on: ubuntu-latest
+    # Secrets are not available to PRs from forks; only run on pushes to main.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    environment: test-universe
+    env:
+      ROBLOX_API_KEY: ${{ secrets.ROBLOX_TEST_API_KEY }}
+      TEST_UNIVERSE_ID: ${{ vars.TEST_UNIVERSE_ID }}
+      TEST_PLACE_ID: ${{ vars.TEST_PLACE_ID }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rokit
+        run: |
+          curl -sSf https://raw.githubusercontent.com/rojo-rbx/rokit/main/scripts/install.sh | bash
+          echo "$HOME/.rokit/bin" >> "$GITHUB_PATH"
+
+      - name: Toolchain + packages
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          rokit authenticate github --token "$GITHUB_TOKEN" || true
+          rokit install --no-trust-check
+          wally install
+
+      - name: Skip when the test universe is not configured
+        id: gate
+        run: |
+          if [ -z "${ROBLOX_API_KEY}" ] || [ -z "${TEST_UNIVERSE_ID}" ] || [ -z "${TEST_PLACE_ID}" ]; then
+            echo "run=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Cloud tests skipped: set ROBLOX_TEST_API_KEY secret and TEST_UNIVERSE_ID / TEST_PLACE_ID variables."
+          else
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build test place
+        if: steps.gate.outputs.run == 'true'
+        run: mkdir -p build && rojo build test.project.json -o build/test.rbxl
+
+      - name: Upload as SAVED version of the TEST place
+        if: steps.gate.outputs.run == 'true'
+        id: upload
+        run: |
+          resp=$(curl -sS --fail-with-body -X POST \
+            "https://apis.roblox.com/universes/v1/${TEST_UNIVERSE_ID}/places/${TEST_PLACE_ID}/versions?versionType=Saved" \
+            -H "x-api-key: ${ROBLOX_API_KEY}" \
+            -H "Content-Type: application/octet-stream" \
+            --data-binary @build/test.rbxl)
+          echo "$resp"
+          echo "version=$(echo "$resp" | jq -r .versionNumber)" >> "$GITHUB_OUTPUT"
+
+      - name: Run Jest via Luau Execution
+        if: steps.gate.outputs.run == 'true'
+        run: lune run tests/run-cloud-tests.luau ${{ steps.upload.outputs.version }}

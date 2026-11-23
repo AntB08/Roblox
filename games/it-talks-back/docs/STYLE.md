@@ -1,0 +1,15 @@
+# Style spec: It Talks Back
+
+- **Look:** old house at night, grey-box first. Muted green-grey wallpaper, dark wood, tile kitchen, concrete basement.
+  Warm lamps (cold blue in the basement). Night sky, dense blue-black atmosphere, desaturated color correction.
+- **Readability on phones:** ambient is dim, not black. Lamps light each room and the flashlight is optional, so
+  players never *need* to max their screen brightness.
+- **Monster:** high-detail generated meshes (assets/meshes) over a 103-joint rig; rounded primitives as fallback.
+  Raw, striated flesh body that's wiry and thin, with a pinched waist; a bony skull sunk low between hunched shoulders, with
+  narrow slanted sockets, pinprick eyes, needle teeth and six wriggling feelers hanging from the mouth, plus a tongue;
+  a ribbed barrel chest, spine ridge, four back tendrils; mismatched arms (right ~25% longer) ending in long blade fingers.
+  Original design (inspired by the general look of gaunt flesh creatures, not copied from any artwork).
+- **UI:** dark translucent pills, cream text, blood-red accents. "Special Elite" typewriter font for the monster's
+  lines and big titles; Builder Sans for everything else. Edges turn red when it is near you.
+- **Audio:** the monster's TTS voice (pitched down, slowed) is the star. Heavy slow footsteps. Music must be an
+  instrumental drone and an instrumental chase loop (placeholders until you upload them). No vocal SFX.
