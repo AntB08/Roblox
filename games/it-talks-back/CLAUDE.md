@@ -6,7 +6,7 @@ Original Roblox game built from `~/Roblox/templates/starter-game`. The knowledge
 
 ## Facts (fill in)
 - Genre / core loop: co-op horror escape. Find 3 fuses → generator → exit, while a talking, listening monster hunts you (see docs/DESIGN.md)
-- Target: mobile-first, ages 9+, sessions of 10–20 min
+- Target: 13+ (voice-chat-only game: players without voice chat are kicked, see VoiceGateService), mobile-first, sessions of 10–20 min
 - Universe IDs: prod <id> (place <id>); test <id> (place <id>). Put the test place id in `default.project.json` → `servePlaceIds`
 - Owner: user <id> | group <id>. Assets must be owned by this creator
 - Data store: `GameConfig.DataStoreName` = `PlayerData_v1`. Never rename it without a migration plan

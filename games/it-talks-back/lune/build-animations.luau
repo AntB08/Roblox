@@ -106,21 +106,22 @@ local function buildRig()
 			end
 		end
 	end
-	for i, x in { -0.3, 0.3 } do
-		local eye = Instance.new("Part")
-		eye.Name = if i == 1 then "LeftEye" else "RightEye"
-		eye.Size = Vector3.new(0.22, 0.14, 0.05)
-		eye.Color = Color3.fromRGB(235, 230, 210)
-		eye.Material = Enum.Material.Neon
-		eye.CanCollide = false
-		eye.Massless = true
-		eye.CFrame = parts.Head.CFrame * CFrame.new(x, 0.2, -0.66)
+	for _, d in SPEC.decor do
+		local host = parts[d.attach]
+		local p = Instance.new("Part")
+		p.Name = d.name
+		p.Size = d.size
+		p.Color = d.color
+		p.Material = d.material
+		p.CanCollide = false
+		p.Massless = true
+		p.CFrame = host.CFrame * d.offset
 		local weld = Instance.new("Weld")
-		weld.Part0 = parts.Head
-		weld.Part1 = eye
-		weld.C0 = CFrame.new(x, 0.2, -0.66)
-		weld.Parent = eye
-		eye.Parent = model
+		weld.Part0 = host
+		weld.Part1 = p
+		weld.C0 = d.offset
+		weld.Parent = p
+		p.Parent = model
 	end
 	local humanoid = Instance.new("Humanoid")
 	humanoid.RigType = Enum.HumanoidRigType.R15
@@ -220,7 +221,7 @@ local function bakeMonster(name, spec)
 	end
 	-- Loops that aren't a natural cycle (idle noise etc.): ease the last quarter back into the
 	-- first frame so the loop point is seamless.
-	if spec.loop and not spec.cycle then
+	if spec.loop then -- (cycles too: tendrils/fingers don't share the gait's period)
 		local first = samples[1].transforms
 		local n = #samples
 		local blendFrom = math.floor(n * 0.75)

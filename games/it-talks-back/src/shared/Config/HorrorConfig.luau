@@ -224,6 +224,9 @@ local HorrorConfig = {
 		},
 	},
 
+	-- Voice-chat-only game: players without voice chat are kicked on join (not in Studio).
+	RequireVoiceChat = true,
+
 	Callouts = { "Kitchen", "Study", "Basement", "Hallway" },
 	CalloutCooldown = 8,
 

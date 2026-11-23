@@ -4,8 +4,10 @@
   Warm lamps (cold blue in the basement). Night sky, dense blue-black atmosphere, desaturated color correction.
 - **Readability on phones:** ambient is dim, not black. Lamps light each room and the flashlight is optional, so
   players never *need* to max their screen brightness.
-- **Monster:** tall, thin, hunched, near-black with two small pale eyes. Eye color = mood
-  (white calm, amber alert, red chase). Original design: no resemblance to existing characters.
+- **Monster:** tall, emaciated, hunched, sickly pale grey (visible in a flashlight), long skull with sunken
+  sockets and pinprick glowing eyes (white calm, amber alert, red chase), long jaw of teeth and a tongue, ribs
+  and spine ridge, arms past its knees with long clawed fingers, clawed toes, rags at the waist, four back
+  tendrils. Original design: no resemblance to existing characters.
 - **UI:** dark translucent pills, cream text, blood-red accents. "Special Elite" typewriter font for the monster's
   lines and big titles; Builder Sans for everything else. Edges turn red when it is near you.
 - **Audio:** the monster's TTS voice (pitched down, slowed) is the star. Heavy slow footsteps. Music must be an
