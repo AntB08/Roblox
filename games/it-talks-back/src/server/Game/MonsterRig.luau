@@ -10,7 +10,7 @@
 --   * MISMATCHED arms (the right one is ~25% longer) ending in long, tapered, clawed fingers
 --   * bony knobs at elbows and knees, clawed toes, rags at the waist
 --
--- 91 Motor6Ds (joint name -> Part1):
+-- 103 Motor6Ds (joint name -> Part1):
 --   core 11:    Root->Pelvis, Spine1->Abdomen, Spine2->Waist, Spine3->Chest, Spine4->UpperChest,
 --               Neck1..4->Neck<n>Seg, Skull->Head, Jaw->Jaw
 --   face 4:     Tongue1->Tongue1, Tongue2->Tongue2, LeftLid, RightLid
@@ -19,6 +19,7 @@
 --   legs 2x4:   <Side>Hip->UpperLeg, <Side>Knee->LowerLeg, <Side>Ankle->Foot, <Side>Toe->Toes
 --   back 20:    Tendril<1-4><A..E>
 --   cloth 12:   Rag<0-5><A|B>
+--   mouth 12:   Feeler<0-5><A|B>
 -- Decorations (ribs, teeth, claws, sockets, spikes...) are welded, not jointed.
 --
 -- Rest pose is upright (the hunch and neck curve live in the animation, so the rig is easy to
@@ -28,17 +29,21 @@
 
 local MonsterRig = {}
 
-local SKIN = Color3.fromRGB(156, 151, 138) -- sickly pale: it shows up horribly in a flashlight
-local SKIN_DARK = Color3.fromRGB(104, 98, 88)
-local DEAD = Color3.fromRGB(58, 52, 50) -- darker, dead-looking hands and feet tips
+local SKIN = Color3.fromRGB(128, 92, 70) -- raw, flayed-looking flesh
+local SKIN_DARK = Color3.fromRGB(92, 60, 46)
+local DEAD = Color3.fromRGB(70, 44, 36) -- darker hands, feet and blade-finger tips
 local CLOTH = Color3.fromRGB(30, 25, 22)
-local BONE = Color3.fromRGB(212, 204, 182)
+local BONE = Color3.fromRGB(176, 150, 120) -- the exposed skull
 local CLAW = Color3.fromRGB(22, 18, 16)
 local MOUTH = Color3.fromRGB(64, 12, 14)
 local SOCKET = Color3.fromRGB(6, 5, 6)
 local EYE = Color3.fromRGB(255, 236, 214)
 
 local HIP_HEIGHT = 3
+-- If the imported meshes face backwards (some importer setups turn models 180 degrees), set this
+-- to CFrame.Angles(0, math.pi, 0).
+local MESH_ROTATION = CFrame.identity
+local applyMeshes: (parts: { [string]: BasePart }) -> boolean
 
 export type Shape = "Ellipsoid" | "Wedge" | "Block"
 export type PartSpec = { name: string, size: Vector3, color: Color3, material: Enum.Material, shape: Shape }
@@ -98,16 +103,16 @@ part("Pelvis", Vector3.new(1.1, 0.7, 0.7), SKIN_DARK)
 part("Abdomen", Vector3.new(0.62, 0.6, 0.46), SKIN) -- wasp-thin waist, two segments
 part("Waist", Vector3.new(0.56, 0.6, 0.42), SKIN)
 part("Chest", Vector3.new(1.8, 1.55, 1.15), SKIN) -- big ribcage
-part("UpperChest", Vector3.new(2.2, 0.6, 0.95), SKIN) -- high, hunched shoulder yoke
+part("UpperChest", Vector3.new(2.3, 0.85, 1.05), SKIN) -- high hunched shoulder hump
 for k, w in { 0.37, 0.34, 0.31, 0.29 } do
 	part(`Neck{k}Seg`, Vector3.new(w, 0.48, w), SKIN) -- four short segments: a smooth S-curve
 end
-part("Head", Vector3.new(0.95, 1.2, 1.75), SKIN) -- long egg skull, long axis front-to-back
-part("Jaw", Vector3.new(0.74, 0.32, 1.3), SKIN_DARK)
+part("Head", Vector3.new(0.82, 1, 1.3), SKIN) -- narrow skull, long front-to-back
+part("Jaw", Vector3.new(0.6, 0.26, 0.95), SKIN_DARK)
 part("Tongue1", Vector3.new(0.24, 0.09, 0.5), MOUTH)
 part("Tongue2", Vector3.new(0.18, 0.08, 0.48), MOUTH)
-part("LeftLid", Vector3.new(0.32, 0.07, 0.24), SKIN_DARK)
-part("RightLid", Vector3.new(0.32, 0.07, 0.24), SKIN_DARK)
+part("LeftLid", Vector3.new(0.27, 0.06, 0.2), SKIN_DARK)
+part("RightLid", Vector3.new(0.27, 0.06, 0.2), SKIN_DARK)
 
 joint("Root", "HumanoidRootPart", "Pelvis", CFrame.new(0, -0.55, 0), CFrame.new())
 joint("Spine1", "Pelvis", "Abdomen", CFrame.new(0, 0.28, 0), CFrame.new(0, -0.24, 0))
@@ -119,42 +124,68 @@ for k = 2, 4 do
 	joint(`Neck{k}`, `Neck{k - 1}Seg`, `Neck{k}Seg`, CFrame.new(0, 0.18, 0), CFrame.new(0, -0.18, 0))
 end
 -- The neck plugs into the BACK of the skull, so the face hangs forward of it.
-joint("Skull", "Neck4Seg", "Head", CFrame.new(0, 0.18, 0), CFrame.new(0, -0.3, 0.42))
-joint("Jaw", "Head", "Jaw", CFrame.new(0, -0.4, 0.4), CFrame.new(0, 0.08, 0.62))
-joint("Tongue1", "Jaw", "Tongue1", CFrame.new(0, 0.1, 0.3), CFrame.new(0, 0, 0.24))
+joint("Skull", "Neck4Seg", "Head", CFrame.new(0, 0.18, 0), CFrame.new(0, -0.25, 0.31))
+joint("Jaw", "Head", "Jaw", CFrame.new(0, -0.33, 0.3), CFrame.new(0, 0.07, 0.46))
+joint("Tongue1", "Jaw", "Tongue1", CFrame.new(0, 0.08, 0.22), CFrame.new(0, 0, 0.24))
 joint("Tongue2", "Tongue1", "Tongue2", CFrame.new(0, 0, -0.24), CFrame.new(0, 0, 0.23))
 for i, side in { "Left", "Right" } do
-	local x = if i == 1 then -0.21 else 0.21
-	joint(side .. "Lid", "Head", side .. "Lid", CFrame.new(x, 0.24, -0.62), CFrame.new(0, 0, 0.12))
+	local x = if i == 1 then -0.18 else 0.18
+	joint(side .. "Lid", "Head", side .. "Lid", CFrame.new(x, 0.17, -0.5), CFrame.new(0, 0, 0.1))
 end
 
 -- Face: no nose, deep sockets with pinprick pupils (tagged MonsterEye), brow, needle teeth.
 for i, side in { "Left", "Right" } do
-	local x = if i == 1 then -0.21 else 0.21
-	decor(side .. "Socket", "Head", CFrame.new(x, 0.12, -0.66), Vector3.new(0.3, 0.24, 0.16), SOCKET)
+	local x = if i == 1 then -0.18 else 0.18
+	-- Narrow sockets slanting down toward the middle: an angry, hateful stare.
+	local slant = if x > 0 then 0.35 else -0.35
+	decor(
+		side .. "Socket",
+		"Head",
+		CFrame.new(x, 0.08, -0.52) * CFrame.Angles(0, 0, slant),
+		Vector3.new(0.3, 0.14, 0.16),
+		SOCKET
+	)
 	decor(
 		side .. "Eye",
 		"Head",
-		CFrame.new(x, 0.12, -0.73),
-		Vector3.new(0.08, 0.08, 0.05),
+		CFrame.new(x, 0.08, -0.6),
+		Vector3.new(0.06, 0.06, 0.04),
 		EYE,
 		"Ellipsoid",
 		NEON,
 		"MonsterEye"
 	)
-	decor(side .. "CheekHollow", "Head", CFrame.new(x * 1.9, -0.22, -0.3), Vector3.new(0.12, 0.36, 0.6), SKIN_DARK)
+	decor(side .. "CheekHollow", "Head", CFrame.new(x * 1.9, -0.18, -0.22), Vector3.new(0.1, 0.3, 0.45), SKIN_DARK)
 end
-decor("Cranium", "Head", CFrame.new(0, 0.28, 0.38) * CFrame.Angles(-0.3, 0, 0), Vector3.new(0.86, 0.85, 1.15), SKIN)
-decor("Brow", "Head", CFrame.new(0, 0.27, -0.6) * CFrame.Angles(0.25, 0, 0), Vector3.new(0.78, 0.13, 0.26), SKIN_DARK)
-decor("UpperMouth", "Head", CFrame.new(0, -0.4, -0.3), Vector3.new(0.62, 0.16, 0.95), MOUTH)
-decor("LowerMouth", "Jaw", CFrame.new(0, 0.12, -0.08), Vector3.new(0.58, 0.07, 1.05), MOUTH)
+decor("Cranium", "Head", CFrame.new(0, 0.23, 0.28) * CFrame.Angles(-0.3, 0, 0), Vector3.new(0.74, 0.7, 0.85), SKIN)
+decor("Brow", "Head", CFrame.new(0, 0.2, -0.47) * CFrame.Angles(0.25, 0, 0), Vector3.new(0.68, 0.11, 0.2), SKIN_DARK)
+decor("UpperMouth", "Head", CFrame.new(0, -0.33, -0.22), Vector3.new(0.54, 0.13, 0.7), MOUTH)
+decor("LowerMouth", "Jaw", CFrame.new(0, 0.1, -0.06), Vector3.new(0.5, 0.06, 0.78), MOUTH)
 for k = 0, 8 do
-	local x = -0.26 + k * 0.065
-	local z = -0.72 + math.abs(k - 4) * 0.045 -- teeth follow the curve of the snout
+	local x = -0.22 + k * 0.055
+	local z = -0.55 + math.abs(k - 4) * 0.035 -- teeth follow the curve of the snout
 	local fang = k == 1 or k == 7
 	local len = if fang then 0.26 else 0.15
-	decor(`ToothUpper{k}`, "Head", CFrame.new(x, -0.46 - len / 2, z), Vector3.new(0.045, len, 0.045), BONE)
-	decor(`ToothLower{k}`, "Jaw", CFrame.new(x, 0.14 + len * 0.4, z + 0.04), Vector3.new(0.04, len * 0.8, 0.04), BONE)
+	decor(`ToothUpper{k}`, "Head", CFrame.new(x, -0.38 - len / 2, z), Vector3.new(0.04, len, 0.04), BONE)
+	decor(`ToothLower{k}`, "Jaw", CFrame.new(x, 0.12 + len * 0.4, z + 0.03), Vector3.new(0.035, len * 0.8, 0.035), BONE)
+end
+
+-- Mouth feelers: six fleshy, jointed feelers hang around the mouth and wriggle (2 joints each).
+for k = 0, 5 do
+	local x = -0.23 + k * 0.092
+	local outer = math.abs(k - 2.5) / 2.5 -- 0 in the middle, 1 at the sides
+	local len1 = 0.42 - outer * 0.1
+	local len2 = 0.38 - outer * 0.08
+	part(`Feeler{k}_1`, Vector3.new(0.085, len1 + 0.05, 0.085), MOUTH)
+	part(`Feeler{k}_2`, Vector3.new(0.06, len2 + 0.04, 0.06), CLAW)
+	joint(
+		`Feeler{k}A`,
+		"Head",
+		`Feeler{k}_1`,
+		CFrame.new(x, -0.42, -0.6 + outer * 0.14) * CFrame.Angles(0.15, 0, (k - 2.5) * 0.06),
+		CFrame.new(0, len1 / 2, 0)
+	)
+	joint(`Feeler{k}B`, `Feeler{k}_1`, `Feeler{k}_2`, CFrame.new(0, -len1 / 2, 0), CFrame.new(0, len2 / 2, 0))
 end
 
 -- Body: rib rings, sternum, spine spikes, shoulder blades, hip bones, rags.
@@ -368,7 +399,7 @@ for t, def in TENDRILS do
 	decor(`Tendril{t}Tip`, `Tendril{t}_5`, CFrame.new(0, 0.32, 0), Vector3.new(0.06, 0.26, 0.06), CLAW)
 end
 
-assert(#JOINTS == 91, `[MonsterRig] expected 91 joints, got {#JOINTS}`)
+assert(#JOINTS == 103, `[MonsterRig] expected 103 joints, got {#JOINTS}`)
 
 MonsterRig.SPEC = table.freeze({ parts = PARTS, joints = JOINTS, decor = DECOR, hipHeight = HIP_HEIGHT })
 
@@ -397,6 +428,49 @@ local function newPart(name: string, size: Vector3, color: Color3, material: Enu
 	p.Massless = true
 	p.CastShadow = true
 	return p
+end
+
+-- Decor that stays even with the meshes (dark socket interiors, glowing eyes, mouth, teeth).
+local KEEP_WITH_MESHES: { [string]: boolean } = { Socket = true, Eye = true, UpperMouth = true, LowerMouth = true }
+
+-- Clones M_<PartName> MeshParts from ServerStorage.TenantMeshes onto the rig. Returns true if any
+-- were applied. MonsterMeshes (generated) says where each mesh's bounding box sits in its part and
+-- its size, so importer recentring / unit scaling doesn't matter.
+function applyMeshes(parts: { [string]: BasePart }): boolean
+	local ok, source = pcall(function()
+		return game:GetService("ServerStorage"):FindFirstChild("TenantMeshes")
+	end)
+	if not ok or not source then
+		return false
+	end
+	local info = require(script.Parent.Parent.Config.MonsterMeshes) :: any
+	local count = 0
+	for partName, host in parts do
+		local template = source:FindFirstChild("M_" .. partName, true)
+		local meta = info[partName]
+		if template and template:IsA("MeshPart") and meta then
+			local mesh = template:Clone()
+			mesh.Name = "Mesh"
+			mesh.Anchored = false
+			mesh.CanCollide = false
+			mesh.CanTouch = false
+			mesh.CanQuery = false
+			mesh.Massless = true
+			mesh.Size = meta.size
+			mesh.CFrame = host.CFrame * CFrame.new(meta.center) * MESH_ROTATION
+			local weld = Instance.new("WeldConstraint")
+			weld.Part0 = host
+			weld.Part1 = mesh
+			weld.Parent = mesh
+			mesh.Parent = host
+			host.Transparency = 1
+			count += 1
+		end
+	end
+	if count == 0 then
+		warn("[MonsterRig] ServerStorage.TenantMeshes has no M_<Part> MeshParts; using primitive shapes")
+	end
+	return count > 0
 end
 
 function MonsterRig.build(name: string): Model
@@ -445,7 +519,19 @@ function MonsterRig.build(name: string): Model
 		end
 	end
 
+	-- High-detail meshes (optional): if the generated meshes were imported into
+	-- ServerStorage.TenantMeshes (assets/meshes/README.md), weld a MeshPart onto every body part and
+	-- hide the primitive under it. Joints and animation are unchanged.
+	local meshMode = applyMeshes(parts)
+
 	for _, d in DECOR do
+		if
+			meshMode
+			and not KEEP_WITH_MESHES[d.name:gsub("^Left", ""):gsub("^Right", "")]
+			and not d.name:find("Tooth")
+		then
+			continue -- the mesh already sculpts ribs, brow, knobs, claws...
+		end
 		local host = parts[d.attach]
 		local p = newPart(d.name, d.size, d.color, d.material, d.shape)
 		p.CastShadow = d.material ~= NEON

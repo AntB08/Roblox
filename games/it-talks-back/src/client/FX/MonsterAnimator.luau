@@ -1,12 +1,12 @@
 --!strict
--- MonsterAnimator: procedural animation for the 91-joint monster rig (Server/Game/MonsterRig).
+-- MonsterAnimator: procedural animation for the 103-joint monster rig (Server/Game/MonsterRig).
 --
 -- Two levels:
 --   1. BODY layer (easy to author): Root, Waist, Neck, Jaw, shoulders, elbows, wrists, hips,
 --      knees, ankles + Grip (finger curl / twitch) per hand, Tongue, Tendril (agitation), Lids.
 --      Built from layers: base hunch -> idle / creep walk / chase sprint (blended by speed) ->
 --      listen / speak / dormant overlays -> one-shot actions (grab, snuff, look, emerge).
---   2. EXPANSION to the 91 real joints: the waist bend is spread over 4 spine joints and the neck
+--   2. EXPANSION to the 103 real joints: the waist bend is spread over 4 spine joints and the neck
 --      over 4 neck joints + skull (so they CURVE instead of hinging), clavicles shrug when arms lift or
 --      reach, every finger curls with its own lag and twitch, toes flex, the tongue wriggles,
 --      lids blink (never while chasing: it stares), and the 4 back tendrils undulate faster the
@@ -45,7 +45,7 @@ export type State = {
 
 local SIDES = { "Left", "Right" }
 
--- ===== The 91 joints and their springs =============================================================
+-- ===== The 103 joints and their springs =============================================================
 local JOINTS: { string } = {
 	"Root",
 	"Spine1",
@@ -87,7 +87,11 @@ for r = 0, 5 do
 	table.insert(JOINTS, `Rag{r}A`)
 	table.insert(JOINTS, `Rag{r}B`)
 end
-assert(#JOINTS == 91, "MonsterAnimator expects the 91-joint rig")
+for k = 0, 5 do
+	table.insert(JOINTS, `Feeler{k}A`)
+	table.insert(JOINTS, `Feeler{k}B`)
+end
+assert(#JOINTS == 103, "MonsterAnimator expects the 103-joint rig")
 
 type SpringSpec = { f: number, z: number }
 local function springFor(j: string): SpringSpec
@@ -95,6 +99,8 @@ local function springFor(j: string): SpringSpec
 		return { f = 1.9 - (string.byte(j, -1) - 65) * 0.12, z = 0.28 } -- whippy, tips the loosest
 	elseif j:find("Rag") then
 		return { f = if j:sub(-1) == "A" then 1.6 else 1.3, z = 0.3 } -- cloth: lags and sways
+	elseif j:find("Feeler") then
+		return { f = 3.2, z = 0.3 } -- loose, wriggly
 	elseif j:find("Thumb") then
 		return { f = 4, z = 0.5 }
 	elseif j:find("Finger") then
@@ -383,7 +389,7 @@ local function action(p: Pose, name: string, a: number, t: number)
 	end
 end
 
--- ===== Expansion: body layer -> 91 joints ============================================================
+-- ===== Expansion: body layer -> 103 joints ============================================================
 
 local function copyInto(target: Pose, joint: string, c: Channel, share: number)
 	add(target, joint, c.rx * share, c.ry * share, c.rz * share, 0)
@@ -433,8 +439,9 @@ local function expand(body: Pose, state: State, ctx: Context, blink: number): Po
 		-- Clavicle shrugs as the arm lifts, rolls forward as it reaches.
 		local lift = math.max(0, sh.rx - 0.8)
 		local reach = math.clamp(sh.rx, 0, 1.6)
-		add(target, side .. "Clavicle", 0, sign * reach * 0.18, sign * (0.28 + lift * 0.3)) -- shoulders hunched high
+		add(target, side .. "Clavicle", 0, sign * reach * 0.18, sign * (0.45 + lift * 0.3)) -- shoulders hunched up around the skull
 		copyInto(target, side .. "Shoulder", sh, 1)
+		add(target, side .. "Shoulder", 0, 0, -sign * 0.42) -- let the arm hang straight down from the raised shoulder
 		copyInto(target, side .. "Elbow", body[side .. "Elbow"], 1)
 		copyInto(target, side .. "Wrist", body[side .. "Wrist"], 1)
 
@@ -477,6 +484,15 @@ local function expand(body: Pose, state: State, ctx: Context, blink: number): Po
 				amp * 0.7 * taper * math.sin(ph * 0.8 + k)
 			)
 		end
+	end
+
+	-- Mouth feelers: always wriggling a little; flare open and writhe when it talks, hunts or grabs.
+	local writhe = math.clamp(0.25 + wriggle * 0.6 + math.max(0, -body.Jaw.rx - 0.1) * 0.8, 0, 1.4)
+	for k = 0, 5 do
+		local side = (k - 2.5) / 2.5
+		local ph = t * (2.2 + writhe * 3) + k * 1.3
+		add(target, `Feeler{k}A`, 0.1 + math.sin(ph) * 0.18 * writhe - writhe * 0.25, 0, side * (0.1 + writhe * 0.35))
+		add(target, `Feeler{k}B`, 0.2 + math.sin(ph - 1.1) * 0.35 * writhe, 0, math.sin(ph * 0.7) * 0.2 * writhe)
 	end
 
 	-- Rags: hang, sway, and trail backward with speed (the springs make them lag behind).
