@@ -73,8 +73,20 @@ local function buildRig()
 	root.CFrame = CFrame.new(0, 4, 0)
 	root.Parent = model
 	local parts = { HumanoidRootPart = root }
+	local function shapeIt(p, shape)
+		local meshType = if shape == "Ellipsoid"
+			then Enum.MeshType.Sphere
+			elseif shape == "Wedge" then Enum.MeshType.Wedge
+			else nil
+		if meshType then
+			local mesh = Instance.new("SpecialMesh")
+			mesh.MeshType = meshType
+			mesh.Parent = p
+		end
+	end
 	for _, spec in SPEC.parts do
 		local p = Instance.new("Part")
+		shapeIt(p, spec.shape)
 		p.Name = spec.name
 		p.Size = spec.size
 		p.Color = spec.color
@@ -109,6 +121,7 @@ local function buildRig()
 	for _, d in SPEC.decor do
 		local host = parts[d.attach]
 		local p = Instance.new("Part")
+		shapeIt(p, d.shape)
 		p.Name = d.name
 		p.Size = d.size
 		p.Color = d.color

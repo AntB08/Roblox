@@ -41,7 +41,7 @@ Coins, Stats {Rounds, Escapes, Rescues, TimesCaught, FusesInserted, PlaySeconds,
 RoundEnded, PlayerCaught, PlayerEscaped, CalloutUsed. Onboarding: DataLoaded → FirstRound → FirstFuse → FirstEscape.
 
 ## Animation and cutscenes (all procedural, no uploaded animation assets)
-- Rig: `src/server/Game/MonsterRig.luau` — 64 Motor6Ds (3-joint spine, 2-joint neck, skull, jaw, 2-joint tongue, eyelids, clavicles, arms, 4 three-joint fingers per hand, legs with toes, 4 three-segment back tendrils) + welded decor (ribs, teeth, claws, sockets, rags). Spec in `MonsterRig.SPEC`.
+- Rig: `src/server/Game/MonsterRig.luau` — 64 Motor6Ds (3-joint spine, 2-joint neck, skull, jaw, 2-joint tongue, eyelids, clavicles, arms, 4 three-joint fingers per hand, legs with toes, 4 three-segment back tendrils) + welded decor (ribs, teeth, claws, sockets, spikes, rags). Parts are ellipsoid/wedge SpecialMeshes (`shape` in the spec). Spec in `MonsterRig.SPEC`.
 - Monster: `src/client/FX/MonsterAnimator.luau` — authored on a body layer, expanded to the 64 joints (curved spine/neck, finger curl and twitch, tongue, blinks, tendril waves); layered target pose + per-joint damped springs (follow-through, overshoot), distance-driven gait (poses: idle, creep walk, chase sprint, listen, speak, grab, snuff, look,
   vanish glitch, emerge), driven by monster attributes `Mood`, `Action` + `ActionUntil` (server `MonsterService.act`).
   Applied each frame by `MonsterFxController`. Action lengths must match `ACTION_LENGTH` there.

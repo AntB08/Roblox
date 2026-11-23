@@ -382,6 +382,11 @@ local function expand(body: Pose, state: State, ctx: Context, blink: number): Po
 	copyInto(target, "Neck1", n, 0.32)
 	copyInto(target, "Neck2", n, 0.33)
 	copyInto(target, "Skull", n, 0.35)
+	-- The vulture S-curve: the neck juts forward and down from the shoulders, then the skull
+	-- tilts back up so the face looks ahead from below shoulder height.
+	add(target, "Neck1", -0.75)
+	add(target, "Neck2", -0.35)
+	add(target, "Skull", 0.9)
 	copyInto(target, "Jaw", body.Jaw, 1)
 
 	-- Tongue: rx = stick out, ry = how much it wriggles.
@@ -401,7 +406,7 @@ local function expand(body: Pose, state: State, ctx: Context, blink: number): Po
 		-- Clavicle shrugs as the arm lifts, rolls forward as it reaches.
 		local lift = math.max(0, sh.rx - 0.8)
 		local reach = math.clamp(sh.rx, 0, 1.6)
-		add(target, side .. "Clavicle", 0, sign * reach * 0.18, sign * lift * 0.3)
+		add(target, side .. "Clavicle", 0, sign * reach * 0.18, sign * (0.28 + lift * 0.3)) -- shoulders hunched high
 		copyInto(target, side .. "Shoulder", sh, 1)
 		copyInto(target, side .. "Elbow", body[side .. "Elbow"], 1)
 		copyInto(target, side .. "Wrist", body[side .. "Wrist"], 1)
