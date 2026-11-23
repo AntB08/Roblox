@@ -557,6 +557,26 @@ EYE = simple("Eyes", (0.17, 0.19, 0.2), 0.12, coat=0.25, emit=0.05)  # milky, di
 for e in eyes:
     e.data.materials.append(EYE)
 
+# Remove helpers that only guided construction.
+for o in list(scene.objects):
+    if o.name.startswith(("Gum", "Collar")):
+        bpy.data.objects.remove(o, do_unlink=True)
+
+# Skeleton points for the rig script (tools/blender/rig_animate_tenant.py).
+import json
+
+with open(f"{OUT}/tenant_joints.json", "w") as fh:
+    json.dump(
+        {
+            "joints": {k: list(v[0]) for k, v in J.items()},
+            "head": list(HEAD_C),
+            "mouth": list(CUT_C),
+            "mouth_size": list(CUT_S),
+            "tongue": [list(p) for p in pts],
+        },
+        fh,
+        indent=1,
+    )
 bpy.ops.wm.save_as_mainfile(filepath=f"{OUT}/tenant_hi.blend")
 tri = sum(len(p.vertices) - 2 for o in scene.objects if o.type == "MESH" and not o.hide_render for p in o.data.polygons)
 print(f"TRIANGLES {tri}")
@@ -610,6 +630,16 @@ SHOTS = {
     "side": ((13.5, -1.5, 5.8), (0, -0.3, 4.4), 38, SAMPLES),
     "back": ((-6, 10.5, 6.6), (0, 0, 4.5), 38, SAMPLES),
 }
+# A ready-to-open scene: model + floor + lights + camera (front shot), materials included.
+cam.location = SHOTS["front"][0]
+cam.rotation_euler = (Vector(SHOTS["front"][1]) - Vector(SHOTS["front"][0])).to_track_quat("-Z", "Y").to_euler()
+cam_data.lens = SHOTS["front"][2]
+scene.cycles.samples = 128
+bpy.ops.file.pack_all()
+bpy.ops.wm.save_as_mainfile(filepath=f"{OUT}/TheTenant.blend", compress=True)
+if "--scene-only" in argv:
+    sys.exit(0)
+
 ONLY = next((a.split("=")[1].split(",") for a in argv if a.startswith("--only=")), list(SHOTS))
 print(f"TEETH {len(teeth)}")
 for name, (loc, tgt, lens, samples) in SHOTS.items():
